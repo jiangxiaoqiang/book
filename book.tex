@@ -1,0 +1,239 @@
+\documentclass{book}
+
+%%%%%% Import Package %%%%%%
+\usepackage{graphicx}
+\usepackage[unicode]{hyperref}
+\usepackage{cite}
+\usepackage{indentfirst}
+\usepackage{multirow}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fontspec,xunicode,xltxtra}
+\usepackage{xeCJK}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{epigraph}
+\usepackage{amsmath}
+\usepackage[xindy]{glossaries}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{longtable}
+
+%When compile under liunx% 
+%\setmainfont{WenQuanYi Micro Hei}  
+%\setmainfont{WenQuanYi Zen Hei Mono} 
+
+\newcounter{coderemarks}   %创建变量
+\setcounter{coderemarks}{1}   %设置变量初值为1
+\newcounter{codevar}     %创建变量
+\setcounter{codevar}{1}     %设置变量初值为
+
+\newcommand{\circlemark}[1]{%
+\tikz\node[text=white,font=\sffamily\bfseries,inner sep=0.2mm,draw,circle,fill=black]{#1};}
+
+\newcommand{\makeremark}[1]{%
+\circlemark{\arabic{coderemarks}}%
+\global \expandafter\def \csname codebox\the\value{coderemarks}\endcsname{#1}%
+\stepcounter{coderemarks}}
+
+\newcommand{\showremarks}{%
+\begin{list}{\circlemark{\arabic{codevar}}} %
+{} %
+\whiledo{\value{codevar} < \value{coderemarks}}{ %
+\item \expandafter\csname codebox\the\value{codevar}\endcsname %
+\stepcounter{codevar}} %
+\end{list} %
+\setcounter{coderemarks}{1}%
+\setcounter{codevar}{1}%
+}
+
+\definecolor{orange}{RGB}{255,127,0} 
+\definecolor{SpringGreen4}{RGB}{0,139,69}
+
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\contentsname}{目录}
+
+\interfootnotelinepenalty=10000
+
+\newcommand*{\songti}{\CJKfamily{zhsong}} % 宋体
+%%%% Set section Attribute %%%%
+\makeatletter
+\makeatother
+
+%%%% 设置 subsection 属性 %%%%
+\makeatletter
+\makeatother
+
+%%%% 设置 subsubsection 属性 %%%%
+\makeatletter
+\makeatother
+
+%Set Hyperref Format
+\hypersetup{pdfborder={0 0 0}, colorlinks=true,linkcolor=blue}
+
+% 段落首行缩进两个字 %
+\makeatletter
+\let\@afterindentfalse\@afterindenttrue
+\@afterindenttrue
+\makeatother
+
+\setlength{\parindent}{2em}  %中文缩进两个汉字位
+
+%%%% 下面的命令重定义页面边距，使其符合中文刊物习惯 %%%%
+\addtolength{\topmargin}{-54pt}
+\setlength{\oddsidemargin}{0.63cm}  % 3.17cm - 1 inch
+\setlength{\evensidemargin}{\oddsidemargin}
+\setlength{\textwidth}{14.66cm}
+\setlength{\textheight}{24.00cm}    % 24.62
+
+%%%%设置TOC深度%%%%
+\setcounter{tocdepth}{2}
+
+%%%% 下面的命令设置行间距与段落间距 %%%%
+\linespread{1.4}
+% \setlength{\parskip}{1ex}
+\setlength{\parskip}{0.5\baselineskip}
+
+%Set where to find the graphics%
+\graphicspath{{./Image/HotPrint/}{./Image/Api/}{./Image/InterfaceDesign/}{./Image/Attachment/}}
+%\graphicspath{{I:\Nutstore\Document\Tex\JsptpdCSSDS\Image\Interface\_Design}}%
+
+%Set Code Format%
+\lstloadlanguages{C, csh, make,python}
+\lstset{	  
+	 alsolanguage= XML,  
+	 tabsize=4, %  
+	 frame=shadowbox, %把代码用带有阴影的框圈起来  
+	 commentstyle=\color{red!50!green!50!blue!50},%浅灰色的注释  
+	 rulesepcolor=\color{red!20!green!20!blue!20},%代码块边框为淡青色  
+	 keywordstyle=\color{blue!90}\bfseries, %代码关键字的颜色为蓝色，粗体  
+	 showstringspaces=false,%不显示代码字符串中间的空格标记  
+	 stringstyle=\ttfamily, % 代码字符串的特殊格式  
+	 keepspaces=true, %  
+	 breakindent=22pt, %  
+	 numbers=left,%左侧显示行号 往左靠,还可以为right，或none，即不加行号  
+	 stepnumber=1,%若设置为2，则显示行号为1,3,5，即stepnumber为公差,默认stepnumber=1  
+	 %numberstyle=\tiny, %行号字体用小号  
+	 numberstyle={\color[RGB]{0,192,192}\tiny} ,%设置行号的大小，大小有tiny,scriptsize,footnotesize,small,normalsize,large等  
+	 numbersep=8pt,  %设置行号与代码的距离，默认是5pt  
+	 basicstyle=\footnotesize, % 这句设置代码的大小  
+	 showspaces=false, %  
+	 flexiblecolumns=true, %  
+	 breaklines=true, %对过长的代码自动换行  
+	 breakautoindent=true,%  
+	 breakindent=4em, %  	   
+	 aboveskip=1em, %代码块边框  
+	 tabsize=4,  
+	 showstringspaces=false, %不显示字符串中的空格  
+	 backgroundcolor=\color[RGB]{245,245,244},   %代码背景色  
+	 %backgroundcolor=\color[rgb]{0.91,0.91,0.91}    %添加背景色  
+	 escapeinside=``,  %在``里显示中文  
+	 %% added by http://bbs.ctex.org/viewthread.php?tid=53451  
+	 fontadjust,  
+	 captionpos=t,  
+	 framextopmargin=2pt,framexbottommargin=2pt,abovecaptionskip=-3pt,belowcaptionskip=3pt,  
+	 xleftmargin=4em,xrightmargin=4em, % 设定listing左右的空白  
+	 texcl=true
+}
+
+%\preamble
+
+%%%% Generate glossary %%%%
+\makeglossaries
+
+\newglossaryentry{computer}
+{
+	name=computer,
+    description={aa}
+}
+
+%%%% 正文开始 %%%%
+\begin{document}
+%封面%
+\begin{titlepage}
+\begin{center}
+
+\textsc{\LARGE Experience Record}\\[1.5cm]
+
+\textsc{Dolphin Project}\\[0.5cm]
+
+\rule{8cm}{0.2em}\mbox{} \\[0.4cm]
+
+{\huge \bfseries Computer Science}\\[0.4cm]
+
+\rule{8cm}{0.2em}\mbox{} \\[1.5cm]
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Author:}\\
+Xiaoqiang \textsc{Jiang}
+\end{flushleft}
+\end{minipage}
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Supervisor:} \\
+Donald \textsc{Knuth}
+\end{flushright}
+\end{minipage}
+
+\vfill
+
+{\large \today}
+
+\end{center}
+\end{titlepage}
+
+%\begin{CJK}{UTF8}{gbsn}
+%%%% 定义标题格式，包括title，author，affiliation，email等 %%%%
+\title{\Huge{经验归纳记录}		
+\author{蒋小强\footnote{本书由\LaTeX{}工具生成，作者
+\texttt{mail:jiangtingqiang@gmail.com}
+}}}
+
+\date{2015.04}	
+
+%%%% Generate Title %%%%  
+\maketitle %
+\clearpage
+\mbox{}         
+\clearpage
+
+\begin{table}\caption[Caption for LOF]{修改记录\protect\footnotemark}					
+	\medskip
+	\centering		
+	\begin{tabular}{|c|c|c|c|c|}
+		\hline
+		\multirow{1}{*}{序号}
+		& \multicolumn{1}{c|}{修改人}  
+		& \multicolumn{1}{c|}{修改日期} 
+		& \multicolumn{1}{c|}{备注}\\			
+		\cline{1-4}
+		1 & 蒋小强 & 2015-04-22 & 创建基础版本\\
+		\hline	
+	\end{tabular}
+\end{table}
+
+\footnotetext{表格\LaTeX{}代码生成可到此处\url{http://www.tablesgenerator.com/}}
+
+\clearpage
+
+\clearpage
+\mbox{}         
+\clearpage
+	
+\tableofcontents	
+
+\part{第一部}
+
+\begin{thebibliography}{0}
+\bibitem{蒋金楠MVC框架揭秘}
+蒋金楠.《ASP.NET MVC 5框架揭秘》.电子工业出版社,2014.
+\end{thebibliography}
+
+%\bibitem{BSD}
+%B. Birch, H. P. F. Swinnerton-Dyer, \emph{Notes on ellptic curves (II)}. J Reine Angrew Math, 1965, 218:79-108.
+\end{document}
