@@ -90,7 +90,7 @@
 \setlength{\textheight}{24.00cm}    % 24.62
 
 %%%%设置TOC深度%%%%
-\setcounter{tocdepth}{2}
+\setcounter{tocdepth}{4}
 
 %%%% 下面的命令设置行间距与段落间距 %%%%
 \linespread{1.4}
@@ -189,7 +189,7 @@ Donald \textsc{Knuth}
 
 %\begin{CJK}{UTF8}{gbsn}
 %%%% 定义标题格式，包括title，author，affiliation，email等 %%%%
-\title{\Huge{经验归纳记录}		
+\title{\Huge{Cruise}		
 \author{蒋小强\footnote{本书由\LaTeX{}工具生成，作者
 \texttt{mail:jiangtingqiang@gmail.com}
 }}}
@@ -228,6 +228,61 @@ Donald \textsc{Knuth}
 \tableofcontents	
 
 \part{第一部}
+
+
+\chapter{第一章}
+
+\section{第一节}
+
+\subsection{U盘只读(Read-only file system)}
+
+在拷贝文件到U盘时，提示如下：
+
+\begin{lstlisting}[language=Bash]
+cp: cannot create regular file '/run/media/dolphin/Fedora-WS-Live-28-1-1/note': Read-only file system
+\end{lstlisting}
+
+回想了下，应该是不久前U盘做了Fedora的刻录盘，刻录工将U盘设置为读保护模式，此时可以使用如下命令将U盘设置为读写模式：
+
+\begin{lstlisting}[language=Bash]
+# 设置设备/dev/sdb1为读写模式
+sudo blockdev --setrw /dev/sdb1
+# 设置设备/dev/sdb1为只读(read only哦)模式
+sudo blockdev --setro /dev/sdb1
+\end{lstlisting}
+
+blockdev命令可以获取Linux下块设备的属性值，以及设置一些块设备的属性值。/dev/sdb1是文件系统名字。设置U盘为读写模式后可顺利拷贝文件到U盘。比较诡异的是，在运行了block命令后，是可以拷贝文件。但是后来不和何原因，U盘又变成只读了，而且blockdev命令只读设置不再有效。后面的解决方式就是将U盘重新分区\footnote{参考StackOverflow的解方法:\url{https://unix.stackexchange.com/questions/216152/usb-disk-read-only-cannot-format-turn-off-write-protection}}，做以下操作之前提前备份文件。列出当前系统上的所有分区信息：
+
+\begin{lstlisting}[language=Bash]
+fdisk -l
+\end{lstlisting}
+
+在列出的分区表中，找到U盘的设备名字，这里是/dev/sdb1。输入如下命令准备编辑分区信息：
+
+\begin{lstlisting}[language=Bash]
+fdisk /dev/sdb1
+\end{lstlisting}
+
+根据提示，删除旧分区信息，创建新分区信息即可。输入d(delete)删除旧分区，输入n(new)创建新分区，输入w(write)保存新分区。使用如下命令创建FAT文件系统：
+
+\begin{lstlisting}[language=Bash]
+mkfs.vfat -F 32 /dev/sdb1被
+\end{lstlisting}
+
+
+
+\section{编辑中}
+
+\subsection{无法获取数据库连接}
+
+最近2天网站运行一段时间后会突然宕掉，日志输出无法获取数据库连接(Could not get JDBC connection)，初步推测是数据库连接泄漏，造成数据库可用连接被使用完，主备节点都拿不到连接，造成此问题，目前连接由连接池进行管理，一般情况下是不需要人工干预数据库的连接申请和释放，也有可能是某处进行了手工申请数据库连接。定时检测连接池数量：
+
+\begin{lstlisting}[language=Bash]
+# 每5秒查看一次到数据库连接个数
+nohup watch -n 5 'lsof -i:5236|wc -l >> pool.log'
+\end{lstlisting}
+
+经过观察，数据库连接稳定在300-310之间，暂时还无法断定是连接池泄漏导致。
 
 \begin{thebibliography}{0}
 \bibitem{蒋金楠MVC框架揭秘}
