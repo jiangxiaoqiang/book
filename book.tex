@@ -284,6 +284,18 @@ nohup watch -n 5 'lsof -i:5236|wc -l >> pool.log'
 
 经过观察，数据库连接稳定在300-310之间，暂时还无法断定是连接池泄漏导致。
 
+
+
+解决的方式：
+
+\begin{itemize}
+	\item{增大数据库Session数量}
+	\item{安装新的数据库，将部分数据连接转移到新库}
+\end{itemize}
+
+
+
+
 \begin{thebibliography}{0}
 \bibitem{蒋金楠MVC框架揭秘}
 蒋金楠.《ASP.NET MVC 5框架揭秘》.电子工业出版社,2014.
