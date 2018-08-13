@@ -130,13 +130,13 @@
 	 showstringspaces=false, %不显示字符串中的空格  
 	 backgroundcolor=\color[RGB]{245,245,244},   %代码背景色  
 	 %backgroundcolor=\color[rgb]{0.91,0.91,0.91}    %添加背景色  
-	 escapeinside=``,  %在``里显示中文  
+	 %escapeinside=``,  %在``里显示中文  
 	 %% added by http://bbs.ctex.org/viewthread.php?tid=53451  
 	 fontadjust,  
 	 captionpos=t,  
 	 framextopmargin=2pt,framexbottommargin=2pt,abovecaptionskip=-3pt,belowcaptionskip=3pt,  
 	 xleftmargin=4em,xrightmargin=4em, % 设定listing左右的空白  
-	 texcl=true
+	 texcl=true	 
 }
 
 %\preamble
@@ -266,12 +266,77 @@ fdisk /dev/sdb1
 根据提示，删除旧分区信息，创建新分区信息即可。输入d(delete)删除旧分区，输入n(new)创建新分区，输入w(write)保存新分区。使用如下命令创建FAT文件系统：
 
 \begin{lstlisting}[language=Bash]
-mkfs.vfat -F 32 /dev/sdb1被
+mkfs.vfat -F 32 /dev/sdb1
 \end{lstlisting}
 
 
 
 \section{编辑中}
+
+\subsection{自动化部署(Auto Deploy)}
+
+调动Maven打包命令：
+
+
+构建后，将文件拷贝到服务器：
+
+\begin{lstlisting}[language=Bash]
+#!/usr/bin/env bash
+
+# 当使用未初始化的变量时，程序自动退出
+set -u
+
+# 当任何一行命令执行失败时，自动退出脚本
+set -e
+
+# 在运行结果之前，先输出执行的那一行命令
+set -x
+
+readonly APP_ID=""
+readonly APP_KEY=""
+readonly PROJECT_DIR="/var/lib/jenkins/workspace/web-ci-59"
+readonly BUILD_OUTPUT_DIR="/var/lib/jenkins/workspace/web-ci-59/cms/target"
+
+BUILD_DIST_FILENAME=${BUILD_OUTPUT_DIR}/cms.war
+
+cd ${BUILD_OUTPUT_DIR}
+
+#
+# 文件过大,无法拷贝
+# 将大文件拆分
+#
+split -b 80M ${BUILD_DIST_FILENAME}
+
+CURRENT_TIME=`date '+%Y-%m-%d %H:%M:%S'`
+
+CONST_STR="ysf"
+
+#
+# 生成TOKEN
+# 接口各项认证参数的排列顺序是：
+# 时间戳(timestamp)、AppKey、随机字符串(echostr)
+#
+TOKEN=`echo -n ${APP_ID}${APP_KEY}${CURRENT_TIME}${CONST_STR}|md5sum|awk '{print $1}'`
+SEQUENCE_TOKEN=`echo -n ${CURRENT_TIME}${APP_ID}${APP_KEY}${CONST_STR}|shasum -a 1|awk '{print $1}'`
+
+
+# 请求服务端,上传主文件
+COMMAND=`curl -H "APPID:$APP_ID" \
+-H "TIMESTAMP:$CURRENT_TIME" \
+-H "ECHOSTR:$CONST_STR" \
+-H "TOKEN:$SEQUENCE_TOKEN" \
+-F "file=@${BUILD_OUTPUT_DIR}/xaa" \
+http://192.168.1.11:8083/api/fileExchange/upload`
+
+COMMAND=`curl -H "APPID:$APP_ID" \
+-H "TIMESTAMP:$CURRENT_TIME" \
+-H "ECHOSTR:$CONST_STR" \
+-H "TOKEN:$SEQUENCE_TOKEN" \
+-F "file=@${BUILD_OUTPUT_DIR}/xab" \
+http://192.168.1.11:8083/api/fileExchange/upload`
+\end{lstlisting}
+
+在上传文件时，由于限制了文件大小(估计是100MB)，当部署文件大于100MB时，使用split命令，拆分成多个小文件分开上传，上传后通过cat命令组装成war包，组装后的文件与原始文件一致，可以通过对比文件的MD5值来判断。
 
 \subsection{无法获取数据库连接}
 

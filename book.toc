@@ -3,4 +3,5 @@
 \contentsline {section}{\numberline {1.1}第一节}{9}{section.1.1}
 \contentsline {subsection}{\numberline {1.1.1}U盘只读(Read-only file system)}{9}{subsection.1.1.1}
 \contentsline {section}{\numberline {1.2}编辑中}{10}{section.1.2}
-\contentsline {subsection}{\numberline {1.2.1}无法获取数据库连接}{10}{subsection.1.2.1}
+\contentsline {subsection}{\numberline {1.2.1}自动化部署(Auto Deploy)}{10}{subsection.1.2.1}
+\contentsline {subsection}{\numberline {1.2.2}无法获取数据库连接}{11}{subsection.1.2.2}
