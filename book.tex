@@ -98,7 +98,7 @@
 \setlength{\parskip}{0.5\baselineskip}
 
 %Set where to find the graphics%
-\graphicspath{{./Image/HotPrint/}{./Image/Api/}{./Image/InterfaceDesign/}{./Image/Attachment/}}
+\graphicspath{{./Image/common/}{./Image/Api/}{./Image/InterfaceDesign/}{./Image/Attachment/}}
 %\graphicspath{{I:\Nutstore\Document\Tex\JsptpdCSSDS\Image\Interface\_Design}}%
 
 %Set Code Format%
@@ -275,15 +275,26 @@ mkfs.vfat -F 32 /dev/sdb1
 
 \subsection{RestTemplate read time out}
 
-系统翻页，偶尔返回空数据。经检查，服务端在使用RestTemplate调用接口时，偶尔会返回Read time out错误。Spring RestTemplate的Read time out默认超时时间是1秒，如图所示。当接口的响应时间超过1秒时，会出现read time out错误。
+系统翻页，偶尔返回空数据。经检查，服务端在使用RestTemplate调用接口时，偶尔会返回Read time out错误。Spring RestTemplate的Read time out默认超时时间是1秒，如图\ref{fig:resttempldatedefaulttimeout}所示。当接口的响应时间超过1秒时，会出现read time out错误。
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.6]{resttempldatedefaulttimeout.png}
+	\caption{RestTemplate默认超时时间}
+	\label{fig:resttempldatedefaulttimeout}
+\end{figure}
 
-%\begin{figure}[htbp]
-%	\centering
-%	\includegraphics[scale=0.8]{javaresourcefolder.png}
-%	\caption{Intellij Idea中的资源文件夹}
-%	\label{fig:javaresourcefolder}
-%\end{figure}
+上图是Debug跟踪时查看的RestTemplate默认变量。由图中可以看出，默认超时时间是1秒。此时需要增大Read time out的默认超时时间。自定义超时时间如下代码片段所示：
+
+\begin{lstlisting}[language=Java]
+@Bean(name = "commonRestTemplate")
+public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+	return restTemplateBuilder.setConnectTimeout(5000)
+			.setReadTimeout(20000)
+			.build();
+}
+\end{lstlisting}
+
 
 
 \subsection{自动化部署(Auto Deploy)}
