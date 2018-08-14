@@ -273,6 +273,19 @@ mkfs.vfat -F 32 /dev/sdb1
 
 \section{编辑中}
 
+\subsection{RestTemplate read time out}
+
+系统翻页，偶尔返回空数据。经检查，服务端在使用RestTemplate调用接口时，偶尔会返回Read time out错误。Spring RestTemplate的Read time out默认超时时间是1秒，如图所示。当接口的响应时间超过1秒时，会出现read time out错误。
+
+
+%\begin{figure}[htbp]
+%	\centering
+%	\includegraphics[scale=0.8]{javaresourcefolder.png}
+%	\caption{Intellij Idea中的资源文件夹}
+%	\label{fig:javaresourcefolder}
+%\end{figure}
+
+
 \subsection{自动化部署(Auto Deploy)}
 
 调动Maven打包命令：
