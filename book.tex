@@ -380,7 +380,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 			\hline
 			report & develop & 主分支 \\		
 			\hline
-			report-frontend & develop & 主分支 \\		
+			report-frontend 繁荣他& develop & 主分支 \\		
 			\hline							
 		\end{tabular}	
 	\end{center}
@@ -488,7 +488,72 @@ location /api/fileExchange {
 */1 * * * * root /opt/app/script/project-name-trigger.sh
 \end{lstlisting}
 
-触发更新规则在相应的Shell脚本中实现。
+触发更新规则在相应的Shell脚本中实现。如下代码片段所示：
+
+\begin{lstlisting}[language=Bash]
+#!/usr/bin/env bash
+
+# 部署触发器
+# 定时检查文件修改
+# 文件修改后，触发部署动作
+
+# 当使用未初始化的变量时，程序自动退出
+#set -u
+
+# 当任何一行命令执行失败时，自动退出脚本
+set -e
+
+# 在运行结果之前，先输出执行的那一行命令
+set -x
+
+# 定义错误日志级别
+LOG_LEVEL=-9000
+
+#定义日志存放目录
+SIMPLE_LOG_4_SH_DIR=/tmp/simplelog4sh
+
+#导入日志
+. /opt/app/script/log4shell.sh
+
+# 当前运行程序版本
+readonly APP_PATH="/opt/app/backend-v1.3"
+readonly DEPLOY_PATH="/home/deploy/credit"
+source ${APP_PATH}/report-version.properties
+CURRENT_VERSION=${VERSION}
+source ${DEPLOY_PATH}/report-version.properties
+DEPLOY_VERSION=${VERSION}
+readonly FILE_NAME="report-web-boot-${CURRENT_VERSION}.jar"
+readonly DEPLOY_FILE_NAME="report-web-boot-${DEPLOY_VERSION}.jar"
+
+logInfo "检查后端App更新..."
+
+deploy()
+{
+	logInfo "停止旧版本程序...,版本：${CURRENT_VERSION}"
+	ps -ef|grep -w ${FILE_NAME}|grep -v grep|cut -c 9-15|xargs kill 9
+	logDebug "开始拷贝新版程序文件....."
+	yes|cp -rf ${DEPLOY_PATH}/${DEPLOY_FILE_NAME} ${APP_PATH}
+	yes|cp -rf ${DEPLOY_PATH}/credit-report-version.properties ${APP_PATH}
+	logInfo "启动新版程序......,程序路径:${APP_PATH},版本：${DEPLOY_VERSION}"
+	${APP_PATH}/start-v1.3.sh
+}
+
+if test ${CURRENT_VERSION} = ${DEPLOY_VERSION}
+then
+	logInfo "版本号无变化，检查文件Hash...."
+	CURRENT_VERSION_MD5=`md5sum ${APP_PATH}/${FILE_NAME}|cut -d ' ' -f1`
+	DEPLOY_VERSION_MD5=`md5sum ${DEPLOY_PATH}/${FILE_NAME}|cut -d ' ' -f1`
+	if test ${CURRENT_VERSION_MD5} != ${DEPLOY_VERSION_MD5}
+	then
+		deploy ""
+	else
+		logInfo "Hash无变化，文件未修改，后端App结束..."
+	fi
+else
+	logInfo "后端App版本有变化,开始部署新版程序..."
+	deploy ""
+fi
+\end{lstlisting}
 
 \section{编辑中}
 
