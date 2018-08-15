@@ -5,8 +5,8 @@
 \contentsline {subsection}{\numberline {1.1.2}RestTemplate read time out}{10}{subsection.1.1.2}
 \contentsline {subsection}{\numberline {1.1.3}自动化部署(Auto Deploy)}{11}{subsection.1.1.3}
 \contentsline {subsubsection}{整体概况}{11}{section*.2}
-\contentsline {subsubsection}{构建服务(Auto Build)}{11}{table.1.1}
+\contentsline {subsubsection}{构建服务(Auto Build)}{12}{table.1.2}
 \contentsline {subsubsection}{中转服务(Forward Service)}{13}{lstnumber.-7.53}
-\contentsline {subsubsection}{应用更新服务(Update Trigger)}{13}{lstnumber.-8.4}
-\contentsline {section}{\numberline {1.2}编辑中}{13}{section.1.2}
-\contentsline {subsection}{\numberline {1.2.1}无法获取数据库连接}{13}{subsection.1.2.1}
+\contentsline {subsubsection}{应用更新服务(Update Trigger)}{14}{lstnumber.-8.4}
+\contentsline {section}{\numberline {1.2}编辑中}{14}{section.1.2}
+\contentsline {subsection}{\numberline {1.2.1}无法获取数据库连接}{14}{subsection.1.2.1}
