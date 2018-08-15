@@ -162,7 +162,7 @@
 
 \rule{8cm}{0.2em}\mbox{} \\[0.4cm]
 
-{\huge \bfseries Computer Science}\\[0.4cm]
+{\huge \bfseries Record}\\[0.4cm]
 
 \rule{8cm}{0.2em}\mbox{} \\[1.5cm]
 
@@ -176,7 +176,7 @@ Xiaoqiang \textsc{Jiang}
 \begin{minipage}{0.4\textwidth}
 \begin{flushright} \large
 \emph{Supervisor:} \\
-Donald \textsc{Knuth}
+Xiaoqiang \textsc{Jiang}
 \end{flushright}
 \end{minipage}
 
@@ -190,7 +190,7 @@ Donald \textsc{Knuth}
 %\begin{CJK}{UTF8}{gbsn}
 %%%% 定义标题格式，包括title，author，affiliation，email等 %%%%
 \title{\Huge{Cruise}		
-\author{蒋小强\footnote{本书由\LaTeX{}工具生成，作者
+\author{蒋小强\footnote{本文档由\LaTeX{}生成，作者
 \texttt{mail:jiangtingqiang@gmail.com}
 }}}
 
@@ -293,8 +293,6 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 
 出现此问题的原因是：当数据量较少时，请求基本能在非常短时间内响应，当数据量逐渐增加时，部分请求处理时间偶尔超过1秒，会出现偶尔失败的情况。
 
-\section{编辑中}
-
 \subsection{自动化部署(Auto Deploy)}
 
 \subsubsection{整体概况}
@@ -325,10 +323,29 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 
 \subsubsection{构建服务(Auto Build)}
 
+构建服务包含获取源码更新、构建、构建后操作3步。源码更新的每个分支定义如下表所示：
+
+\begin{table}[htbp]
+	\caption{自动部署后触发脚本命名规则}
+	\label{table:databaseconnectionpool}
+	\begin{center}
+		\begin{tabular}{|c|p{5cm}|}
+			\hline
+			\multirow{1}{*}{脚本名称}		 
+			& \multicolumn{1}{c|}{备注}\\			
+			\cline{1-2}
+			\{prject-name\}-after-build-handler.sh &  项目后端构建后处理 \\
+			\hline
+			\{project-name\}-frontend-after-build-handler.sh  & 项目后端构建后处理 \\		
+			\hline				
+		\end{tabular}	
+	\end{center}
+\end{table}
+
 构建服务定时检查源码仓库的变动，监测到变动后，触发自动编译打包等操作。构建后，通过调用构建后脚本，将文件拷贝到服务器。构建后脚本路径/home/jenkins-bak/，各个脚本的含义如表所示。
 
 \begin{table}[htbp]
-	\caption{自动部署上传脚本规则}
+	\caption{自动部署后触发脚本命名规则}
 	\label{table:databaseconnectionpool}
 	\begin{center}
 		\begin{tabular}{|c|p{5cm}|}
@@ -428,6 +445,8 @@ location /api/fileExchange {
 \end{lstlisting}
 
 触发更新规则在相应的Shell脚本中实现。
+
+\section{编辑中}
 
 \subsection{无法获取数据库连接}
 
