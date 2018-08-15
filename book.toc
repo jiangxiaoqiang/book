@@ -4,4 +4,8 @@
 \contentsline {subsection}{\numberline {1.1.1}U盘只读(Read-only file system)}{9}{subsection.1.1.1}
 \contentsline {section}{\numberline {1.2}编辑中}{10}{section.1.2}
 \contentsline {subsection}{\numberline {1.2.1}自动化部署(Auto Deploy)}{10}{subsection.1.2.1}
-\contentsline {subsection}{\numberline {1.2.2}无法获取数据库连接}{11}{subsection.1.2.2}
+\contentsline {subsubsection}{整体概况}{10}{section*.2}
+\contentsline {subsubsection}{构建服务}{10}{table.1.1}
+\contentsline {subsubsection}{中转服务}{12}{lstnumber.-6.53}
+\contentsline {subsubsection}{应用更新服务}{12}{lstnumber.-6.53}
+\contentsline {subsection}{\numberline {1.2.2}无法获取数据库连接}{12}{subsection.1.2.2}
