@@ -555,27 +555,28 @@ else
 fi
 \end{lstlisting}
 
-由于目前应用较多，单独列出每个应用的目录比较冗长。此处仅仅描述目录的命名的一般性原则。当前各个应用的目录如下：
+由于目前应用较多，单独列出每个应用的目录比较冗长。此处仅仅描述目录的命名的一般性原则。测试环境的目录统一在opt下(项目初始阶段习惯)，正式环境的目录在根目录home(初始习惯)或者data下，data目录存放应用是推荐的标准做法，以后新应用部署推荐用此标准，data下存放组织名称对应的目录，组织名称下对应此组织相应的应用。当前各个应用的目录如表\ref{table:projectdirectionayinfo}所示。recommand表示推荐做法，obsolete表示过时的做法，以后不推荐采用的方式。Test表示测试环境，对应的测试服务器IP,Production表示生产环境，对应的生产环境的IP。
 
 \begin{table}[htbp]
-	\caption{项目目录信息}
-	\label{table:databaseconnectionpool}
+	\caption{项目部署目录信息}
+	\label{table:projectdirectionayinfo}
 	\begin{center}
-		\begin{tabular}{|c|c|p{5cm}|}
+		\begin{tabular}{|c|c|p{5cm}|c|}
 			\hline
-			\multirow{1}{*}{项目名称}
+			\multirow{1}{*}{IP}
 			& \multicolumn{1}{c|}{环境} 
-			& \multicolumn{1}{c|}{部署目录}\\			
-			\cline{1-3}
-			report &  Test(6)  & /opt/app/backend-v1.3/report \\
+			& \multicolumn{1}{c|}{目录}
+			& \multicolumn{1}{c|}{备注}\\			
+			\cline{1-4}
+			192.168.1.6 &  Test  & /opt/app/ & 部署目录(recommand) \\
 			\hline
-			report &  Production(6)  & /opt/app/backend-v1.3/report \\
+			192.168.1.6 &  Test  & /home/deploy/credit/ & CI部署文件存放目录 \\
 			\hline
-			report-frontend & Test & /opt/app/frontend-v1.3 \\
+			192.168.1.6 &  Test  & /opt/app/script/ & CI部署脚本存放目录 \\
 			\hline
-			report-frontend & Production & /opt/app/frontend-v1.3 \\
+			10.10.1.* &  Production  & /home/app/ & obsolete \\
 			\hline
-			system & Test &  /opt/app/frontend-v1.3 \\
+			10.10.1.* &  Production  & /data/\{companyname\}/app/ & recommand \\
 			\hline							
 		\end{tabular}	
 	\end{center}
