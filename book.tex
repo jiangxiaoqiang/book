@@ -568,21 +568,55 @@ fi
 			& \multicolumn{1}{c|}{目录}
 			& \multicolumn{1}{c|}{备注}\\			
 			\cline{1-4}
-			192.168.1.6 &  Test  & /opt/app/ & 部署目录(recommand) \\
+			192.168.1.6 &  Test  & /opt/app/ & 部署目录 \\
 			\hline
 			192.168.1.6 &  Test  & /home/deploy/credit/ & CI部署文件存放目录 \\
 			\hline
 			192.168.1.6 &  Test  & /opt/app/script/ & CI部署脚本存放目录 \\
 			\hline
-			10.10.1.* &  Production  & /home/app/ & obsolete \\
+			10.10.1.* &  Production  & /home/app/ & \textcolor{red}{obsolete} \\
 			\hline
-			10.10.1.* &  Production  & /data/\{companyname\}/app/ & recommand \\
+			10.10.1.* &  Production  & /data/\{companyname\}/app/ & \textcolor{green}{recommand} \\
 			\hline							
 		\end{tabular}	
 	\end{center}
 \end{table}
 
+\subsection{Nginx超时转发}
+
+在后端有双机或多台机器提供服务的情况下，如果某一台机器超过了一定时间未响应，Nginx将尝试将请求转发到下一台服务器。由于写操作时，如果没有在后端作重复校验，一旦写操作比较耗时，转发后会出现重复写的情况(POST一般不进行超时转发，但是幂等请求下也可能会产生重复，比如日志记录、触发消息通知等等)。避免此问题的一种设计方案是在前端渲染表单时，生成一个唯一ID，防止重复提交。所以此处仅仅将超时转发的规则应用在部分url上，在Nginx中的配置如下：
+
+\begin{lstlisting}[language=Bash]
+upstream example_upstream{
+	server 192.168.0.1 max_fails=1 fail_timeout=3s;
+	server 192.168.0.2 max_fails=1 fail_timeout=3s backup;
+}
+location /example/ {
+	proxy_pass http://example_upstream/;
+	proxy_set_header Host: test.example.com;
+	proxy_set_head X-real-ip $remote_addr;
+	proxy_next_upstream error timeout http_500;
+}
+\end{lstlisting}
+
+Nginx在POST, LOCK, PATCH这种会对服务器造成不幂等的方法，默认是不进行重试的，如果一定要进行重试，则要加上如下配置：
+
+\begin{lstlisting}[language=Bash]
+# 非幂等也进行超时转发配置
+proxy_next_upstream error timeout http_500 non_idemponent;
+\end{lstlisting}
+
 \section{编辑中}
+
+\subsection{OutOfMemory}
+
+\begin{lstlisting}[language=Bash]
+# 
+./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
+\end{lstlisting}
+
+
+
 
 \subsection{无法获取数据库连接}
 

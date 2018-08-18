@@ -8,6 +8,8 @@
 \contentsline {subsubsection}{构建服务(Auto Build)}{12}{table.1.2}
 \contentsline {subsubsection}{中转服务(Forward Service)}{13}{lstnumber.-7.53}
 \contentsline {subsubsection}{应用更新服务(Update Trigger)}{14}{lstnumber.-8.4}
-\contentsline {section}{\numberline {1.2}编辑中}{15}{section.1.2}
-\contentsline {subsection}{\numberline {1.2.1}无法获取数据库连接}{15}{subsection.1.2.1}
-\contentsline {subsection}{\numberline {1.2.2}XX-Net}{16}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.1.4}Nginx超时转发}{15}{subsection.1.1.4}
+\contentsline {section}{\numberline {1.2}编辑中}{16}{section.1.2}
+\contentsline {subsection}{\numberline {1.2.1}OutOfMemory}{16}{subsection.1.2.1}
+\contentsline {subsection}{\numberline {1.2.2}无法获取数据库连接}{16}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.2.3}XX-Net}{17}{subsection.1.2.3}
