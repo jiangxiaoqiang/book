@@ -399,7 +399,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 			\cline{1-2}
 			\{prject-name\}-after-build-handler.sh &  项目后端构建后处理 \\
 			\hline
-			\{project-name\}-frontend-after-build-handler.sh  & 项目后端构建后处理 \\		
+			\{project-name\}-frontend-after-build-handler.sh  & 项目前端构建后处理 \\		
 			\hline				
 		\end{tabular}	
 	\end{center}
@@ -604,6 +604,9 @@ nohup watch -n 5 'lsof -i:5236|wc -l >> pool.log'
 	\item{增大数据库Session数量}
 	\item{安装新的数据库，将部分数据连接转移到新库}
 \end{itemize}
+
+\subsection{OutOfMemoryError}
+
 
 
 
