@@ -108,7 +108,6 @@
 	 tabsize=4, %  
 	 frame=shadowbox, %把代码用带有阴影的框圈起来  
 	 commentstyle=\color{red!50!green!50!blue!50},%浅灰色的注释  
-	 frameround=tttt,%圆角边框
 	 rulesepcolor=\color{red!20!green!20!blue!20},%代码块边框为淡青色  
 	 keywordstyle=\color{blue!90}\bfseries, %代码关键字的颜色为蓝色，粗体  
 	 showstringspaces=false,%不显示代码字符串中间的空格标记  
@@ -135,12 +134,8 @@
 	 %% added by http://bbs.ctex.org/viewthread.php?tid=53451  
 	 fontadjust,  
 	 captionpos=t,  
-	 framextopmargin=2pt,
-	 framexbottommargin=2pt,
-	 abovecaptionskip=-3pt,
-	 belowcaptionskip=3pt,  
-	 xleftmargin=4em,
-	 xrightmargin=4em, % 设定listing左右的空白  
+	 framextopmargin=2pt,framexbottommargin=2pt,abovecaptionskip=-3pt,belowcaptionskip=3pt,  
+	 xleftmargin=4em,xrightmargin=4em, % 设定listing左右的空白  
 	 texcl=true	 
 }
 
@@ -611,6 +606,18 @@ Nginx在POST, LOCK, PATCH这种会对服务器造成不幂等的方法，默认�
 proxy_next_upstream error timeout http_500 non_idemponent;
 \end{lstlisting}
 
+\section{编辑中}
+
+\subsection{OutOfMemory}
+
+\begin{lstlisting}[language=Bash]
+# 
+./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
+\end{lstlisting}
+
+
+
+
 \subsection{无法获取数据库连接}
 
 最近2天网站运行一段时间后会突然宕掉，日志输出无法获取数据库连接(Could not get JDBC connection)，初步推测是数据库连接泄漏，造成数据库可用连接被使用完，主备节点都拿不到连接，造成此问题，目前连接由连接池进行管理，一般情况下是不需要人工干预数据库的连接申请和释放，也有可能是某处进行了手工申请数据库连接，但是没有释放连接导致。使用如下Shell脚本每隔一段时间检测连接池数量：
@@ -631,31 +638,28 @@ active 20,maxActive 20
 
 \begin{lstlisting}[language=SQL]
 -- 查看数据库当前会话情况
-select clnt_ip,state,user_name,count(*)
-from v$sessions
-group by clnt_ip,state,user_name
+
 \end{lstlisting}
 
-结果如图\ref{fig:sessionstatistics}所示：
+结果如图所示：
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.8]{sessionstatistics.png}
-	\caption{DB当前连接会话统计}
-	\label{fig:sessionstatistics}
-\end{figure}
 
-可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题。DBCP当连接数超过最大连接数时，所有连接都会被断开。逐步应用以下优化的方式。
 
-\paragraph{增加网站数据库连接数量上限}调整配置增大数据库连接上限，可以增加网站并发服务能力：
+可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题。DBCP当连接数超过最大连接数时，所有连接都会被断开。
 
-\begin{lstlisting}[language=Bash]
-# 最小空闲连接数
-<property name="minIdle" value="50" />
-<property name="maxActive" value="100" />
-\end{lstlisting}
+解决的方式：
 
-做了以上优化后，可以提高网站的并发服务量，20个连接确实太小，综合评估资源，调整后连接池分配情况：
+\begin{itemize}
+	\item{增加网站数据库连接数量上限}
+	\item{增大数据库Session数量}
+	\item{安装新的数据库，将部分数据连接转移到新库}
+\end{itemize}
+
+<<<<<<< HEAD
+\subsection{OutOfMemoryError}
+
+=======
+做了以上优化后，可以提高网站的并发服务量，20个连接确实太小，综评估资源，调整后连接池分配情况：
 
 \begin{table}[htbp]
 	\caption{应用连接个数分配情况}
@@ -679,22 +683,10 @@ group by clnt_ip,state,user_name
 	\end{center}
 \end{table}
 
-\paragraph{增大数据库Session数量上限}目前数据库的会话数量是500，可以调整为1000。
 
-\paragraph{缓存页面信息}实际上，页面在绝大部分时间是不会改变的，完全可以将页面信息缓存在Redis中，不但减轻数据库压力，还可成倍提高网站响应速度和并发处理能力。此种优化方式需要对代码做一定程度改造，比如发布信息时，需要清除对应模块的Redis缓存信息，保证信息更新及时。
-
-
-\section{编辑中}
-
-\subsection{OutOfMemory}
-
-\begin{lstlisting}[language=Bash]
-# 
-./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
-\end{lstlisting}
 
 \subsection{XX-Net}
-
+>>>>>>> 4484d4eeba89240957349ec189f4a6c8aaf67367
 
 
 
