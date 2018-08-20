@@ -585,6 +585,15 @@ fi
 
 \section{编辑中}
 
+
+\begin{lstlisting}[language=Bash]
+# 
+./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
+\end{lstlisting}
+
+
+
+
 \subsection{无法获取数据库连接}
 
 最近2天网站运行一段时间后会突然宕掉，日志输出无法获取数据库连接(Could not get JDBC connection)，初步推测是数据库连接泄漏，造成数据库可用连接被使用完，主备节点都拿不到连接，造成此问题，目前连接由连接池进行管理，一般情况下是不需要人工干预数据库的连接申请和释放，也有可能是某处进行了手工申请数据库连接。定时检测连接池数量：
