@@ -13,6 +13,7 @@
 \contentsline {paragraph}{增加网站数据库连接数量上限}{17}{figure.1.2}
 \contentsline {paragraph}{增大数据库Session数量上限}{18}{table.1.6}
 \contentsline {paragraph}{缓存页面信息}{18}{table.1.6}
+\contentsline {paragraph}{将流量分配到不同的机器}{18}{table.1.6}
 \contentsline {section}{\numberline {1.2}编辑中}{18}{section.1.2}
 \contentsline {subsection}{\numberline {1.2.1}内存溢出异常}{18}{subsection.1.2.1}
 \contentsline {subsection}{\numberline {1.2.2}XX-Net}{18}{subsection.1.2.2}

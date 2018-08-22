@@ -613,6 +613,10 @@ proxy_next_upstream error timeout http_500 non_idemponent;
 
 \subsection{无法获取数据库连接}
 
+\begin{quote}
+	\textbf{\textcolor{red}{导致问题的原因：数据库连接配置过小，访问量增长时造成连接分配不足，导致无法顺畅访问站点。}}
+\end{quote}
+
 最近2天网站运行一段时间后会突然宕掉，日志输出无法获取数据库连接(Could not get JDBC connection)，初步推测是数据库连接泄漏，造成数据库可用连接被使用完，主备节点都拿不到连接，造成此问题，目前连接由连接池进行管理，一般情况下是不需要人工干预数据库的连接申请和释放，也有可能是某处进行了手工申请数据库连接，但是没有释放连接导致。使用如下Shell脚本每隔一段时间检测连接池数量：
 
 \begin{lstlisting}[language=Bash]
@@ -627,7 +631,7 @@ nohup watch -n 5 'lsof -i:5236|wc -l >> pool.log'
 active 20,maxActive 20
 \end{lstlisting}
 
-表示当前活动连接数20个，最大活动连接数20个。虽然到数据库的连接有300多个，但是绝大多数是空闲的(Idle)，如下语句查看数据库当前会话的个数。
+表示当前活动连接数20个，最大活动连接数20个。虽然到数据库的会话有300多个，但是绝大多数是空闲的(Idle)，如下语句查看数据库当前会话的个数。
 
 \begin{lstlisting}[language=SQL]
 -- 查看数据库当前会话情况
@@ -640,22 +644,23 @@ group by clnt_ip,state,user_name
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[scale=0.8]{sessionstatistics.png}
+	\includegraphics[scale=0.7]{sessionstatistics.png}
 	\caption{DB当前连接会话统计}
 	\label{fig:sessionstatistics}
 \end{figure}
 
-可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题。DBCP当连接数超过最大连接数时，所有连接都会被断开。逐步应用以下优化的方式。
+可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter\footnote{\url{http://jmeter.apache.org/}}模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题同样的日志输出，说明问题在此处，需要优化。DBCP当连接数超过最大连接数时，所有连接都会被断开[未找到权威出处]。经过考虑，逐步应用以下优化的方式。
 
 \paragraph{增加网站数据库连接数量上限}调整配置增大数据库连接上限，可以增加网站并发服务能力：
 
-\begin{lstlisting}[language=Bash]
-# 最小空闲连接数
+\begin{lstlisting}[language=XML]
+<!-- 最小空闲连接数 -->
 <property name="minIdle" value="50" />
+<!-- 最大连接数 -->
 <property name="maxActive" value="100" />
 \end{lstlisting}
 
-做了以上优化后，可以提高网站的并发服务量，20个连接确实太小，综合评估资源，调整后连接池分配情况：
+做了以上优化后，可以提高网站的并发服务量，降低由于访问量过大造成网站不可用的概率，20个连接确实太小，综合评估数据库现有的连接资源(500)，调整后连接数分配情况：
 
 \begin{table}[htbp]
 	\caption{应用连接个数分配情况}
@@ -683,6 +688,7 @@ group by clnt_ip,state,user_name
 
 \paragraph{缓存页面信息}实际上，页面在绝大部分时间是不会改变的，完全可以将页面信息缓存在Redis中，不但减轻数据库压力，还可成倍提高网站响应速度和并发处理能力。此种优化方式需要对代码做一定程度改造，比如发布信息时，需要清除对应模块的Redis缓存信息，保证信息更新及时。
 
+\paragraph{将流量分配到不同的机器}后端流量可以主备机同时启用，涉及到Session共享问题，需要进一步测试。
 
 \section{编辑中}
 
