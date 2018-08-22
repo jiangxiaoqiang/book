@@ -688,10 +688,10 @@ group by clnt_ip,state,user_name
 
 \subsection{内存溢出异常}
 
-上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
+上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
 
 \begin{lstlisting}[language=Bash]
-# 
+# 启动统计守护进程
 ./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
 \end{lstlisting}
 
