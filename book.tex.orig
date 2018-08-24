@@ -404,7 +404,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 			\cline{1-2}
 			\{prject-name\}-after-build-handler.sh &  项目后端构建后处理 \\
 			\hline
-			\{project-name\}-frontend-after-build-handler.sh  & 项目后端构建后处理 \\		
+			\{project-name\}-frontend-after-build-handler.sh  & 项目前端构建后处理 \\		
 			\hline				
 		\end{tabular}	
 	\end{center}
@@ -611,9 +611,6 @@ Nginx在POST, LOCK, PATCH这种会对服务器造成不幂等的方法，默认�
 proxy_next_upstream error timeout http_500 non_idemponent;
 \end{lstlisting}
 
-
-
-
 \subsection{无法获取数据库连接}
 
 \begin{quote}
@@ -623,8 +620,13 @@ proxy_next_upstream error timeout http_500 non_idemponent;
 最近2天网站运行一段时间后会突然宕掉，日志输出无法获取数据库连接(Could not get JDBC connection)，初步推测是数据库连接泄漏，造成数据库可用连接被使用完，主备节点都拿不到连接，造成此问题，目前连接由连接池进行管理，一般情况下是不需要人工干预数据库的连接申请和释放，也有可能是某处进行了手工申请数据库连接，但是没有释放连接导致。使用如下Shell脚本每隔一段时间检测连接池数量：
 
 \begin{lstlisting}[language=Bash]
+<<<<<<< HEAD
+# 启动Deamon服务
+./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
+=======
 # 每5秒查看一次到数据库连接个数
 nohup watch -n 5 'lsof -i:5236|wc -l >> pool.log'
+>>>>>>> d74a3b899541a8fdedc693a566e9f0f0fb8a2394
 \end{lstlisting}
 
 经过观察，数据库连接稳定在300-310之间，如果是连接池泄漏，那么连接会随着程序运行逐渐增长，最终达到连接数量上限，根据观察，初步可以排除连接泄漏导致此问题。后来经过日志筛查，发现如下输出：
@@ -702,16 +704,10 @@ group by clnt_ip,state,user_name
 \begin{lstlisting}[language=Bash]
 # 启动统计守护进程
 ./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
-jmap -dump:format=b,file=/opt/example.dump [pid]
+jmap -dump:format=b,file=/opt [pid]
 \end{lstlisting}
 
 在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。
-
-
-
-\subsection{资源分配约定}
-
-由于最近处理的问题大多涉及到资源问题，所以这里约定一个
 
 
 
