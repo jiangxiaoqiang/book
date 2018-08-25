@@ -16,4 +16,7 @@
 \contentsline {paragraph}{将流量分配到不同的机器}{18}{table.1.6}
 \contentsline {section}{\numberline {1.2}编辑中}{18}{section.1.2}
 \contentsline {subsection}{\numberline {1.2.1}Java heap space}{18}{subsection.1.2.1}
-\contentsline {subsection}{\numberline {1.2.2}XX-Net}{18}{subsection.1.2.2}
+\contentsline {paragraph}{问题复现}{19}{lstnumber.-17.4}
+\contentsline {paragraph}{问题回顾}{19}{section*.3}
+\contentsline {paragraph}{问题解决}{19}{lstnumber.-18.3}
+\contentsline {subsection}{\numberline {1.2.2}XX-Net}{20}{subsection.1.2.2}
