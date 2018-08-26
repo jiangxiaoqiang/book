@@ -697,15 +697,51 @@ group by clnt_ip,state,user_name
 
 \subsection{Java heap space}
 
+\begin{quote}
+	\textbf{\textcolor{red}{导致问题的原因：APP分配的内存资源不足，系统并发性能不足，应对持续并发请求能力需要加强。}}
+\end{quote}
+
 上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
 
 \begin{lstlisting}[language=Bash]
 # 启动统计守护进程
 ./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
+# 生成内存dump文件
 jmap -dump:format=b,file=/opt/example.dump [pid]
 \end{lstlisting}
 
-在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。
+在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。初步监测，老年代(Old Generation)的内存的确在不断增长。但是仅凭此点，无法下结论一定存在内存泄漏，如果老年代在以后执行GC(Garbage Collection)后，老年代(Old Generation)初始内存不停增长，才可以推断的确存在内存泄漏，因为不停增加的初始内存，标志着有部分内存永远无法被FGC回收，随着程序的不断运行，必定会由于内存不足而Hang住。
+
+在一段时期内，程序一启动老年代就已经满了，占用率直接100\%。开始是以为流量较高，YGC频繁，不停的有经过多次YGC未回收的对象移入老年代，最多FGC执行频繁一些罢了。后来更为诡异的事情发生了，机器突然变得非常卡顿，磁盘使用量快速增长，最后程序直接无法启动，启动不到30s立即停止响应或者直接输出Java Heap space错误。
+
+\paragraph{问题复现}
+
+经过备份的日志阅读，发现一段时间段内，有大量针对某一查询请求，且非常集中。下午抽出时间在测试环境使用JMeter构造红集中请求的查询，模拟线上场景。当并发的用户量不断增长时，YGC越来越频繁，同时老年代初始内存消耗上升快速。当并发量达到50时，老年代内存使用量飙升到100\%,同时程序Hang住，输出Java Heap space错误。终于知道症结在机器在应对并发流量时内存不足，没有对内存做好估算。并发量升高时，应用对的内存消耗极大的超出了预期，即使每个线程5MB的内存，100个并发也才500MB，当前的内存有5GB，按照预期是完全足够的。但最终还是将服务器的内存增大到64GB来解决问题。
+
+\paragraph{问题回顾}
+
+当在并发量较高时，APP启动时，会占用比较多的老年代内存，所以在下午应用已启动老年代内存立即耗尽，年轻代不停的执行GC。当并发超出系统承载能力时，老年代默认内存已经无法支撑应用启动的初始内存消耗，所以应用启动立即发生内存溢出。有于在发生内存溢出时会生成dump文件，将现场保留到磁盘以备问题排查，每个dump文件从2GB-8GB不等，所以造成磁盘使用量急速消耗。
+
+\begin{lstlisting}[language=Bash]
+# 内存溢出时生成dump文件
+-XX:+HeapDumpOnOutOfMemoryError 
+-XX:HeapDumpPath=/home/app
+\end{lstlisting}
+
+不停的尝试启动，不停的生成dump文件，造成磁盘IO急剧升高，所以机器卡顿。
+
+\paragraph{问题解决}
+
+一是增大系统并发吞吐量，二是系统需要有限流和熔断机制。为了避免类似情况，系统做如下优化：
+
+\begin{itemize}
+	\item {一是将热点查询做成静态化页面，针对一级页面，打开即默认加载的数据静态化，避免后端接口处理，降低接口压力。}
+	\item {二是缓存凭据，凭据信息更改不频繁，直接缓存到内存中，避免数据库查询。}
+	\item {三是评估内存消耗，针对设计预期的并发分配相应的资源。}
+	\item{四是限流，识别无效请求并主动丢弃，减少无效流量对资源的占用和消耗，可以根据实时流量调整限制级别。例如在平时网站运行时，可以将限制关闭，在应对重大事件时，可以将限制开启并根据网站保障级别调整限制级别。}
+	\item {五是使用监控工具，对网站的实时流量和服务器负载有监控预警，根据流量情况采取不同的措施。}
+\end{itemize}
+
 
 
 
