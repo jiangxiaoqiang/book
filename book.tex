@@ -237,7 +237,7 @@ Xiaoqiang \textsc{Jiang}
 
 \chapter{第一章}
 
-\section{第一节}
+\section{常见问题排查及解决}
 
 \subsection{U盘只读(Read-only file system)}
 
@@ -755,12 +755,10 @@ update report_config
 set url = replace(url,'内网IP','公网IP')
 \end{lstlisting}
 
-\section{编辑中}
-
 \subsection{查询变慢}
 
 \begin{quote}
-	\textbf{\textcolor{red}{导致问题的原因：日志数据不断膨胀造成查询变慢。}}
+	\textbf{\textcolor{red}{导致问题的原因：日志数据不断膨胀造成查询变慢，日志记录的方式需要优化。}}
 \end{quote}
 
 这两天不断有反馈原来很快的查询现在不知道什么原因变慢了，查看了变慢的页面后，确实速度不符合设计预期，正常情况下不应大于200ms，平均响应时间肯定不会超过1s，页面数据是放在接口缓存中。加上调用链路的开销，不应该有延迟。访问接口数据的流程如图\ref{fig:api-request}所示：
@@ -788,22 +786,39 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 
 \begin{itemize}
 	\item {快速的解决方式，临时备份日志，建立空的日志表。}
-	\item {重构日志，直接记录流水，不记录统计信息。}
+	\item {重构日志，直接记录流水，不记录统计信息。(\textcolor{green}{\textbf{Recommand}})}
 	\item {构建独立的日志服务，所有的日志打到独立的服务上，采用简单消息队列。(\textcolor{green}{\textbf{Recommand}})}
 	\item {尝试ELK日志分析系统。}
 \end{itemize}
 
-
-
-
-
 \subsection{资源分配约定}
 
-由于最近处理的问题大多涉及到资源问题，例如文件无法上传，邮件无法发送，主要由于磁盘空间不足。原来分配的虚拟机一般home目录较大，所以将随着程序运行可能需要消耗较大磁盘空间的目录放在home目录下，但是新内网虚拟机恰好home目录很小。导致一些列问题，所以这里约定目录大小的规范。
+由于最近处理的问题大多涉及到资源问题，例如文件无法上传，邮件无法发送，主要由于磁盘空间不足。原来分配的虚拟机一般home目录较大，所以将随着程序运行可能需要消耗较大磁盘空间的目录放在home目录下，但是新内网虚拟机恰好home目录很小。导致一些列问题，所以这里约定新部署App目录的统一规范。
 
+\begin{table}[htbp]
+	\caption{磁盘目录分配约定}
+	\label{table:}
+	\begin{center}
+		\begin{tabular}{|c|p{5cm}|}
+			\hline
+			\multirow{1}{*}{路径}
+			& \multicolumn{1}{c|}{用途}\\			
+			\cline{1-2}
+			/opt/alibaba/app &  存放项目应用程序  \\
+			\hline
+			/opt/alibaba/var/data & 存放数据文件 \\
+			\hline			
+			/opt/alibaba/var/image & 存放图片文件 \\
+			\hline
+			/opt/alibaba/local & 存放三方程序 \\
+			\hline														
+		\end{tabular}	
+	\end{center}
+\end{table}
 
+考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。
 
-
+\section{编辑中}
 
 \subsection{Python绘图}
 
