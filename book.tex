@@ -404,7 +404,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 			\cline{1-2}
 			\{prject-name\}-after-build-handler.sh &  项目后端构建后处理 \\
 			\hline
-			\{project-name\}-frontend-after-build-handler.sh  & 项目前端构建后处理 \\		
+			\{project-name\}-frontend-after-build-handler.sh  & 项目后端构建后处理 \\		
 			\hline				
 		\end{tabular}	
 	\end{center}
@@ -611,6 +611,9 @@ Nginx在POST, LOCK, PATCH这种会对服务器造成不幂等的方法，默认�
 proxy_next_upstream error timeout http_500 non_idemponent;
 \end{lstlisting}
 
+
+
+
 \subsection{无法获取数据库连接}
 
 \begin{quote}
@@ -704,7 +707,7 @@ group by clnt_ip,state,user_name
 # 启动统计守护进程
 ./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
 # 生成内存dump文件
-jmap -dump:format=b,file=/opt [pid]
+jmap -dump:format=b,file=/opt/example.dump [pid]
 \end{lstlisting}
 
 在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。初步监测，老年代(Old Generation)的内存的确在不断增长。但是仅凭此点，无法下结论一定存在内存泄漏，如果老年代在以后执行GC(Garbage Collection)后，老年代(Old Generation)初始内存不停增长，才可以推断的确存在内存泄漏，因为不停增加的初始内存，标志着有部分内存永远无法被FGC回收，随着程序的不断运行，必定会由于内存不足而Hang住。
@@ -729,7 +732,34 @@ jmap -dump:format=b,file=/opt [pid]
 
 \paragraph{问题解决}
 
-一是增大系统并发吞吐量，二是系统需要有限流和熔断机制。为了避免类似情况，系统做如下优化：一是将热点查询做成静态化页面，针对一级页面，打开即默认加载的数据静态化，避免后端接口处理，降低接口压力。二是缓存凭据，凭据信息更改不频繁，直接缓存到内存中，避免数据库查询。三是评估内存消耗，针对设计预期的并发分配响应的资源。四是限流，识别无效请求并主动丢弃，减少无效流量对资源的占用和消耗，可以根据实时流量调整限制级别。例如在平时网站运行时，可以将限制关闭，在应对重大事件时，可以将限制开启并根据网站保障级别调整限制级别。五是使用监控工具，对网站的实时流量和服务器负载有监控预警，根据流量情况采取不同的措施。
+一是增大系统并发吞吐量，二是系统需要有限流和熔断机制。为了避免类似情况，系统做如下优化：
+
+\begin{itemize}
+	\item {一是将热点查询做成静态化页面，针对一级页面，打开即默认加载的数据静态化，避免后端接口处理，降低接口压力。}
+	\item {二是缓存凭据，凭据信息更改不频繁，直接缓存到内存中，避免数据库查询。}
+	\item {三是评估内存消耗，针对设计预期的并发分配相应的资源。}
+	\item{四是限流，识别无效请求并主动丢弃，减少无效流量对资源的占用和消耗，可以根据实时流量调整限制级别。例如在平时网站运行时，可以将限制关闭，在应对重大事件时，可以将限制开启并根据网站保障级别调整限制级别。}
+	\item {五是使用监控工具，对网站的实时流量和服务器负载有监控预警，根据流量情况采取不同的措施。}
+\end{itemize}
+
+
+
+
+\subsection{资源分配约定}
+
+由于最近处理的问题大多涉及到资源问题，所以这里约定一个
+
+
+\subsection{Python绘图}
+
+
+https://www.jianshu.com/p/d9cc124d8a30
+
+\begin{lstlisting}[language=Bash]
+pip install numpy
+pip install scipy
+的南方 install python-matplotlib
+\end{lstlisting}
 
 
 \subsection{XX-Net}

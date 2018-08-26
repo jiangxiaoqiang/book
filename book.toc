@@ -19,4 +19,6 @@
 \contentsline {paragraph}{问题复现}{19}{lstnumber.-17.4}
 \contentsline {paragraph}{问题回顾}{19}{section*.3}
 \contentsline {paragraph}{问题解决}{19}{lstnumber.-18.3}
-\contentsline {subsection}{\numberline {1.2.2}XX-Net}{20}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.2.2}资源分配约定}{20}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.2.3}Python绘图}{20}{subsection.1.2.3}
+\contentsline {subsection}{\numberline {1.2.4}XX-Net}{20}{subsection.1.2.4}

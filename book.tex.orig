@@ -108,6 +108,7 @@
 	 tabsize=4, %  
 	 frame=shadowbox, %把代码用带有阴影的框圈起来  
 	 commentstyle=\color{red!50!green!50!blue!50},%浅灰色的注释  
+	 frameround=tttt,%圆角边框
 	 rulesepcolor=\color{red!20!green!20!blue!20},%代码块边框为淡青色  
 	 keywordstyle=\color{blue!90}\bfseries, %代码关键字的颜色为蓝色，粗体  
 	 showstringspaces=false,%不显示代码字符串中间的空格标记  
@@ -134,8 +135,12 @@
 	 %% added by http://bbs.ctex.org/viewthread.php?tid=53451  
 	 fontadjust,  
 	 captionpos=t,  
-	 framextopmargin=2pt,framexbottommargin=2pt,abovecaptionskip=-3pt,belowcaptionskip=3pt,  
-	 xleftmargin=4em,xrightmargin=4em, % 设定listing左右的空白  
+	 framextopmargin=2pt,
+	 framexbottommargin=2pt,
+	 abovecaptionskip=-3pt,
+	 belowcaptionskip=3pt,  
+	 xleftmargin=4em,
+	 xrightmargin=4em, % 设定listing左右的空白  
 	 texcl=true	 
 }
 
@@ -399,7 +404,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 			\cline{1-2}
 			\{prject-name\}-after-build-handler.sh &  项目后端构建后处理 \\
 			\hline
-			\{project-name\}-frontend-after-build-handler.sh  & 项目前端构建后处理 \\		
+			\{project-name\}-frontend-after-build-handler.sh  & 项目后端构建后处理 \\		
 			\hline				
 		\end{tabular}	
 	\end{center}
@@ -606,19 +611,14 @@ Nginx在POST, LOCK, PATCH这种会对服务器造成不幂等的方法，默认�
 proxy_next_upstream error timeout http_500 non_idemponent;
 \end{lstlisting}
 
-\section{编辑中}
-
-\subsection{OutOfMemory}
-
-\begin{lstlisting}[language=Bash]
-# 
-./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
-\end{lstlisting}
-
 
 
 
 \subsection{无法获取数据库连接}
+
+\begin{quote}
+	\textbf{\textcolor{red}{导致问题的原因：数据库连接配置过小，访问量增长时造成连接分配不足，导致无法顺畅访问站点。}}
+\end{quote}
 
 最近2天网站运行一段时间后会突然宕掉，日志输出无法获取数据库连接(Could not get JDBC connection)，初步推测是数据库连接泄漏，造成数据库可用连接被使用完，主备节点都拿不到连接，造成此问题，目前连接由连接池进行管理，一般情况下是不需要人工干预数据库的连接申请和释放，也有可能是某处进行了手工申请数据库连接，但是没有释放连接导致。使用如下Shell脚本每隔一段时间检测连接池数量：
 
@@ -634,32 +634,36 @@ nohup watch -n 5 'lsof -i:5236|wc -l >> pool.log'
 active 20,maxActive 20
 \end{lstlisting}
 
-表示当前活动连接数20个，最大活动连接数20个。虽然到数据库的连接有300多个，但是绝大多数是空闲的(Idle)，如下语句查看数据库当前会话的个数。
+表示当前活动连接数20个，最大活动连接数20个。虽然到数据库的会话有300多个，但是绝大多数是空闲的(Idle)，如下语句查看数据库当前会话的个数。
 
 \begin{lstlisting}[language=SQL]
 -- 查看数据库当前会话情况
-
+select clnt_ip,state,user_name,count(*)
+from v$sessions
+group by clnt_ip,state,user_name
 \end{lstlisting}
 
-结果如图所示：
+结果如图\ref{fig:sessionstatistics}所示：
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.7]{sessionstatistics.png}
+	\caption{DB当前连接会话统计}
+	\label{fig:sessionstatistics}
+\end{figure}
 
+可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter\footnote{\url{http://jmeter.apache.org/}}模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题同样的日志输出，说明问题在此处，需要优化。DBCP当连接数超过最大连接数时，所有连接都会被断开[未找到权威出处]。经过考虑，逐步应用以下优化的方式。
 
-可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题。DBCP当连接数超过最大连接数时，所有连接都会被断开。
+\paragraph{增加网站数据库连接数量上限}调整配置增大数据库连接上限，可以增加网站并发服务能力：
 
-解决的方式：
+\begin{lstlisting}[language=XML]
+<!-- 最小空闲连接数 -->
+<property name="minIdle" value="50" />
+<!-- 最大连接数 -->
+<property name="maxActive" value="100" />
+\end{lstlisting}
 
-\begin{itemize}
-	\item{增加网站数据库连接数量上限}
-	\item{增大数据库Session数量}
-	\item{安装新的数据库，将部分数据连接转移到新库}
-\end{itemize}
-
-<<<<<<< HEAD
-\subsection{OutOfMemoryError}
-
-=======
-做了以上优化后，可以提高网站的并发服务量，20个连接确实太小，综评估资源，调整后连接池分配情况：
+做了以上优化后，可以提高网站的并发服务量，降低由于访问量过大造成网站不可用的概率，20个连接确实太小，综合评估数据库现有的连接资源(500)，调整后连接数分配情况：
 
 \begin{table}[htbp]
 	\caption{应用连接个数分配情况}
@@ -683,10 +687,82 @@ active 20,maxActive 20
 	\end{center}
 \end{table}
 
+\paragraph{增大数据库Session数量上限}目前数据库的会话数量是500，可以调整为1000。
+
+\paragraph{缓存页面信息}实际上，页面在绝大部分时间是不会改变的，完全可以将页面信息缓存在Redis中，不但减轻数据库压力，还可成倍提高网站响应速度和并发处理能力。此种优化方式需要对代码做一定程度改造，比如发布信息时，需要清除对应模块的Redis缓存信息，保证信息更新及时。
+
+\paragraph{将流量分配到不同的机器}后端流量可以主备机同时启用，涉及到Session共享问题，需要进一步测试。
+
+\section{编辑中}
+
+\subsection{Java heap space}
+
+\begin{quote}
+	\textbf{\textcolor{red}{导致问题的原因：APP分配的内存资源不足，系统并发性能不足，应对持续并发请求能力需要加强。}}
+\end{quote}
+
+上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
+
+\begin{lstlisting}[language=Bash]
+# 启动统计守护进程
+./jstatd -J-Djava.security.policy=../jstatd.all.policy -J-Djava.rmi.server.hostname=10.10.1.53
+<<<<<<< HEAD
+# 生成内存dump文件
+jmap -dump:format=b,file=/opt [pid]
+=======
+jmap -dump:format=b,file=/opt/example.dump [pid]
+>>>>>>> e35f2b4273df5a28a3c00974bf191f7751222c72
+\end{lstlisting}
+
+在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。初步监测，老年代(Old Generation)的内存的确在不断增长。但是仅凭此点，无法下结论一定存在内存泄漏，如果老年代在以后执行GC(Garbage Collection)后，老年代(Old Generation)初始内存不停增长，才可以推断的确存在内存泄漏，因为不停增加的初始内存，标志着有部分内存永远无法被FGC回收，随着程序的不断运行，必定会由于内存不足而Hang住。
+
+在一段时期内，程序一启动老年代就已经满了，占用率直接100\%。开始是以为流量较高，YGC频繁，不停的有经过多次YGC未回收的对象移入老年代，最多FGC执行频繁一些罢了。后来更为诡异的事情发生了，机器突然变得非常卡顿，磁盘使用量快速增长，最后程序直接无法启动，启动不到30s立即停止响应或者直接输出Java Heap space错误。
+
+\paragraph{问题复现}
+
+经过备份的日志阅读，发现一段时间段内，有大量针对某一查询请求，且非常集中。下午抽出时间在测试环境使用JMeter构造红集中请求的查询，模拟线上场景。当并发的用户量不断增长时，YGC越来越频繁，同时老年代初始内存消耗上升快速。当并发量达到50时，老年代内存使用量飙升到100\%,同时程序Hang住，输出Java Heap space错误。终于知道症结在机器在应对并发流量时内存不足，没有对内存做好估算。并发量升高时，应用对的内存消耗极大的超出了预期，即使每个线程5MB的内存，100个并发也才500MB，当前的内存有5GB，按照预期是完全足够的。但最终还是将服务器的内存增大到64GB来解决问题。
+
+\paragraph{问题回顾}
+
+当在并发量较高时，APP启动时，会占用比较多的老年代内存，所以在下午应用已启动老年代内存立即耗尽，年轻代不停的执行GC。当并发超出系统承载能力时，老年代默认内存已经无法支撑应用启动的初始内存消耗，所以应用启动立即发生内存溢出。有于在发生内存溢出时会生成dump文件，将现场保留到磁盘以备问题排查，每个dump文件从2GB-8GB不等，所以造成磁盘使用量急速消耗。
+
+\begin{lstlisting}[language=Bash]
+# 内存溢出时生成dump文件
+-XX:+HeapDumpOnOutOfMemoryError 
+-XX:HeapDumpPath=/home/app
+\end{lstlisting}
+
+不停的尝试启动，不停的生成dump文件，造成磁盘IO急剧升高，所以机器卡顿。
+
+\paragraph{问题解决}
+
+一是增大系统并发吞吐量，二是系统需要有限流和熔断机制。为了避免类似情况，系统做如下优化：一是将热点查询做成静态化页面，针对一级页面，打开即默认加载的数据静态化，避免后端接口处理，降低接口压力。二是缓存凭据，凭据信息更改不频繁，直接缓存到内存中，避免数据库查询。三是评估内存消耗，针对设计预期的并发分配响应的资源。四是限流，识别无效请求并主动丢弃，减少无效流量对资源的占用和消耗，可以根据实时流量调整限制级别。例如在平时网站运行时，可以将限制关闭，在应对重大事件时，可以将限制开启并根据网站保障级别调整限制级别。五是使用监控工具，对网站的实时流量和服务器负载有监控预警，根据流量情况采取不同的措施。
+
+
+\subsection{资源分配约定}
+
+由于最近处理的问题大多涉及到资源问题，所以这里约定一个
+
+
+\subsection{Python绘图}
+
+
+https://www.jianshu.com/p/d9cc124d8a30
+
+\begin{lstlisting}[language=Bash]
+pip install numpy
+pip install scipy
+的南方 install python-matplotlib
+\end{lstlisting}
 
 
 \subsection{XX-Net}
->>>>>>> 4484d4eeba89240957349ec189f4a6c8aaf67367
+
+
+
+
+
+
 
 
 
