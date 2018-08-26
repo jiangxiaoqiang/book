@@ -16,4 +16,6 @@
 \contentsline {paragraph}{将流量分配到不同的机器}{18}{table.1.6}
 \contentsline {section}{\numberline {1.2}编辑中}{18}{section.1.2}
 \contentsline {subsection}{\numberline {1.2.1}Java heap space}{18}{subsection.1.2.1}
-\contentsline {subsection}{\numberline {1.2.2}XX-Net}{19}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.2.2}资源分配约定}{19}{subsection.1.2.2}
+\contentsline {subsection}{\numberline {1.2.3}Python绘图}{19}{subsection.1.2.3}
+\contentsline {subsection}{\numberline {1.2.4}XX-Net}{19}{subsection.1.2.4}
