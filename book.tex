@@ -693,7 +693,6 @@ group by clnt_ip,state,user_name
 
 \paragraph{将流量分配到不同的机器}后端流量可以主备机同时启用，涉及到Session共享问题，需要进一步测试。
 
-\section{编辑中}
 
 \subsection{Java heap space}
 
@@ -742,12 +741,68 @@ jmap -dump:format=b,file=/opt/example.dump [pid]
 	\item {五是使用监控工具，对网站的实时流量和服务器负载有监控预警，根据流量情况采取不同的措施。}
 \end{itemize}
 
+\subsection{报表在现场演示环境无法打开}
+
+\begin{quote}
+	\textbf{\textcolor{red}{导致问题的原因：报表地址配置的内网地址，公网用户无法访问。}}
+\end{quote}
+
+报表服务部署在内网的机器上，内网的机器与平时使用的机器在一个局域网中，内网用户访问报表可以直接通过内网IP。但是公网的用户无法访问报表服务器的内网IP，需要通过公网IP做一次转发。就像在自己家里部署一个服务，但是在办公室的PC是无法访问的，需要有公网IP做转发。公网用户访问报表的一般流程是，先访问公网地址，公网地址将流量转发到内网的反向代理服务器，反向代理服务器根据报表的URL将流量路由到报表服务器。使用如下语句更新报表配置即可：
+
+\begin{lstlisting}[language=SQL]
+# 将报表服务的IP调整为公网IP
+update report_config
+set url = replace(url,'内网IP','公网IP')
+\end{lstlisting}
+
+\section{编辑中}
+
+\subsection{查询变慢}
+
+\begin{quote}
+	\textbf{\textcolor{red}{导致问题的原因：日志数据不断膨胀造成查询变慢。}}
+\end{quote}
+
+这两天不断有反馈原来很快的查询现在不知道什么原因变慢了，查看了变慢的页面后，确实速度不符合设计预期，正常情况下不应大于200ms，平均响应时间肯定不会超过1s，页面数据是放在接口缓存中。加上调用链路的开销，不应该有延迟。访问接口数据的流程如图\ref{fig:api-request}所示：
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.1]{api-request.jpg}
+	\caption{接口数据调用流程}
+	\label{fig:api-request}
+\end{figure}
+
+首先确定接口缓存有效，在接口服务器上请求接口服务：
+
+\begin{lstlisting}[language=Bash]
+curl -H "APPID:" \ 
+-H "TIMESTAMP:2016-12-19 16 (tel:2016121916):58:02" \ 
+-H "ECHOSTR:sdsaasf" -H "TOKEN:" \
+-H "Accept: application/json, text/plain" \ 
+http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
+\end{lstlisting}
+
+在50ms内可以返回结果，说明缓存有效，不是从数据库获取。其次确定网络设备影响(已经感受到的发送POST请求会有1-2s左右延迟，网络A的服务器发出请求，网络B的服务器需要1-2s才能实际接收到并处理)，在网络A使用访问接口服务，时间与网络B访问相近。由于端口80绑定域名，新建内网服务，从内网站点访问接口，时间超过3s，说明问题在A网的站点。后经过跟踪，发现A网站点接口本身处理非常快，但是绝大部分时间消耗在处理请求后返回的过程中。经过跟踪，处理请求后查询更新了日志表，而日志表的数据在800W左右。
+
+\paragraph{问题解决}
+
+\begin{itemize}
+	\item {快速的解决方式，临时备份日志，建立空的日志表。}
+	\item {重构日志，直接记录流水，不记录统计信息。}
+	\item {构建独立的日志服务，所有的日志打到独立的服务上，采用简单消息队列。(\textcolor{green}{\textbf{Recommand}})}
+	\item {尝试ELK日志分析系统。}
+\end{itemize}
+
+
 
 
 
 \subsection{资源分配约定}
 
-由于最近处理的问题大多涉及到资源问题，所以这里约定一个
+由于最近处理的问题大多涉及到资源问题，例如文件无法上传，邮件无法发送，主要由于磁盘空间不足。原来分配的虚拟机一般home目录较大，所以将随着程序运行可能需要消耗较大磁盘空间的目录放在home目录下，但是新内网虚拟机恰好home目录很小。导致一些列问题，所以这里约定目录大小的规范。
+
+
+
 
 
 \subsection{Python绘图}
