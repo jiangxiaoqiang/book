@@ -818,8 +818,6 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 
 考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。
 
-\section{编辑中}
-
 \subsection{Tomcat请求头设置}
 
 App在启动的时候占用老年代内存较大，当并发增大时，消耗内存迅速增加。经过排查，是maxHttpHeaderSize参数配置过大。
@@ -836,6 +834,8 @@ server.max-http-header-size=102400000
 \end{lstlisting}
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
+
+\section{编辑中}
 
 \subsection{服务限流}
 
@@ -854,7 +854,20 @@ server.max-http-header-size=102400000
 
 \subsection{GoAccess}
 
-最近网站流量偏高，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的GoAccess\footnote{\url{https://goaccess.io}}。
+最近网站流量“偏高”，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的GoAccess\footnote{\url{https://goaccess.io}}。
+
+\begin{lstlisting}[language=Bash]
+goaccess -a -d -f /data/logs/fanhaobai.com.access.log \
+-p /etc/goaccess.conf \ 
+-o /data/html/hexo/public/go-access.html
+\end{lstlisting}
+
+每一个小时执行：
+
+\begin{lstlisting}[language=Bash]
+0 1 * * *   root   goaccess -d -f /usr/loca/nginx/logs/example.log \ 
+-p /usr/local/etc/goaccess.conf
+\end{lstlisting}
 
 
 
