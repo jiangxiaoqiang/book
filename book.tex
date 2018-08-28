@@ -835,6 +835,12 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 
 优化后，在测试环境作压力测试检验。
 
+\subsection{GoAccess}
+
+最近网站流量偏高，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的GoAccess\footnote{\url{https://goaccess.io}}。
+
+
+
 
 \subsection{Python绘图}
 
@@ -844,7 +850,7 @@ https://www.jianshu.com/p/d9cc124d8a30
 \begin{lstlisting}[language=Bash]
 pip install numpy
 pip install scipy
-的南方 install python-matplotlib
+dnf install python-matplotlib
 \end{lstlisting}
 
 
