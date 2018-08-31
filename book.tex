@@ -700,7 +700,15 @@ group by clnt_ip,state,user_name
 	\textbf{\textcolor{red}{导致问题的原因：APP分配的内存资源不足，系统并发性能不足，应对持续并发请求能力需要加强。}}
 \end{quote}
 
-上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
+上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。新建
+
+\begin{lstlisting}[language=Bash]
+grant codebase "file:/home/local/jdk1.8.0_111/lib/tools.jar" {   
+	permission java.security.AllPermission;   
+};
+\end{lstlisting}
+
+在服务端启动jstatd(Java State Daemon)守护进程:
 
 \begin{lstlisting}[language=Bash]
 # 启动统计守护进程
@@ -710,6 +718,30 @@ jmap -dump:format=b,file=/opt/example.dump [pid]
 \end{lstlisting}
 
 在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。初步监测，老年代(Old Generation)的内存的确在不断增长。但是仅凭此点，无法下结论一定存在内存泄漏，如果老年代在以后执行GC(Garbage Collection)后，老年代(Old Generation)初始内存不停增长，才可以推断的确存在内存泄漏，因为不停增加的初始内存，标志着有部分内存永远无法被FGC回收，随着程序的不断运行，必定会由于内存不足而Hang住。
+
+\begin{table}[htbp]
+	\caption{应用内存消耗}
+	\label{table:appmemoryusing}
+	\begin{center}
+		\begin{tabular}{|c|c|p{2cm}|}
+			\hline
+			\multirow{1}{*}{并发数量}
+			& \multicolumn{1}{c|}{Old Generation内存消耗} 
+			& \multicolumn{1}{c|}{连接个数}\\			
+			\cline{1-3}
+			0 &  404MB  & 100 \\
+			\hline
+			1 &  1.119GB  & 100 \\
+			\hline
+			10 &  3.847GB  & 100 \\
+			\hline
+			20 &  3.689GB  & 100 \\
+			\hline
+			30 &  4.834GB  & 100 \\
+			\hline											
+		\end{tabular}	
+	\end{center}
+\end{table}
 
 在一段时期内，程序一启动老年代就已经满了，占用率直接100\%。开始是以为流量较高，YGC频繁，不停的有经过多次YGC未回收的对象移入老年代，最多FGC执行频繁一些罢了。后来更为诡异的事情发生了，机器突然变得非常卡顿，磁盘使用量快速增长，最后程序直接无法启动，启动不到30s立即停止响应或者直接输出Java Heap space错误。
 
@@ -817,6 +849,24 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 \end{table}
 
 考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。
+
+\chapter{部署}
+
+
+\section{title}
+
+
+\subsection{Platform}
+
+
+关闭防火墙：
+
+\begin{lstlisting}[language=Bash]
+systemctl stop firewalld.service
+\end{lstlisting}
+
+
+
 
 \section{编辑中}
 
