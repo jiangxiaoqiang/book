@@ -835,7 +835,47 @@ server.max-http-header-size=102400000
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
 
+\subsection{GoAccess}
+
+最近网站流量“偏高”，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的应用GoAccess\footnote{\url{https://goaccess.io}}。
+
+\begin{lstlisting}[language=Bash]
+goaccess -a -d -f /usr/local/nginx/logs/example.log
+goaccess -a -d -f /usr/local/nginx/logs/example.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
+\end{lstlisting}
+
+不能以服务的方式运行，所以做一个crontab定时任务，每隔一段时间生成网站访问日志的统计信息：
+
+\begin{lstlisting}[language=Bash]
+# 每20分钟执行
+*/20 * * * *   root   goaccess -d -f /usr/loca/nginx/logs/example.log -p /usr/local/etc/goaccess.conf
+\end{lstlisting}
+
+根据URL的访问频率统计信息如图\ref{fig:spideranalysis}所示，从统计图中可以看出，九成以上的请求都集中在一个URL。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{spideranalysis.png}
+	\caption{访问URL统计}
+	\label{fig:spideranalysis}
+\end{figure}
+
+根据IP的统计信息如图\ref{fig:ipstatistics}所示，从统计图中可以看出，5成以上的访问请求只服务了3个IP。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{ipstatistics.png}
+	\caption{根据IP统计}
+	\label{fig:ipstatistics}
+\end{figure}
+
+
+
 \section{编辑中}
+
+\subsection{Spider}
+
+
 
 \subsection{Could not get a resource from the pool}
 
@@ -887,39 +927,6 @@ netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
 
 
 优化后，在测试环境作压力测试检验。
-
-\subsection{GoAccess}
-
-最近网站流量“偏高”，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的应用GoAccess\footnote{\url{https://goaccess.io}}。
-
-\begin{lstlisting}[language=Bash]
-goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
-\end{lstlisting}
-
-不能以服务的方式运行，所以做一个crontab定时任务，每隔一段时间生成网站访问日志的统计信息：
-
-\begin{lstlisting}[language=Bash]
-# 每20分钟执行
-*/20 * * * *   root   goaccess -d -f /usr/loca/nginx/logs/example.log -p /usr/local/etc/goaccess.conf
-\end{lstlisting}
-
-根据URL的访问频率统计信息如图\ref{fig:spideranalysis}所示，从统计图中可以看出，九成以上的请求都集中在一个URL。
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{spideranalysis.png}
-	\caption{访问URL统计}
-	\label{fig:spideranalysis}
-\end{figure}
-
-根据IP的统计信息如图\ref{fig:ipstatistics}所示，从统计图中可以看出，5成以上的访问请求只服务了3个IP。
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{ipstatistics.png}
-	\caption{根据IP统计}
-	\label{fig:ipstatistics}
-\end{figure}
 
 
 
