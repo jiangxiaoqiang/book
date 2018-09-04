@@ -870,36 +870,15 @@ server.max-http-header-size=102400000
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
 
-
-
-
-
-
-
-\section{编辑中}
-
-\subsection{Could not get a resource from the pool}
-
-网站运行一段时间后，无法访问，查看日志，出现如下提示：
-
-\begin{lstlisting}[language=Bash]
-redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
-…
-Caused by: java.util.NoSuchElementException: Pool exhausted
-at org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:464)
-\end{lstlisting}
-
-JedisPool中的Jedis对象个数是有限的，默认是8个。
-
-https://yq.aliyun.com/articles/236384
-
-
 \subsection{查看网站并发}
 
 使用如下命令查看网站并发：
 
 \begin{lstlisting}[language=Bash]
 netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+
+# 查看Ngni并发
+tail -f access.log | awk -F '[' '{print $2}' | awk 'BEGIN{key="";count=0}{if(key==$1){count++}else{printf("%s\t%d\r\n", key, count);count=1;key=$1}}'
 \end{lstlisting}
 
 结果如图\ref{fig:websiteconcurrentaccess}所示：
@@ -910,24 +889,6 @@ netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
 	\caption{查看服务器并发示例}
 	\label{fig:websiteconcurrentaccess}
 \end{figure}
-
-
-
-
-\subsection{服务限流}
-
-由于服务器的硬件资源和网络带宽资源始终是有限的，服务器可以承载的流量也会有上限，超过应用的承载极限后，程序稳定服务即无法保障。所以除了提高服务器服务能力外，还需要在超过服务器的承载上限之前，限制过量的访问请求，保护应用。网站许多内容缓存在Redis中，主要保障访问数据库连接不要超过数据库提供的最大连接上限(目前数据库提供的会话为100)，或者说不导致数据库过载。接口应用不要超过接口所能提供的最高并发。接口服务可以在Ngnix通过ngx\_http\_limit\_req\_module配置来实现，保障打到接口的流量不会超过接口可以承载的最大流量(经初步测试，在内存40GB左右的情况下，目前接口并发能到100左右，具体数量要根据接口的业务员逻辑复杂情况而定)。同时网站侧需要作流量统计识别与限制，防止无效流量占用接口资源导致接口疲于应付爬虫等无效流量而无法服务于正常用户。
-
-\paragraph{网站流量识别与限制}
-
-网站不采取在Ngnix上做流量限制，原因是
-
-
-
-\paragraph{接口Nginx防止流量过载}
-
-
-优化后，在测试环境作压力测试检验。
 
 \subsection{GoAccess}
 
@@ -961,6 +922,49 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 	\caption{根据IP统计}
 	\label{fig:ipstatistics}
 \end{figure}
+
+
+\section{编辑中}
+
+\subsection{Nginx启用压缩}
+
+最近演示时说系统很慢，打开系统查看，首屏加载时间超过8s，确实不符合常规。由于网站是SPA应用，首先查看Javascript大小，竟然有接近8MB大小，对比了线上系统，发现演示系统Javascript没有压缩。内网访问，查看Javascript大小在1.6MB左右，已经经过压缩，推测可能是多级代理时需要对代理Nginx做特殊配置，尝试添加如下配置：
+
+\begin{lstlisting}[language=Bash]
+gzip_proxied any;
+\end{lstlisting}
+
+https://reinout.vanrees.org/weblog/2015/11/19/nginx-proxy-gzip.html
+
+\subsection{Could not get a resource from the pool}
+
+网站运行一段时间后，无法访问，查看日志，出现如下提示：
+
+\begin{lstlisting}[language=Bash]
+redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
+…
+Caused by: java.util.NoSuchElementException: Pool exhausted
+at org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:464)
+\end{lstlisting}
+
+JedisPool中的Jedis对象个数是有限的，默认是8个。
+
+https://yq.aliyun.com/articles/236384
+
+\subsection{服务限流}
+
+由于服务器的硬件资源和网络带宽资源始终是有限的，服务器可以承载的流量也会有上限，超过应用的承载极限后，程序稳定服务即无法保障。所以除了提高服务器服务能力外，还需要在超过服务器的承载上限之前，限制过量的访问请求，保护应用。网站许多内容缓存在Redis中，主要保障访问数据库连接不要超过数据库提供的最大连接上限(目前数据库提供的会话为100)，或者说不导致数据库过载。接口应用不要超过接口所能提供的最高并发。接口服务可以在Ngnix通过ngx\_http\_limit\_req\_module配置来实现，保障打到接口的流量不会超过接口可以承载的最大流量(经初步测试，在内存40GB左右的情况下，目前接口并发能到100左右，具体数量要根据接口的业务员逻辑复杂情况而定)。同时网站侧需要作流量统计识别与限制，防止无效流量占用接口资源导致接口疲于应付爬虫等无效流量而无法服务于正常用户。
+
+\paragraph{网站流量识别与限制}
+
+网站不采取在Ngnix上做流量限制，原因是
+
+
+
+\paragraph{接口Nginx防止流量过载}
+
+
+优化后，在测试环境作压力测试检验。
 
 
 
