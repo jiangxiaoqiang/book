@@ -697,7 +697,7 @@ group by clnt_ip,state,user_name
 \subsection{Java heap space}
 
 \begin{quote}
-	\textbf{\textcolor{red}{导致问题的原因：APP分配的内存资源不足，系统并发性能不足，应对持续并发请求能力需要加强。}}
+	\textbf{\textcolor{red}{导致问题的原因：表面看是APP分配的内存资源不足，系统并发性能不足，应对持续并发请求能力需要加强，实际是Tomcat请求头配置过大(100MB)，每个线程会申请对应大小的空间，而大对象JVM直接会放到老年代，一旦并发请求稍多，造成内存溢出。}}
 \end{quote}
 
 上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
