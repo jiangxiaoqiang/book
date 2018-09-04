@@ -741,6 +741,41 @@ jmap -dump:format=b,file=/opt/example.dump [pid]
 	\item {五是使用监控工具，对网站的实时流量和服务器负载有监控预警，根据流量情况采取不同的措施。}
 \end{itemize}
 
+关键的问题是，在当前并发的情况下，不应该消耗如此大的内存。问题在哪里？使用JMap\footnote{\url{https://docs.oracle.com/javase/7/docs/technotes/tools/share/jmap.html}}(Java Memory Map)命令将运行时内存情况输出，采用MAT\footnote{\url{https://www.eclipse.org/mat/}}(The Eclipse Memory Analyzer)工具进行分析，查看内存中的大对象如图\ref{fig:javahprofanalysis}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.4]{javahprofanalysis.png}
+	\caption{Java内存对象分析}
+	\label{fig:javahprofanalysis}
+\end{figure}
+
+从Histogram图中可以看出，对象中byte数组的大小超过了8GB，每一个byte数组元素大小是102408208(约102MB)。怎么会有如此大对象？问题非常有可能就出在这些大对象上面了。下载Tomcat 8.0.53(注意下载的源码需要尽量服务器上运行的版本一致，InternalNioInputBuffer类在往后版本的Tomcat已经被移除)源码查看，找到如下代码片段：
+
+\begin{lstlisting}[language=Java]
+@Override
+protected void init(SocketWrapper<NioChannel> socketWrapper,
+AbstractEndpoint<NioChannel> endpoint) throws IOException {
+
+	socket = socketWrapper.getSocket();
+	if (socket == null) {
+		// Socket has been closed in another thread
+		throw new IOException(sm.getString("iib.socketClosed"));
+	}
+	socketReadBufferSize =
+	socket.getBufHandler().getReadBuffer().capacity();
+	
+	int bufLength = headerBufferSize + socketReadBufferSize;
+	if (buf == null || buf.length < bufLength) {
+		buf = new byte[bufLength];
+	}
+	
+	pool = ((NioEndpoint)endpoint).getSelectorPool();
+}
+\end{lstlisting}
+
+在处理请求的线程初始化时，根据请求头大小新构建一个byte数组，原来是请求头设置过大。系统在生成byte数组时，判断是大对象，直接将对象放到老年代中，造成老年代消耗内存急速增长。
+
 \subsection{报表在现场演示环境无法打开}
 
 \begin{quote}
@@ -835,6 +870,7 @@ server.max-http-header-size=102400000
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
 
+
 \subsection{GoAccess}
 
 最近网站流量“偏高”，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的应用GoAccess\footnote{\url{https://goaccess.io}}。
@@ -868,8 +904,6 @@ goaccess -a -d -f /usr/local/nginx/logs/example.log -p /etc/goaccess.conf -o /da
 	\caption{根据IP统计}
 	\label{fig:ipstatistics}
 \end{figure}
-
-
 
 \section{编辑中}
 
@@ -946,11 +980,13 @@ dnf install python-matplotlib
 
 
 
+redis为了避免客户端连接数过多，有一个timeout配置，意思是如果连接的空闲时间超过了timeout的值，则关闭连接。默认配置是0，意思是没有超时限制，永远不关闭连接。
 
+\subsection{fluxion}
 
+Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
 
-
-
+Enter path to handshake file
 
 
 \begin{thebibliography}{0}
