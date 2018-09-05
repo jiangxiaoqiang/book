@@ -687,11 +687,51 @@ group by clnt_ip,state,user_name
 	\end{center}
 \end{table}
 
+增加了连接数上限后，为了验证效果，采用crontab定时任务每隔5分钟定时采集不同时间点数据库的活动Session个数：
+
+\begin{lstlisting}[language=Bash]
+# 每5分钟定时执行采集任务
+*/5 *  *  *  *  root   /usr/local/dolphin/script/db-pool-monitor.sh
+\end{lstlisting}
+
+脚本将采集到的数据放入csv文件中，后期采用Excel生成可直观的图表：
+
+\begin{lstlisting}[language=Bash]
+#!/usr/bin/env bash
+
+# 当使用未初始化的变量时，程序自动退出
+set -u
+
+# 当任何一行命令执行失败时，自动退出脚本
+set -e
+
+# 在运行结果之前，先输出执行的那一行命令
+set -x
+
+connect_size=`lsof -i|grep 10.20.1.17|grep java|wc -l`
+current_time=`date "+%H:%M:%S"`
+current_date=`date "+%Y%m%d"`
+echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}".csv
+\end{lstlisting}
+
+脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.6]{dbsession.bmp}
+	\caption{DB历史会话数统计}
+	\label{fig:dbsession}
+\end{figure}
+
+8:50到9:40之间进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
+
 \paragraph{增大数据库Session数量上限}目前数据库的会话数量是500，可以调整为1000。
 
 \paragraph{缓存页面信息}实际上，页面在绝大部分时间是不会改变的，完全可以将页面信息缓存在Redis中，不但减轻数据库压力，还可成倍提高网站响应速度和并发处理能力。此种优化方式需要对代码做一定程度改造，比如发布信息时，需要清除对应模块的Redis缓存信息，保证信息更新及时。
 
 \paragraph{将流量分配到不同的机器}后端流量可以主备机同时启用，涉及到Session共享问题，需要进一步测试。
+
+
 
 
 \subsection{Java heap space}
@@ -870,7 +910,6 @@ server.max-http-header-size=102400000
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
 
-<<<<<<< .mine
 \subsection{GoAccess}
 
 最近网站流量“偏高”，导致关键服务停服。所以可以考虑实时的监控网站的健康状态，作出对应的决策。由于安全原因不能使用监控应用，所以找到一个直接在终端下可以查看Nginx日志统计信息的应用GoAccess\footnote{\url{https://goaccess.io}}。
@@ -971,6 +1010,9 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 
 \section{编辑中}
+
+\subsection{数据库并发连接查看}
+
 
 
 
