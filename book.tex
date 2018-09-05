@@ -905,29 +905,20 @@ goaccess -a -d -f /usr/local/nginx/logs/example.log -p /etc/goaccess.conf -o /da
 	\label{fig:ipstatistics}
 \end{figure}
 
-\section{编辑中}
+\subsection{Nginx启用压缩}
 
-\subsection{Spider}
-
-
-
-\subsection{Could not get a resource from the pool}
-
-网站运行一段时间后，无法访问，查看日志，出现如下提示：
+最近演示时说系统很慢，打开系统查看，首屏加载时间超过8s，确实不符合常规。由于网站是SPA应用，首先查看Javascript大小，竟然有接近8MB大小，对比了线上系统，发现演示系统Javascript没有压缩。这里经过了两级Ngnix代理，内网访问Ngnix代理，浏览器中查看Javascript大小在1.6MB左右，说明内网的Nginx代理已经压缩了Javascript文件，推测可能是另一级需要对代理Nginx做启用gzip压缩配置，尝试在另一级Nginx代理添加如下配置：
 
 \begin{lstlisting}[language=Bash]
-redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
-…
-Caused by: java.util.NoSuchElementException: Pool exhausted
-at org.apache.commons.pool2.impl.GenericObjectPool.borrowObject(GenericObjectPool.java:464)
+# HTTP代理版本(proxy\_http\_version)
+proxy_http_version 1.1
+# gzip支持版本(gzip\_http\_version)
+gzip_http_version 1.0
 \end{lstlisting}
 
-JedisPool中的Jedis对象个数是有限的，默认是8个。
+gzip模块默认支持压缩的HTTP版本是1.1，而代理模块的默认代理HTTP版本是1.0\footnote{\url{https://reinout.vanrees.org/weblog/2015/11/19/nginx-proxy-gzip.html}}，不匹配，造成gzip的压缩没有生效，调整任意一项即可。
 
-https://yq.aliyun.com/articles/236384
-
-
-=======>>>>>>> .theirs\subsection{查看网站并发}
+\subsection{查看网站并发}
 
 使用如下命令查看网站并发：
 
@@ -981,15 +972,7 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 \section{编辑中}
 
->>>>>>> .theirs\subsection{Nginx启用压缩}
 
-最近演示时说系统很慢，打开系统查看，首屏加载时间超过8s，确实不符合常规。由于网站是SPA应用，首先查看Javascript大小，竟然有接近8MB大小，对比了线上系统，发现演示系统Javascript没有压缩。内网访问，查看Javascript大小在1.6MB左右，已经经过压缩，推测可能是多级代理时需要对代理Nginx做特殊配置，尝试添加如下配置：
-
-\begin{lstlisting}[language=Bash]
-gzip_proxied any;
-\end{lstlisting}
-
-https://reinout.vanrees.org/weblog/2015/11/19/nginx-proxy-gzip.html
 
 \subsection{Could not get a resource from the pool}
 
