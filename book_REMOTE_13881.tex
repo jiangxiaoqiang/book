@@ -1013,8 +1013,6 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 \section{编辑中}
 
-\subsection{Clonezilla}
-
 \subsection{自动构建更新的问题}
 
 有时经常会遇到代码提交后在测试环境总看不到效果的问题。可以使用如下方式逐步排查。第一步检查Jenkins是否获取到了最新的代码，在Jenkins构建目录(/var/lib/jenkins/workspace)下检查最新代码片段。第二步检查Tomcat目录下是否包含最新的调整后的代码，由于Tomcat下是已经编译完毕的class文件，需要借助Luyten\footnote{Luyten是一个出色的Java反编译器,项目地址是\url{https://github.com/deathmarine/Luyten}。}工具打开，查看源码，是否包含最新的改动，如果包含最新改动，说明自动编译构建没问题。这里查看Tomcat下的class文件包含了最新的调整，但是没有自动更新，重启Tomcat后更新生效。尝试调整发布脚本，每次发布时重新启动Tomcat来解决此问题。
