@@ -944,6 +944,8 @@ goaccess -a -d -f /usr/local/nginx/logs/example.log -p /etc/goaccess.conf -o /da
 	\label{fig:ipstatistics}
 \end{figure}
 
+查看统计信息http://www.example.com恶心/upload/statistic.html。
+
 \subsection{Nginx启用压缩}
 
 最近演示时说系统很慢，打开系统查看，首屏加载时间超过8s，确实不符合常规。由于网站是SPA应用，首先查看Javascript大小，竟然有接近8MB大小，对比了线上系统，发现演示系统Javascript没有压缩。这里经过了两级Ngnix代理，内网访问Ngnix代理，浏览器中查看Javascript大小在1.6MB左右，说明内网的Nginx代理已经压缩了Javascript文件，推测可能是另一级需要对代理Nginx做启用gzip压缩配置，尝试在另一级Nginx代理添加如下配置：
@@ -977,9 +979,7 @@ tail -f access.log | awk -F '[' '{print $2}' | awk 'BEGIN{key="";count=0}{if(key
 	\label{fig:websiteconcurrentaccess}
 \end{figure}
 
-
-
-<<<<<<< .mine=======\begin{lstlisting}[language=Bash]
+\begin{lstlisting}[language=Bash]
 goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
 \end{lstlisting}
 
@@ -1011,8 +1011,12 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 \section{编辑中}
 
-\subsection{数据库并发连接查看}
+\subsection{Nginx会话保持}
 
+使用sticky\_cookie\_insert启用会话亲缘关系，这会导致来自同一客户端的请求被传递到一组服务器在同一台服务器。
+
+
+\subsection{Clonezilla}
 
 
 
