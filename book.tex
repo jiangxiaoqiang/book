@@ -714,7 +714,7 @@ current_date=`date "+%Y%m%d"`
 echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}".csv
 \end{lstlisting}
 
-脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
+数据库实时Session监控脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
 
 \begin{figure}[htbp]
 	\centering
@@ -723,7 +723,7 @@ echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}
 	\label{fig:dbsession}
 \end{figure}
 
-8:50到9:40之间进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
+8:50到9:40时间段进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
 
 \paragraph{增大数据库Session数量上限}目前数据库的会话数量是500，可以调整为1000。
 
@@ -886,12 +886,16 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 			/opt/alibaba/var/image & 存放图片文件 \\
 			\hline
 			/opt/alibaba/local & 存放三方程序 \\
+			\hline
+			/opt/alibaba/backup & 存放备份文件 \\
+			\hline
+			/opt/alibaba/logs & 存放日志文件 \\
 			\hline														
 		\end{tabular}	
 	\end{center}
 \end{table}
 
-考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。
+考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。日志应独立存放，避免放到应用目录下，因为日志文件通常会比较大，独立存放日志好处之一是在新应用部署时，可以直接拷贝app目录，而避免与日志一起拷贝或者需要单独做一步忽略日志的操作。
 
 \subsection{Tomcat请求头设置}
 
@@ -977,9 +981,7 @@ tail -f access.log | awk -F '[' '{print $2}' | awk 'BEGIN{key="";count=0}{if(key
 	\label{fig:websiteconcurrentaccess}
 \end{figure}
 
-
-
-<<<<<<< .mine=======\begin{lstlisting}[language=Bash]
+\begin{lstlisting}[language=Bash]
 goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
 \end{lstlisting}
 
@@ -1011,9 +1013,43 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 \section{编辑中}
 
-\subsection{数据库并发连接查看}
+\subsection{自动构建更新的问题}
 
+有时经常会遇到代码提交后在测试环境总看不到效果的问题。可以使用如下方式逐步排查。第一步检查Jenkins是否获取到了最新的代码，在Jenkins构建目录(/var/lib/jenkins/workspace)下检查最新代码片段。第二步检查Tomcat目录下是否包含最新的调整后的代码，由于Tomcat下是已经编译完毕的class文件，需要借助Luyten\footnote{Luyten是一个出色的Java反编译器,项目地址是\url{https://github.com/deathmarine/Luyten}。}工具打开，查看源码，是否包含最新的改动，如果包含最新改动，说明自动编译构建没问题。这里查看Tomcat下的class文件包含了最新的调整，但是没有自动更新，重启Tomcat后更新生效。尝试调整发布脚本，每次发布时重新启动Tomcat来解决此问题。
 
+\begin{lstlisting}[language=Bash]
+#!/usr/bin/env bash
+
+# 当使用未初始化的变量时，程序自动退出
+set -u
+
+# 当任何一行命令执行失败时，自动退出脚本
+set -e
+
+# 在运行结果之前，先输出执行的那一行命令
+set -x
+
+readonly AUTO_BUILD_OUTPUT_PATH="/var/lib/jenkins/workspace/dolphin/api/target"
+readonly PROGRAM_NAME="cms.war"
+readonly DEPOLY_PATH="/opt/alibaba/local/apache-tomcat-8.0.52/webapps/"
+readonly TOMCAT_BIN_PATH="/opt/haishu/local/apache-tomcat-8.0.52/bin"
+readonly APP_FILE_IDENTITY_NAME="apache-tomcat-8.0.52"
+
+# 停止站点
+ps -ef|grep -w ${APP_FILE_IDENTITY_NAME}|grep -v grep|cut -c 9-15|xargs kill 9
+
+sleep 3
+
+# 拷贝部署文件
+yes|cp -rf ${AUTO_BUILD_OUTPUT_PATH}/cms.war ${DEPOLY_PATH}
+
+# 启动站点
+${TOMCAT_BIN_PATH}/startup.sh
+\end{lstlisting}
+
+\subsection{TCPCopy}
+
+TCPCopy可分为在线模式和离线模式，离线模式首先在线上服务器抓包，再拷贝到测试服务器进行重放。
 
 
 \subsection{Could not get a resource from the pool}
