@@ -1111,6 +1111,81 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 Enter path to handshake file
 
 
+
+\part{Tool}
+
+
+\chapter{Docker}
+
+\section{Docker基础}
+
+\subsection{为什么要用Docker}
+
+其实开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？可大量减少花费在维护、配置不同系统、服务版本不同的时间。
+
+\subsection{Docker安装}
+
+\subsection{安装数据层}
+
+查看MariaDB:
+
+\begin{lstlisting}[language=Bash]
+docker search mariadb
+\end{lstlisting}
+
+安装MariaDB:
+
+\begin{lstlisting}[language=Bash]
+docker pull mariadb
+\end{lstlisting}
+
+安装时，从国外镜像下载的速非常非常慢，首先将下载源调整为国内的下载源。对于使用systemd的系统，在/etc/docker/daemon.json中写入如下内容(不存在此文件新建即可)：
+
+\begin{lstlisting}
+{
+	"registry-mirrors": [
+		"https://registry.docker-cn.com"
+	]
+}
+\end{lstlisting}
+
+运行容器：
+
+\begin{lstlisting}[language=Bash]
+docker run --name MariaDB \
+	-p 3306:3306 \
+	-v /data/db/mariadb:/var/lib/mysql \
+	-e MYSQL_ROOT_PASSWORD=123456 \
+	-d mariadb
+# 运行Jenkins
+docker run -p 8080:8080 \ 
+	-p 50000:50000 \ 
+	-v /usr/local/work/jenkins:/var/jenkins_home \ 
+	--name j01 -idt jenkins
+\end{lstlisting}
+
+p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。
+
+\subsection{Docker导入导出}
+
+查看名称：
+
+\begin{lstlisting}[language=Bash]
+docker ps
+\end{lstlisting}
+
+导出：
+
+\begin{lstlisting}[language=Bash]
+docker import -o MariaDB.tar MariaDB
+\end{lstlisting}
+
+导入：
+
+\begin{lstlisting}[language=Bash]
+docker export MariaDB.tar MariaDB
+\end{lstlisting}
+
 \begin{thebibliography}{0}
 \bibitem{蒋金楠MVC框架揭秘}
 蒋金楠.《ASP.NET MVC 5框架揭秘》.电子工业出版社,2014.
