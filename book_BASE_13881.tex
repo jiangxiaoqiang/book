@@ -714,7 +714,7 @@ current_date=`date "+%Y%m%d"`
 echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}".csv
 \end{lstlisting}
 
-数据库实时Session监控脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
+脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
 
 \begin{figure}[htbp]
 	\centering
@@ -723,7 +723,7 @@ echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}
 	\label{fig:dbsession}
 \end{figure}
 
-8:50到9:40时间段进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
+8:50到9:40之间进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
 
 \paragraph{增大数据库Session数量上限}目前数据库的会话数量是500，可以调整为1000。
 
@@ -740,15 +740,7 @@ echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}
 	\textbf{\textcolor{red}{导致问题的原因：表面看是APP分配的内存资源不足，系统并发性能不足，应对持续并发请求能力需要加强，实际是Tomcat请求头配置过大(100MB)，每个线程会申请对应大小的空间，而大对象JVM直接会放到老年代，一旦并发请求稍多，造成内存溢出。}}
 \end{quote}
 
-上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。新建
-
-\begin{lstlisting}[language=Bash]
-grant codebase "file:/home/local/jdk1.8.0_111/lib/tools.jar" {   
-	permission java.security.AllPermission;   
-};
-\end{lstlisting}
-
-在服务端启动jstatd(Java State Daemon)守护进程:
+上周网站Down掉，本周接口Down掉，愉快的周末泡汤了。所以，暗自忖度，一定要找到问所在。Heap的大小是Young Generation 和Tenured Generaion 之和。在JVM中如果98\%的时间是用于GC,且可用的Heap size 不足2\%的时候将抛出此异常信息。内存溢出一般分为2种情况，一时是超出预期的访问量/数据量，另一种是内存泄露(Memory leak)。第一次的内存溢出异常有hprof文件，将文件拷贝出来进行分析。第二次接口异常没有生成hprof，采用VisualVM\footnote{VisualVM在JDK安装包中附带，在\$JAVA\_HOME/bin目录下。}分析内存情况。在服务端启动jstatd(Java State Daemon)守护进程:
 
 \begin{lstlisting}[language=Bash]
 # 启动统计守护进程
@@ -758,30 +750,6 @@ jmap -dump:format=b,file=/opt/example.dump [pid]
 \end{lstlisting}
 
 在本地使用VisualVM监视服务端JVM的运行情况，内存的增长速度在4-5MB/s,2GB的内存在4-5min就被消耗完毕，接着进行一次YGC(Young Garbage Collection)。初步监测，老年代(Old Generation)的内存的确在不断增长。但是仅凭此点，无法下结论一定存在内存泄漏，如果老年代在以后执行GC(Garbage Collection)后，老年代(Old Generation)初始内存不停增长，才可以推断的确存在内存泄漏，因为不停增加的初始内存，标志着有部分内存永远无法被FGC回收，随着程序的不断运行，必定会由于内存不足而Hang住。
-
-\begin{table}[htbp]
-	\caption{应用内存消耗}
-	\label{table:appmemoryusing}
-	\begin{center}
-		\begin{tabular}{|c|c|p{2cm}|}
-			\hline
-			\multirow{1}{*}{并发数量}
-			& \multicolumn{1}{c|}{Old Generation内存消耗} 
-			& \multicolumn{1}{c|}{连接个数}\\			
-			\cline{1-3}
-			0 &  404MB  & 100 \\
-			\hline
-			1 &  1.119GB  & 100 \\
-			\hline
-			10 &  3.847GB  & 100 \\
-			\hline
-			20 &  3.689GB  & 100 \\
-			\hline
-			30 &  4.834GB  & 100 \\
-			\hline											
-		\end{tabular}	
-	\end{center}
-\end{table}
 
 在一段时期内，程序一启动老年代就已经满了，占用率直接100\%。开始是以为流量较高，YGC频繁，不停的有经过多次YGC未回收的对象移入老年代，最多FGC执行频繁一些罢了。后来更为诡异的事情发生了，机器突然变得非常卡顿，磁盘使用量快速增长，最后程序直接无法启动，启动不到30s立即停止响应或者直接输出Java Heap space错误。
 
@@ -918,36 +886,13 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 			/opt/alibaba/var/image & 存放图片文件 \\
 			\hline
 			/opt/alibaba/local & 存放三方程序 \\
-			\hline
-			/opt/alibaba/backup & 存放备份文件 \\
-			\hline
-			/opt/alibaba/logs & 存放日志文件 \\
 			\hline														
 		\end{tabular}	
 	\end{center}
 \end{table}
 
-考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。日志应独立存放，避免放到应用目录下，因为日志文件通常会比较大，独立存放日志好处之一是在新应用部署时，可以直接拷贝app目录，而避免与日志一起拷贝或者需要单独做一步忽略日志的操作。
+考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。
 
-<<<<<<< HEAD
-\chapter{部署}
-
-
-\section{title}
-
-
-\subsection{Platform}
-
-
-关闭防火墙：
-
-\begin{lstlisting}[language=Bash]
-systemctl stop firewalld.service
-\end{lstlisting}
-
-
-
-=======
 \subsection{Tomcat请求头设置}
 
 App在启动的时候占用老年代内存较大，当并发增大时，消耗内存迅速增加。经过排查，是maxHttpHeaderSize参数配置过大。
@@ -964,7 +909,6 @@ server.max-http-header-size=102400000
 \end{lstlisting}
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
->>>>>>> b9ec6079217b311e422f99fcf8d201cc7ad906c3
 
 \subsection{GoAccess}
 
@@ -1033,7 +977,9 @@ tail -f access.log | awk -F '[' '{print $2}' | awk 'BEGIN{key="";count=0}{if(key
 	\label{fig:websiteconcurrentaccess}
 \end{figure}
 
-\begin{lstlisting}[language=Bash]
+
+
+<<<<<<< .mine=======\begin{lstlisting}[language=Bash]
 goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
 \end{lstlisting}
 
@@ -1065,45 +1011,9 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 \section{编辑中}
 
-\subsection{Clonezilla}
+\subsection{数据库并发连接查看}
 
-\subsection{自动构建更新的问题}
 
-有时经常会遇到代码提交后在测试环境总看不到效果的问题。可以使用如下方式逐步排查。第一步检查Jenkins是否获取到了最新的代码，在Jenkins构建目录(/var/lib/jenkins/workspace)下检查最新代码片段。第二步检查Tomcat目录下是否包含最新的调整后的代码，由于Tomcat下是已经编译完毕的class文件，需要借助Luyten\footnote{Luyten是一个出色的Java反编译器,项目地址是\url{https://github.com/deathmarine/Luyten}。}工具打开，查看源码，是否包含最新的改动，如果包含最新改动，说明自动编译构建没问题。这里查看Tomcat下的class文件包含了最新的调整，但是没有自动更新，重启Tomcat后更新生效。尝试调整发布脚本，每次发布时重新启动Tomcat来解决此问题。
-
-\begin{lstlisting}[language=Bash]
-#!/usr/bin/env bash
-
-# 当使用未初始化的变量时，程序自动退出
-set -u
-
-# 当任何一行命令执行失败时，自动退出脚本
-set -e
-
-# 在运行结果之前，先输出执行的那一行命令
-set -x
-
-readonly AUTO_BUILD_OUTPUT_PATH="/var/lib/jenkins/workspace/dolphin/api/target"
-readonly PROGRAM_NAME="cms.war"
-readonly DEPOLY_PATH="/opt/alibaba/local/apache-tomcat-8.0.52/webapps/"
-readonly TOMCAT_BIN_PATH="/opt/haishu/local/apache-tomcat-8.0.52/bin"
-readonly APP_FILE_IDENTITY_NAME="apache-tomcat-8.0.52"
-
-# 停止站点
-ps -ef|grep -w ${APP_FILE_IDENTITY_NAME}|grep -v grep|cut -c 9-15|xargs kill 9
-
-sleep 3
-
-# 拷贝部署文件
-yes|cp -rf ${AUTO_BUILD_OUTPUT_PATH}/cms.war ${DEPOLY_PATH}
-
-# 启动站点
-${TOMCAT_BIN_PATH}/startup.sh
-\end{lstlisting}
-
-\subsection{TCPCopy}
-
-TCPCopy可分为在线模式和离线模式，离线模式首先在线上服务器抓包，再拷贝到测试服务器进行重放。
 
 
 \subsection{Could not get a resource from the pool}
@@ -1162,81 +1072,6 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 Enter path to handshake file
 
-
-
-\part{Tool}
-
-
-\chapter{Docker}
-
-\section{Docker基础}
-
-\subsection{为什么要用Docker}
-
-其实开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？可大量减少花费在维护、配置不同系统、服务版本不同的时间。
-
-\subsection{Docker安装}
-
-\subsection{安装数据层}
-
-查看MariaDB:
-
-\begin{lstlisting}[language=Bash]
-docker search mariadb
-\end{lstlisting}
-
-安装MariaDB:
-
-\begin{lstlisting}[language=Bash]
-docker pull mariadb
-\end{lstlisting}
-
-安装时，从国外镜像下载的速非常非常慢，首先将下载源调整为国内的下载源。对于使用systemd的系统，在/etc/docker/daemon.json中写入如下内容(不存在此文件新建即可)：
-
-\begin{lstlisting}
-{
-	"registry-mirrors": [
-		"https://registry.docker-cn.com"
-	]
-}
-\end{lstlisting}
-
-运行容器：
-
-\begin{lstlisting}[language=Bash]
-docker run --name MariaDB \
-	-p 3306:3306 \
-	-v /data/db/mariadb:/var/lib/mysql \
-	-e MYSQL_ROOT_PASSWORD=123456 \
-	-d mariadb
-# 运行Jenkins
-docker run -p 8080:8080 \ 
-	-p 50000:50000 \ 
-	-v /usr/local/work/jenkins:/var/jenkins_home \ 
-	--name j01 -idt jenkins
-\end{lstlisting}
-
-p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。
-
-\subsection{Docker导入导出}
-
-查看名称：
-
-\begin{lstlisting}[language=Bash]
-docker ps
-\end{lstlisting}
-
-导出：
-
-\begin{lstlisting}[language=Bash]
-docker import -o MariaDB.tar MariaDB
-\end{lstlisting}
-
-导入：
-
-\begin{lstlisting}[language=Bash]
-docker export MariaDB.tar MariaDB
-\end{lstlisting}
 
 \begin{thebibliography}{0}
 \bibitem{蒋金楠MVC框架揭秘}
