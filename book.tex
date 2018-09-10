@@ -1121,7 +1121,12 @@ systemctl stop firewalld.service
 
 \subsection{TCPCopy}
 
-TCPCopy可分为在线模式和离线模式，离线模式首先在线上服务器抓包，再拷贝到测试服务器进行重放。
+这里需要实现生产服务器抓取到流量，在测试服务器上进行回放，回放时可以适当放大流量，使程序实际具有更强的处理能力。TCPCopy可分为在线模式和离线模式，离线模式首先在线上服务器抓包，再拷贝到测试服务器进行重放。使用命令dump流量：
+
+\begin{lstlisting}[language=Bash]
+tcpdump -i eth0 -w /tmp/xxx.cap
+\end{lstlisting}
+
 
 
 \subsection{Could not get a resource from the pool}
