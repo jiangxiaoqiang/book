@@ -1080,9 +1080,6 @@ yes|cp -rf ${AUTO_BUILD_OUTPUT_PATH}/cms.war ${DEPOLY_PATH}
 ${TOMCAT_BIN_PATH}/startup.sh
 \end{lstlisting}
 
-
-\chapter{部署}
-
 \subsection{Non-resolvable parent POM for Could not find artifact and 'parent.relativePath' points at wrong local POM}
 
 Maven构建时提示如下错误：
@@ -1102,7 +1099,11 @@ Non-resolvable parent POM for Could not find artifact and 'parent.relativePath' 
 </classpathentry>
 \end{lstlisting}
 
+.classpath文件用于记录项目编译环境的所有信息，包括：源文件路径、编译后class文件存放路径、依赖的jar包路径、运行的容器信息、依赖的外部project等信息。另查看Maven Repositor在菜单Window->Show View->Other...->Maven->Maven Repositories下。
 
+
+
+\chapter{部署}
 
 
 \subsection{Platform}
