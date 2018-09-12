@@ -1196,7 +1196,17 @@ Enter path to handshake file
 
 \subsection{为什么要用Docker}
 
-其实开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？可大量减少花费在维护、配置不同系统、服务版本不同的时间。
+好不容易配置部署了redmine，结果后面换了一台机器，又重新部署一遍？其实绝大部都是配置的工作，繁琐又重复，其实我们没有办法也没有必要记住每一步操作步骤，先安装什么，安装好了再修改哪个文件的配置，重复的劳动没有任何意义。开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？以上这些问题，就是Docker要解决的问题，可大量减少花费在维护、配置不同系统的时间。常用命令:
+
+\begin{lstlisting}[language=Bash]
+# 查看当前运行的容器
+docker ps
+# 登陆Docker容器
+docker exec -it f5605d02f9f5 bash
+# 登陆Docker后，登陆MariaDB
+mysql -h127.0.0.1 -uroot -p123456
+\end{lstlisting}
+
 
 \subsection{Docker安装}
 
@@ -1239,7 +1249,14 @@ docker run -p 8080:8080 \
 	--name j01 -idt jenkins
 \end{lstlisting}
 
-p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。
+p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
+
+\begin{lstlisting}[language=Bash]
+# 启动MariaDB
+docker run --name mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb
+\end{lstlisting}
+
+
 
 \subsection{Docker导入导出}
 
