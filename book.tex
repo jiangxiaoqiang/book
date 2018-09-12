@@ -1118,6 +1118,47 @@ systemctl stop firewalld.service
 
 \section{编辑中}
 
+\subsection{LocalDateTime格式化}
+
+在Spring中，接收LocalDateTime日期时间数据时，只需要使用@DateTimeFormat注解即可。由于没有加注解，返回的时间格式如下：
+
+
+\begin{lstlisting}
+{
+	"message": "ok",
+	"code": 2000,
+	"data": {
+	"dtexample": [
+			2018,
+			9,
+			12,
+			22,
+			12,
+			45,
+			347000000
+		]
+	}
+}
+
+\end{lstlisting}
+
+在Model的字段上添加时间格式的注解：
+
+\begin{lstlisting}[language=Java]
+@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+\end{lstlisting}
+
+返回的时间格式如下：
+
+\begin{lstlisting}
+{
+	"message": "ok",
+	"code": 2000,
+	"data": {
+		"dtexample": "2018-09-12 22:13:16"
+	}
+}
+\end{lstlisting}
 
 \subsection{TCPCopy}
 
