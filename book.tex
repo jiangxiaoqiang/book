@@ -1120,8 +1120,39 @@ systemctl stop firewalld.service
 
 \subsection{LocalDateTime格式化}
 
-在Spring中，接收LocalDateTime日期时间数据时，只需要使用@DateTimeFormat注解即可。由于没有加注解，返回的时间格式如下：
+在Spring中，接收LocalDateTime日期时间数据时，只需要使用@DateTimeFormat注解即可。在没有引用jsr310(Java Specification Requests)包时：
 
+\begin{lstlisting}
+compile ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.1")
+\end{lstlisting}
+
+返回的日期序列化后如下：
+\begin{lstlisting}
+{
+	"message": "ok",
+	"code": 2000,
+	"data": {
+		"dtexample": {
+			"hour": 23,
+			"minute": 11,
+			"second": 16,
+			"nano": 350000000,
+			"dayOfYear": 255,
+			"dayOfWeek": "WEDNESDAY",
+			"month": "SEPTEMBER",
+			"dayOfMonth": 12,
+			"year": 2018,
+			"monthValue": 9,
+			"chronology": {
+				"calendarType": "iso8601",
+				"id": "ISO"
+			}
+		}
+	}
+}
+\end{lstlisting}
+
+jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeFormatter用于对格式化/解析的支持。JSR 310规范领导者Stephen Colebourne就是joda-time作者，其主要思想也是借鉴了joda-time，而不是直接把joda-time移植到Java平台中。添加jsr包没有加注解的情况下，返回的时间格式如下：
 
 \begin{lstlisting}
 {
@@ -1148,7 +1179,7 @@ systemctl stop firewalld.service
 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
 \end{lstlisting}
 
-返回的时间格式如下：
+返回的时间格式如下\footnote{\url{https://geowarin.com/correctly-handle-jsr-310-java-8-dates-with-jackson/}}：
 
 \begin{lstlisting}
 {
