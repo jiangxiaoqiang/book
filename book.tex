@@ -1101,23 +1101,6 @@ Non-resolvable parent POM for Could not find artifact and 'parent.relativePath' 
 
 .classpath文件用于记录项目编译环境的所有信息，包括：源文件路径、编译后class文件存放路径、依赖的jar包路径、运行的容器信息、依赖的外部project等信息。另查看Maven Repositor在菜单Window->Show View->Other...->Maven->Maven Repositories下。
 
-
-
-\chapter{部署}
-
-
-\subsection{Platform}
-
-
-关闭防火墙：
-
-\begin{lstlisting}[language=Bash]
-systemctl stop firewalld.service
-\end{lstlisting}
-
-
-\section{编辑中}
-
 \subsection{LocalDateTime格式化}
 
 在Spring中，接收LocalDateTime日期时间数据时，只需要使用@DateTimeFormat注解即可。在没有引用jsr310(Java Specification Requests)包时：
@@ -1190,6 +1173,8 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 	}
 }
 \end{lstlisting}
+
+\section{编辑中}
 
 \subsection{TCPCopy}
 
