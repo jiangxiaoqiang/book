@@ -1162,7 +1162,7 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
 \end{lstlisting}
 
-返回的时间格式如下\footnote{\url{https://geowarin.com/correctly-handle-jsr-310-java-8-dates-with-jackson/}}：
+返回的时间格式如下\footnote{参考文章：\url{https://geowarin.com/correctly-handle-jsr-310-java-8-dates-with-jackson/}}：
 
 \begin{lstlisting}
 {
@@ -1175,6 +1175,13 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 \end{lstlisting}
 
 \section{编辑中}
+
+
+
+./redis-cli -h localhost -p 6379
+auth eEUuNIMEIBsCF
+select 8
+FLUSHALL
 
 \subsection{TCPCopy}
 
@@ -1311,6 +1318,11 @@ p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。
 \begin{lstlisting}[language=Bash]
 # 启动MariaDB
 docker run --name mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb
+
+# 启动Jenkins
+docker run --name jenkins -p 8080:8080 -p 50000:50000 --env JAVA_OPTS="-Xmx8192m" --env JAVA_OPTS="-Djava.util.logging.config.file=/home/osboxes/jenkins_home_docker/log.properties"  --env JENKINS_SLAVE_AGENT_PORT=50000 -v /usr/local/work/jenkins:/var/jenkins_home jenkinsci/jenkins
+
+docker run -itd -p 8080:8080 -p 50000:50000 --name jenkins --privileged=true  -v /home/hzq/jenkins:/var/jenkins_home jenkins
 \end{lstlisting}
 
 
