@@ -1176,7 +1176,7 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 
 \subsection{invalid constant type: 18}
 
-Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8下运行项目需要javassist 3.18.2-GA及以上版本\footnote{\url{https://stackoverflow.com/questions/24281235/error-creating-entitymanagerfactory-due-to-error-tying-to-scan-jar-file}}，添加依赖：
+Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8下运行项目需要javassist 3.18.2-GA及以上版本\footnote{\url{https://stackoverflow.com/questions/24281235/error-creating-entitymanagerfactory-due-to-error-tying-to-scan-jar-file}}，在hibernate entity manager包中的AbstractJarVisitor类中有调用,添加依赖：
 
 \begin{lstlisting}[language=Bash]
 <dependency>
