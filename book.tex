@@ -1162,7 +1162,7 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
 \end{lstlisting}
 
-返回的时间格式如下\footnote{\url{https://geowarin.com/correctly-handle-jsr-310-java-8-dates-with-jackson/}}：
+返回的时间格式如下\footnote{参考文章：\url{https://geowarin.com/correctly-handle-jsr-310-java-8-dates-with-jackson/}}：
 
 \begin{lstlisting}
 {
@@ -1174,7 +1174,30 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 }
 \end{lstlisting}
 
+\subsection{invalid constant type: 18}
+
+Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8下运行项目需要javassist 3.18.2-GA及以上版本\footnote{\url{https://stackoverflow.com/questions/24281235/error-creating-entitymanagerfactory-due-to-error-tying-to-scan-jar-file}}，添加依赖：
+
+\begin{lstlisting}[language=Bash]
+<dependency>
+	<groupId>org.javassist</groupId>
+	<artifactId>javassist</artifactId>
+	<version>3.18.2-GA</version>
+</dependency>
+\end{lstlisting}
+
+CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
+
 \section{编辑中}
+
+
+
+
+
+./redis-cli -h localhost -p 6379
+auth eEUuNIMEIBsCF
+select 8
+FLUSHALL
 
 \subsection{缓存雪崩(Cache stampede)}
 
@@ -1255,6 +1278,13 @@ dnf install python-matplotlib
 
 
 redis为了避免客户端连接数过多，有一个timeout配置，意思是如果连接的空闲时间超过了timeout的值，则关闭连接。默认配置是0，意思是没有超时限制，永远不关闭连接。
+
+\subsection{fluxion}
+
+Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
+
+Enter path to handshake file
+
 
 
 \part{Tool}

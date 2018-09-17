@@ -846,7 +846,7 @@ AbstractEndpoint<NioChannel> endpoint) throws IOException {
 }
 \end{lstlisting}
 
-在处理请求的线程初始化时，根据请求头大小新构建一个byte数组，原来是请求头设置过大。系统在生成byte数组时，判断是大对象，直接将对象放到老年代中，造成老年代消耗内存急速增长。
+在处理请求的线程初始化时，根据请求头大小新构建一个byte数组(\textcolor{red}{new byte[bufLength]})，原来是请求头设置过大。系统在生成byte数组时，判断是大对象，直接将对象放到老年代中，造成老年代消耗内存急速增长。
 
 \subsection{报表在现场演示环境无法打开}
 
@@ -929,25 +929,9 @@ http://192.168.1.11:28081/api/example?name=\&page=1\&size=10|jq '.'
 
 考虑到安全，程序启动须使用alibaba帐号，不使用root启动应用程序。日志应独立存放，避免放到应用目录下，因为日志文件通常会比较大，独立存放日志好处之一是在新应用部署时，可以直接拷贝app目录，而避免与日志一起拷贝或者需要单独做一步忽略日志的操作。
 
-<<<<<<< HEAD
-\chapter{部署}
-
-
-\section{title}
-
-
-\subsection{Platform}
-
-
-关闭防火墙：
-
-\begin{lstlisting}[language=Bash]
-systemctl stop firewalld.service
-\end{lstlisting}
 
 
 
-=======
 \subsection{Tomcat请求头设置}
 
 App在启动的时候占用老年代内存较大，当并发增大时，消耗内存迅速增加。经过排查，是maxHttpHeaderSize参数配置过大。
@@ -964,7 +948,7 @@ server.max-http-header-size=102400000
 \end{lstlisting}
 
 这种问题应该是很明显的，为何到现在才发现？对比了旧版的配置，旧版配置的是1MB。估计在新版配置的时候顺手将开发环境的配置拷贝到生产，而开发环境的配置比较随意。Tomcat在处理HTTP请求时，会直接申请maxHttpHeaderSize大小的内存空间，而不仅仅是一个限制。
->>>>>>> b9ec6079217b311e422f99fcf8d201cc7ad906c3
+
 
 \subsection{GoAccess}
 
@@ -1062,14 +1046,6 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 	\label{fig:ipstatistics}
 \end{figure}
 
-<<<<<<< HEAD
-=======
-
-\section{编辑中}
-
-\subsection{Clonezilla}
-
->>>>>>> ef7f3b71c8ea67942068340da25d9c77a1620c7e
 \subsection{自动构建更新的问题}
 
 有时经常会遇到代码提交后在测试环境总看不到效果的问题。可以使用如下方式逐步排查。第一步检查Jenkins是否获取到了最新的代码，在Jenkins构建目录(/var/lib/jenkins/workspace)下检查最新代码片段。第二步检查Tomcat目录下是否包含最新的调整后的代码，由于Tomcat下是已经编译完毕的class文件，需要借助Luyten\footnote{Luyten是一个出色的Java反编译器,项目地址是\url{https://github.com/deathmarine/Luyten}。}工具打开，查看源码，是否包含最新的改动，如果包含最新改动，说明自动编译构建没问题。这里查看Tomcat下的class文件包含了最新的调整，但是没有自动更新，重启Tomcat后更新生效。尝试调整发布脚本，每次发布时重新启动Tomcat来解决此问题。
@@ -1104,16 +1080,139 @@ yes|cp -rf ${AUTO_BUILD_OUTPUT_PATH}/cms.war ${DEPOLY_PATH}
 ${TOMCAT_BIN_PATH}/startup.sh
 \end{lstlisting}
 
+\subsection{Non-resolvable parent POM for Could not find artifact and 'parent.relativePath' points at wrong local POM}
+
+Maven构建时提示如下错误：
+
+\begin{lstlisting}
+Non-resolvable parent POM for Could not find artifact and 'parent.relativePath' points at wrong local POM
+\end{lstlisting}
+
+在Windows->Proference->Maven->User Settings中，调整Maven的配置文件的位置为D:/maven3/maven3/conf/settings.xml，重新构建即可。另外在项目中，某一个项目中没有Maven Dependency，导致依赖包无法找到，在项目的.classpath文件中添加如下配置即可：
+
+\begin{lstlisting}[language=XML]
+<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+	<attributes>
+		<attribute name="maven.pomderived" value="true"/>
+		<attribute name="org.eclipse.jst.component.nondependency" value=""/>
+	</attributes>
+</classpathentry>
+\end{lstlisting}
+
+.classpath文件用于记录项目编译环境的所有信息，包括：源文件路径、编译后class文件存放路径、依赖的jar包路径、运行的容器信息、依赖的外部project等信息。另查看Maven Repositor在菜单Window->Show View->Other...->Maven->Maven Repositories下。
+
+\subsection{LocalDateTime格式化}
+
+在Spring中，接收LocalDateTime日期时间数据时，只需要使用@DateTimeFormat注解即可。在没有引用jsr310(Java Specification Requests)包时：
+
+\begin{lstlisting}
+compile ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.1")
+\end{lstlisting}
+
+返回的日期序列化后如下：
+\begin{lstlisting}
+{
+	"message": "ok",
+	"code": 2000,
+	"data": {
+		"dtexample": {
+			"hour": 23,
+			"minute": 11,
+			"second": 16,
+			"nano": 350000000,
+			"dayOfYear": 255,
+			"dayOfWeek": "WEDNESDAY",
+			"month": "SEPTEMBER",
+			"dayOfMonth": 12,
+			"year": 2018,
+			"monthValue": 9,
+			"chronology": {
+				"calendarType": "iso8601",
+				"id": "ISO"
+			}
+		}
+	}
+}
+\end{lstlisting}
+
+jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeFormatter用于对格式化/解析的支持。JSR 310规范领导者Stephen Colebourne就是joda-time作者，其主要思想也是借鉴了joda-time，而不是直接把joda-time移植到Java平台中。添加jsr包没有加注解的情况下，返回的时间格式如下：
+
+\begin{lstlisting}
+{
+	"message": "ok",
+	"code": 2000,
+	"data": {
+	"dtexample": [
+			2018,
+			9,
+			12,
+			22,
+			12,
+			45,
+			347000000
+		]
+	}
+}
+
+\end{lstlisting}
+
+在Model的字段上添加时间格式的注解：
+
+\begin{lstlisting}[language=Java]
+@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+\end{lstlisting}
+
+返回的时间格式如下\footnote{参考文章：\url{https://geowarin.com/correctly-handle-jsr-310-java-8-dates-with-jackson/}}：
+
+\begin{lstlisting}
+{
+	"message": "ok",
+	"code": 2000,
+	"data": {
+		"dtexample": "2018-09-12 22:13:16"
+	}
+}
+\end{lstlisting}
+
 \section{编辑中}
 
+<<<<<<< HEAD
+\subsection{缓存雪崩(Cache stampede)}
 
-D:\maven3\maven3\bin\mvn.bat install
+当系统在高负载时，缓存失效后，导致大量的查询请求打在后端数据库上，导致数据库不堪负载，导致宕机。避免缓存雪崩可以采用如下方式。
+
+\subsubsection{锁(Lock)}
+
+获取缓存key时，加锁。加锁减轻了数据库的压力，但是并没有提高系统吞吐量。锁住的时候，其他的线程都在等待。
+
+\subsubsection{设置过期标志更新缓存}
+
+1、缓存标记：记录缓存数据是否过期，如果过期会触发通知另外的线程在后台去更新实际key的缓存；
+
+2、缓存数据：它的过期时间比缓存标记的时间延长1倍，例：标记缓存时间30分钟，数据缓存设置为60分钟。 这样，当缓存标记key过期后，实际缓存还能把旧数据返回给调用端，直到另外的线程在后台更新完成后，才会返回新缓存\footnote{\url{http://www.cnblogs.com/leeSmall/p/8594542.html}}。
+
+每一个缓存数据增加相应的缓存标记，记录缓存的是否失效，如果缓存标记失效，则更新数据缓存。
+
+\subsubsection{为key设置不同的缓存失效时间}
 
 
+=======
+
+
+./redis-cli -h localhost -p 6379
+auth eEUuNIMEIBsCF
+select 8
+FLUSHALL
+>>>>>>> bb98aa6c4a3c2da31d01802a455cbda7f550f593
 
 \subsection{TCPCopy}
 
-TCPCopy可分为在线模式和离线模式，离线模式首先在线上服务器抓包，再拷贝到测试服务器进行重放。
+这里需要实现生产服务器抓取到流量，在测试服务器上进行回放，回放时可以适当放大流量，使程序实际具有更强的处理能力。TCPCopy可分为在线模式和离线模式，离线模式首先在线上服务器抓包，再拷贝到测试服务器进行重放。使用命令dump流量：
+
+\begin{lstlisting}[language=Bash]
+tcpdump -i eth0 -w /tmp/xxx.cap
+\end{lstlisting}
+
 
 
 \subsection{Could not get a resource from the pool}
@@ -1166,13 +1265,6 @@ dnf install python-matplotlib
 
 redis为了避免客户端连接数过多，有一个timeout配置，意思是如果连接的空闲时间超过了timeout的值，则关闭连接。默认配置是0，意思是没有超时限制，永远不关闭连接。
 
-\subsection{fluxion}
-
-Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
-
-Enter path to handshake file
-
-
 
 \part{Tool}
 
@@ -1183,7 +1275,17 @@ Enter path to handshake file
 
 \subsection{为什么要用Docker}
 
-其实开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？可大量减少花费在维护、配置不同系统、服务版本不同的时间。
+好不容易配置部署了redmine，结果后面换了一台机器，又重新部署一遍？其实绝大部都是配置的工作，繁琐又重复，其实我们没有办法也没有必要记住每一步操作步骤，先安装什么，安装好了再修改哪个文件的配置，重复的劳动没有任何意义。开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？以上这些问题，就是Docker要解决的问题，可大量减少花费在维护、配置不同系统的时间。常用命令:
+
+\begin{lstlisting}[language=Bash]
+# 查看当前运行的容器
+docker ps
+# 登陆Docker容器
+docker exec -it f5605d02f9f5 bash
+# 登陆Docker后，登陆MariaDB
+mysql -h127.0.0.1 -uroot -p123456
+\end{lstlisting}
+
 
 \subsection{Docker安装}
 
@@ -1226,7 +1328,36 @@ docker run -p 8080:8080 \
 	--name j01 -idt jenkins
 \end{lstlisting}
 
-p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。
+p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
+
+\begin{lstlisting}[language=Bash]
+# 启动MariaDB
+docker run --name mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb
+
+# 启动Jenkins
+<<<<<<< HEAD
+docker run -p 8080:8080 -v /usr/local/work/jenkins:/var/jenkins_home -t jenkins
+=======
+docker run --name jenkins -p 8080:8080 -p 50000:50000 --env JAVA_OPTS="-Xmx8192m" --env JAVA_OPTS="-Djava.util.logging.config.file=/home/osboxes/jenkins_home_docker/log.properties"  --env JENKINS_SLAVE_AGENT_PORT=50000 -v /usr/local/work/jenkins:/var/jenkins_home jenkinsci/jenkins
+
+docker run -itd -p 8080:8080 -p 50000:50000 --name jenkins --privileged=true  -v /home/hzq/jenkins:/var/jenkins_home jenkins
+>>>>>>> bb98aa6c4a3c2da31d01802a455cbda7f550f593
+\end{lstlisting}
+
+启动Jenkins可能会出现如下错误：
+
+\begin{lstlisting}[language=Bash]
+touch: cannot touch ‘/var/jenkins_home/copy_reference_file.log’: Permission denied
+Can not write to /var/jenkins_home/copy_reference_file.log. Wrong volume permissions?
+\end{lstlisting}
+
+当映射本地数据卷时，/home/docker/jenkins目录的拥有者为root用户，而容器中jenkins user的uid为1000。需要调整目录权限：
+
+\begin{lstlisting}[language=Bash]
+sudo chown -R 1000:1000 /home/docker/jenkins
+\end{lstlisting}
+
+启动后就可以通过本地的8080端口登陆Jenkin了。
 
 \subsection{Docker导入导出}
 
