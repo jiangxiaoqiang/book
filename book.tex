@@ -1186,7 +1186,25 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 </dependency>
 \end{lstlisting}
 
-CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。更新依赖后，需要检查项目所有引用都指向新的依赖包，如果某些依赖还是指向旧的依赖，还是会出现加载jar包出现invalid constant问题。
+CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。更新依赖后，需要检查项目所有引用都指向新的依赖包，如果某些依赖还是指向旧的依赖，还是会出现加载jar包出现invalid constant问题。排除parant依赖可以在子项目中声明新的依赖，Maven会覆盖父项目的依赖定义：
+
+
+\begin{lstlisting}[language=XML]
+<dependency>
+	<groupId>org.hibernate</groupId>
+	<artifactId>hibernate-core</artifactId>
+	<version>${hibernate.version}</version>
+	<exclusions>
+		<exclusion>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<version>3.15.0-GA</version>
+		</exclusion>
+	</exclusions>
+</dependency>
+\end{lstlisting}
+
+以上定义说明hibernate-core排除3.15.0-GA版本的javassist包，使用更高版本的包，解决javassist在JDK 8下兼容性问题。
 
 \section{编辑中}
 
