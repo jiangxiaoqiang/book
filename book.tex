@@ -1174,7 +1174,23 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 }
 \end{lstlisting}
 
+\subsection{invalid constant type: 18}
+
+Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8下运行项目需要javassist 3.18.2-GA及以上版本\footnote{\url{https://stackoverflow.com/questions/24281235/error-creating-entitymanagerfactory-due-to-error-tying-to-scan-jar-file}}，在hibernate entity manager包中的AbstractJarVisitor类中有调用,添加依赖：
+
+\begin{lstlisting}[language=Bash]
+<dependency>
+	<groupId>org.javassist</groupId>
+	<artifactId>javassist</artifactId>
+	<version>3.18.2-GA</version>
+</dependency>
+\end{lstlisting}
+
+CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
+
 \section{编辑中}
+
+
 
 
 
@@ -1182,6 +1198,26 @@ jsr310提供了对java.util.Date的替代，另外还提供了新的DateTimeForm
 auth eEUuNIMEIBsCF
 auth eEUuNIMEIBsCF
 FLUSHALL
+
+\subsection{缓存雪崩(Cache stampede)}
+
+当系统在高负载时，缓存失效后，导致大量的查询请求打在后端数据库上，导致数据库不堪负载，导致宕机。避免缓存雪崩可以采用如下方式。
+
+\subsubsection{锁(Lock)}
+
+获取缓存key时，加锁。加锁减轻了数据库的压力，但是并没有提高系统吞吐量。锁住的时候，其他的线程都在等待。
+
+\subsubsection{设置过期标志更新缓存}
+
+1、缓存标记：记录缓存数据是否过期，如果过期会触发通知另外的线程在后台去更新实际key的缓存；
+
+2、缓存数据：它的过期时间比缓存标记的时间延长1倍，例：标记缓存时间30分钟，数据缓存设置为60分钟。 这样，当缓存标记key过期后，实际缓存还能把旧数据返回给调用端，直到另外的线程在后台更新完成后，才会返回新缓存\footnote{\url{http://www.cnblogs.com/leeSmall/p/8594542.html}}。
+
+每一个缓存数据增加相应的缓存标记，记录缓存的是否失效，如果缓存标记失效，则更新数据缓存。
+
+\subsubsection{为key设置不同的缓存失效时间}
+
+
 
 \subsection{TCPCopy}
 
@@ -1320,12 +1356,23 @@ p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。
 docker run --name mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb
 
 # 启动Jenkins
-docker run --name jenkins -p 8080:8080 -p 50000:50000 --env JAVA_OPTS="-Xmx8192m" --env JAVA_OPTS="-Djava.util.logging.config.file=/home/osboxes/jenkins_home_docker/log.properties"  --env JENKINS_SLAVE_AGENT_PORT=50000 -v /usr/local/work/jenkins:/var/jenkins_home jenkinsci/jenkins
-
-docker run -itd -p 8080:8080 -p 50000:50000 --name jenkins --privileged=true  -v /home/hzq/jenkins:/var/jenkins_home jenkins
+docker run -p 8080:8080 -v /usr/local/work/jenkins:/var/jenkins_home -t jenkins
 \end{lstlisting}
 
+启动Jenkins可能会出现如下错误：
 
+\begin{lstlisting}[language=Bash]
+touch: cannot touch ‘/var/jenkins_home/copy_reference_file.log’: Permission denied
+Can not write to /var/jenkins_home/copy_reference_file.log. Wrong volume permissions?
+\end{lstlisting}
+
+当映射本地数据卷时，/home/docker/jenkins目录的拥有者为root用户，而容器中jenkins user的uid为1000。需要调整目录权限：
+
+\begin{lstlisting}[language=Bash]
+sudo chown -R 1000:1000 /home/docker/jenkins
+\end{lstlisting}
+
+启动后就可以通过本地的8080端口登陆Jenkin了。
 
 \subsection{Docker导入导出}
 
