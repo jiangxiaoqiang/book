@@ -1186,7 +1186,7 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 </dependency>
 \end{lstlisting}
 
-CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
+CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。更新依赖后，需要检查项目所有引用都指向新的依赖包，如果某些依赖还是指向旧的依赖，还是会出现加载jar包出现invalid constant问题。
 
 \section{编辑中}
 
