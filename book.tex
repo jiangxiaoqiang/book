@@ -239,6 +239,21 @@ Xiaoqiang \textsc{Jiang}
 
 \section{常见问题排查及解决}
 
+\paragraph{Windows同时连接内外网}
+
+如下命令让所有流量都走10.55.10.1：
+
+\begin{lstlisting}[language=Bash]
+# 添加路由语法
+route ADD destination_network MASK subnet_mask  gateway_ip metric_cost
+# 添加默认路由
+route add -p 0.0.0.0 mask 0.0.0.0 10.55.10.1
+# 10.55开头的流量走网关10.55.10.1
+route -p add 10.55.0.0 mask 255.255.0.0 10.55.10.1 metric 1
+\end{lstlisting}
+
+如果没有指定子网掩码(Subnet Mask)，默认使用255.255.255.0.跳数(Metric)数字越小，优先级越高,Metric为路由术语，译为度，指在路由选择协议算法完成计算后得到的一个变量值，它的目的是确定最佳路由。
+
 \subsection{U盘只读(Read-only file system)}
 
 在拷贝文件到U盘时，提示如下：
@@ -1188,16 +1203,21 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 
 CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
 
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=1]{dependencyconflict.png}
+	\caption{依赖冲突}
+	\label{fig:dependencyconflict}
+\end{figure}
+
+
+
+
 \section{编辑中}
 
 
 
-
-
-./redis-cli -h localhost -p 6379
-auth eEUuNIMEIBsCF
-auth eEUuNIMEIBsCF
-FLUSHALL
 
 \subsection{缓存雪崩(Cache stampede)}
 
@@ -1283,8 +1303,115 @@ redis为了避免客户端连接数过多，有一个timeout配置，意思是�
 
 Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
 
-Enter path to handshake file
+\chapter{Python}
 
+\section{Python练习}
+
+添加Ambari的源：
+
+\begin{lstlisting}[language=Python]
+# 查看Linux版本信息
+cat /etc/redhat-release
+# 下载ambari资源
+wget http://s3.amazonaws.com/public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo
+
+cp ambari.repo /etc/yum.repos.d
+\end{lstlisting}
+
+
+\subsection{反反爬}
+
+在爬取豆瓣的过程中，爬取一段时间后，总是出现404错误。尝试添加HTTP请求头，模拟浏览器的请求。但是在添加请求头之后，没有产生预期的效果，所以采用Charles工具来验证请求头。首先在代码中设置Charles代理：
+
+\begin{lstlisting}[language=Python]
+proxy_support = urllib.request.ProxyHandler({'https': 'localhost:8888'})
+opener = urllib.request.build_opener(proxy_support)
+urllib.request.install_opener(opener)
+req = urllib.request.Request(url)
+\end{lstlisting}
+
+在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。
+
+\subsection{api}
+
+POST请求接口：
+
+\begin{lstlisting}[language=Bash]
+curl -H "Content-Type:application/json" -X POST --data '{"index":"true"}' http://localhost:8000/spider/api/book
+\end{lstlisting}
+
+body传送json数据：
+
+\begin{lstlisting}[language=Bash]
+curl -XPOST -H’Content-Type: application/json’ http://localhost:8000/spider/api/book -d@temp.json
+python3 manage.py runserver 0.0.0.0:9000
+\end{lstlisting}
+
+服务端接收请求：
+
+\begin{lstlisting}[language=Bash]
+location ^~ /spider/api/ {
+	# 匹配爬虫服务URL
+	# 匹配符合以后，停止往下搜索正则，采用这一条
+	proxy_pass http://spider-service;
+}
+\end{lstlisting}
+
+\paragraph{'utf8' codec can't decode byte 0x8b in position 1: invalid start byte}
+
+由于默认请求头包含gzip格式，服务端在返回的时候，对消息体进行了压缩。客户端发送Accept-Encoding请求头表示接收的内容类型。Python默认不自动解压，无法识别，所以出现此问题。
+
+\begin{lstlisting}
+'Accept-Encoding':'gzip, deflate, br',
+\end{lstlisting}
+
+去掉gzip压缩类型即可。
+
+\section{DB}
+
+\subsection{Postgres}
+
+fdw是foreign-data wrapper的一个简称，可以叫外部封装数据,可以在本地数据库操作远程数据库.创建远程server:
+
+\begin{lstlisting}[language=SQL]
+create server server_remote 
+FOREIGN data wrapper postgres_fdw 
+OPTIONS(host '35.194.196.172', port '5432', dbname 'dolphin');
+-- 查看所有远程连接
+SELECT * from pg_foreign_server;
+\end{lstlisting}
+
+在server\_remote下为角色postgres创建一个用户匹配信息，options里是用户名和密码。
+
+\begin{lstlisting}[language=SQL]
+create user mapping for postgres 
+server server_remote 
+options(user 'postgres',password 'postgres');
+\end{lstlisting}
+
+现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。
+
+
+\section{日志中心(Logging Center)}
+
+对日志统一格式定义如下：
+
+
+\begin{lstlisting}
+{
+	"date": "yyyy - MM - dd HH: mm: ss ",
+	"ip/host" "192.168.1.12",
+	"pid": "1211",
+	"topic": "track"
+	"type": "error",
+	"tag": "redis connection refused",
+	"platform": "java/go/php",
+	"level": "info/warn/error",
+	"app": "appName",
+	"module": "com.youzan.somemodule",
+	"detail": "any things you want here"
+}
+\end{lstlisting}
 
 
 \part{Tool}
