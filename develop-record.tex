@@ -545,7 +545,7 @@ addtohook={%
 {\begin{tikzpicture}[remember picture,overlay]
 \node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{background}}; % Background image
 \draw[anchor=north] (midpoint) node [fill=ocre!30!white,fill opacity=0.6,text opacity=1,inner sep=1cm]{\Huge\centering\bfseries\sffamily\parbox[c][][t]{\paperwidth}{\centering 开发记录 \\[15pt] % Book title
-{\Large 卷一}\\[20pt] % Subtitle
+{\Large 卷二}\\[20pt] % Subtitle
 {\large Dolphin}}}; % Author name
 \end{tikzpicture}};
 \end{tikzpicture}
@@ -677,12 +677,7 @@ mkfs.vfat -F 32 /dev/sdb1
 
 运行一段时间后，系统翻页，偶尔返回空数据。经检查，服务端在使用RestTemplate调用接口时，偶尔会返回Read time out错误。Spring RestTemplate的Read time out默认超时时间是1秒，如图\ref{fig:resttempldatedefaulttimeout}所示。当接口的响应时间超过1秒时，会出现read time out错误。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{resttempldatedefaulttimeout.png}
-	\caption{RestTemplate默认超时时间}
-	\label{fig:resttempldatedefaulttimeout}
-\end{figure}
+
 
 上图是Debug跟踪时查看的RestTemplate默认变量。由图中可以看出，默认超时时间是1秒。此时需要增大Read time out的默认超时时间。自定义Read time out超时时间如下代码片段所示：
 
@@ -1043,12 +1038,7 @@ group by clnt_ip,state,user_name
 
 结果如图\ref{fig:sessionstatistics}所示：
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.6]{sessionstatistics.png}
-	\caption{DB当前连接会话统计}
-	\label{fig:sessionstatistics}
-\end{figure}
+
 
 可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter\footnote{\url{http://jmeter.apache.org/}}模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题同样的日志输出，说明问题在此处，需要优化。DBCP当连接数超过最大连接数时，所有连接都会被断开[未找到权威出处]。经过考虑，逐步应用以下优化的方式。
 
@@ -1114,12 +1104,6 @@ echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}
 
 数据库实时Session监控脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{dbsession.bmp}
-	\caption{DB历史会话数统计}
-	\label{fig:dbsession}
-\end{figure}
 
 8:50到9:40时间段进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
 
@@ -1213,12 +1197,7 @@ jmap -dump:format=b,file=/opt/example.dump [pid]
 
 关键的问题是，在当前并发的情况下，不应该消耗如此大的内存。问题在哪里？使用JMap\footnote{\url{https://docs.oracle.com/javase/7/docs/technotes/tools/share/jmap.html}}(Java Memory Map)命令将运行时内存情况输出，采用MAT\footnote{\url{https://www.eclipse.org/mat/}}(The Eclipse Memory Analyzer)工具进行分析，查看内存中的大对象如图\ref{fig:javahprofanalysis}所示。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.3]{javahprofanalysis.png}
-	\caption{Java内存对象分析}
-	\label{fig:javahprofanalysis}
-\end{figure}
+
 
 从Histogram图中可以看出，对象中byte数组的大小超过了8GB，每一个byte数组元素大小是102408208(约102MB)。怎么会有如此大对象？问题非常有可能就出在这些大对象上面了。下载Tomcat 8.0.53(注意下载的源码需要尽量服务器上运行的版本一致，InternalNioInputBuffer类在往后版本的Tomcat已经被移除)源码查看，找到如下代码片段：
 
@@ -1269,12 +1248,6 @@ set url = replace(url,'内网IP','公网IP')
 
 这两天不断有反馈原来很快的查询现在不知道什么原因变慢了，查看了变慢的页面后，确实速度不符合设计预期，正常情况下不应大于200ms，平均响应时间肯定不会超过1s，页面数据是放在接口缓存中。加上调用链路的开销，不应该有延迟。访问接口数据的流程如图\ref{fig:api-request}所示：
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.08]{api-request.jpg}
-	\caption{接口数据调用流程}
-	\label{fig:api-request}
-\end{figure}
 
 首先确定接口缓存有效，在接口服务器上请求接口服务：
 
@@ -1371,21 +1344,11 @@ goaccess -a -d -f /usr/local/nginx/logs/example.log -p /etc/goaccess.conf -o /da
 
 根据URL的访问频率统计信息如图\ref{fig:spideranalysis}所示，从统计图中可以看出，九成以上的请求都集中在一个URL。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.3]{spideranalysis.png}
-	\caption{访问URL统计}
-	\label{fig:spideranalysis}
-\end{figure}
+
 
 根据IP的统计信息如图\ref{fig:ipstatistics}所示，从统计图中可以看出，5成以上的访问请求只服务了3个IP。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.3]{ipstatistics.png}
-	\caption{根据IP统计}
-	\label{fig:ipstatistics}
-\end{figure}
+
 
 \subsection{Nginx启用压缩}
 
@@ -1413,12 +1376,7 @@ tail -f access.log | awk -F '[' '{print $2}' | awk 'BEGIN{key="";count=0}{if(key
 
 结果如图\ref{fig:websiteconcurrentaccess}所示：
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.7]{websiteconcurrentaccess.png}
-	\caption{查看服务器并发示例}
-	\label{fig:websiteconcurrentaccess}
-\end{figure}
+
 
 \begin{lstlisting}[language=Bash]
 goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
@@ -1433,21 +1391,11 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 根据URL的访问频率统计信息如图\ref{fig:spideranalysis}所示，从统计图中可以看出，九成以上的请求都集中在一个URL。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{spideranalysis.png}
-	\caption{访问URL统计}
-	\label{fig:spideranalysis}
-\end{figure}
+
 
 根据IP的统计信息如图\ref{fig:ipstatistics}所示，从统计图中可以看出，5成以上的访问请求只服务了3个IP。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{ipstatistics.png}
-	\caption{根据IP统计}
-	\label{fig:ipstatistics}
-\end{figure}
+
 
 \subsection{自动构建更新的问题}
 
@@ -1592,12 +1540,7 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
 
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=1]{dependencyconflict.png}
-	\caption{依赖冲突}
-	\label{fig:dependencyconflict}
-\end{figure}
+
 
 
 
@@ -1803,8 +1746,130 @@ options(user 'postgres',password 'postgres');
 \end{lstlisting}
 
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{resttempldatedefaulttimeout.png}
+	\caption{RestTemplate默认超时时间}
+	\label{fig:resttempldatedefaulttimeout}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.6]{sessionstatistics.png}
+	\caption{DB当前连接会话统计}
+	\label{fig:sessionstatistics}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{dbsession.bmp}
+	\caption{DB历史会话数统计}
+	\label{fig:dbsession}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.3]{javahprofanalysis.png}
+	\caption{Java内存对象分析}
+	\label{fig:javahprofanalysis}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.08]{api-request.jpg}
+	\caption{接口数据调用流程}
+	\label{fig:api-request}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.35]{spideranalysis.png}
+	\caption{访问URL统计}
+	\label{fig:spideranalysis}
+\end{figure}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.4]{ipstatistics.png}
+	\caption{根据IP统计}
+	\label{fig:ipstatistics}
+\end{figure}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{websiteconcurrentaccess.png}
+	\caption{查看服务器并发示例}
+	\label{fig:websiteconcurrentaccess}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.35]{spideranalysis.png}
+	\caption{访问URL统计}
+	\label{fig:spideranalysis}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.4]{ipstatistics.png}
+	\caption{根据IP统计}
+	\label{fig:ipstatistics}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.7]{dependencyconflict.png}
+	\caption{依赖冲突}
+	\label{fig:dependencyconflict}
+\end{figure}
+
+
+
+
+
 \part{Tool}
 
+\chapter{Widgets}
+
+\section{WireGuard}
+
+生成公钥和私钥：
+
+\begin{lstlisting}[language=Bash]
+wg genkey | tee privatekey | wg pubkey > publickey
+\end{lstlisting}
+
+在服务器上，配置以下内容：
+
+\begin{lstlisting}[language=Bash]
+[Interface]　　
+Address = 192.168.2.1　　
+PrivateKey = <server's privatekey>　　
+ListenPort = 51820　　
+
+[Peer]　　
+PublicKey = <client's publickey>　　
+AllowedIPs = 192.168.2.2/32
+\end{lstlisting}
+
+对于客户端，这是配置：
+
+\begin{lstlisting}[language=Bash]
+[Interface]　　
+Address = 192.168.2.2　　
+PrivateKey = <client's privatekey>　　
+ListenPort = 21841
+　　
+[Peer]　　
+PublicKey = <server's publickey>　　
+Endpoint = <server's ip>:51820　　
+AllowedIPs = 192.168.2.1/24　　
+# This is for if you're behind a NAT and　　
+# want the connection to be kept alive.　　
+PersistentKeepalive = 25
+\end{lstlisting}
 
 \chapter{Docker}
 
