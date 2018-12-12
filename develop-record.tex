@@ -1887,8 +1887,7 @@ PublicKey = <client's publickey>　　
 AllowedIPs = 192.168.2.2/32
 \end{lstlisting}
 
-Peer表示节点，当有多个节点时，配置多个Peer即可。使用192.168.2.0/24子网作为VPN的地址空间。对于每台计算机，您需要在此范围内选择一个唯一的地址(192.168.0.1到192.168.0.254），并使用CIDR表示法指定地址和子网。对于客户端，这是配置：
-
+使用192.168.2.0/24子网作为我们VPN的地址空间。 对于每台计算机，您需要在此范围内选择一个唯一的地址(192.168.0.1到192.168.0.254），并使用CIDR表示法指定地址和子网。对于客户端，这是配置：
 \begin{lstlisting}[language=Bash]
 [Interface]　　
 Address = 192.168.2.2/24　　
@@ -1899,6 +1898,7 @@ ListenPort = 51820
 # 服务端的公钥　　
 PublicKey = <server's publickey>　　
 Endpoint = <server's ip>:51820　　
+
 AllowedIPs = 192.168.2.2/32　　
 # This is for if you're behind a NAT and　　
 # want the connection to be kept alive.　　
@@ -1915,7 +1915,6 @@ wg-quick是WireGuard用来启动网络设备的Bash脚本。
 
 \newpage
 ~\vfill
-
 
 \chapter{Docker}
 
