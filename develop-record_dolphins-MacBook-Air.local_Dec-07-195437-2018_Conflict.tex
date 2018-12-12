@@ -1,4 +1,4 @@
-\documentclass[8pt]{book}
+\documentclass[a5paper,9pt]{book}
 
 \usepackage{xeCJK}
 \usepackage{listings}
@@ -6,8 +6,7 @@
 \usepackage{longtable}
 \usepackage{fontspec}
 \usepackage{ctex}
-\usepackage[top=3cm,bottom=3cm,left=3cm,right=3cm, headsep=8pt]{geometry} % Page margins
-\geometry{papersize={19cm,24cm}}
+\usepackage[top=3cm,bottom=3cm,left=3cm,right=3cm, headsep=10pt,a5paper]{geometry} % Page margins
 \usepackage{graphicx} % Required for including pictures
 \graphicspath{{Pictures/}{Image/common/}} % Specifies the directory where pictures are stored
 \usepackage{lipsum} % Inserts dummy text
@@ -602,7 +601,6 @@ addtohook={%
 %----------------------------------------------------------------------------------------
 
 
-
 这里记录的是一些比较杂乱的笔记，绝大多数文字皆来源于网络，不是自己的原创，这里没有高深的算法，没有宏伟的技术及系统架构，只是一些平时工作中遇到的一些问题，和解决问题的思路以及所采用的方案。由于平时工作时还没有遇到前人没有遇到过的问题需要自己发明方去解决(其实真的遇到估计也是没辙)，所以绝大部分内容是为了避免再遇到同样的问题时，又需要到处去搜寻，索性将之记录下来，以便于下次可以快刀斩乱麻，迅速解决问题。
 
 
@@ -672,10 +670,6 @@ fdisk /dev/sdb1
 根据提示，删除旧分区信息，创建新分区信息即可。输入d(delete)删除旧分区，输入n(new)创建新分区，输入w(write)保存新分区。使用如下命令创建FAT文件系统：
 
 \begin{lstlisting}[language=Bash]
-# sdX - "SCSI" hard disk. 
-# Also includes SATA and SAS. 
-# And IDE disks using libata 
-# (on any recent distro).
 mkfs.vfat -F 32 /dev/sdb1
 \end{lstlisting}
 
@@ -708,7 +702,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 	\caption{自动部署项目信息}
 	\label{table:databaseconnectionpool}
 	\begin{center}
-		\begin{tabular}{|c|p{4.5cm}|p{4cm}|}
+		\begin{tabular}{|c|p{2cm}|p{3cm}|}
 			\hline
 			\multirow{1}{*}{项目名称}
 			& \multicolumn{1}{c|}{中文名} 
@@ -746,7 +740,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 	\caption{自动部署服务器信息}
 	\label{table:databaseconnectionpool}
 	\begin{center}
-		\begin{tabular}{|c|c|p{5cm}|}
+		\begin{tabular}{|c|c|p{3cm}|}
 			\hline
 			\multirow{1}{*}{IP}
 			& \multicolumn{1}{c|}{名称} 
@@ -771,7 +765,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 	\caption{分支名称及含义}
 	\label{table:projectbranch}
 	\begin{center}
-		\begin{tabular}{|c|c|p{6cm}|}
+		\begin{tabular}{|c|c|p{3cm}|}
 			\hline
 			\multirow{1}{*}{项目名称}		 
 			& \multicolumn{1}{c|}{分支名称}
@@ -797,7 +791,7 @@ public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
 	\caption{自动部署后触发脚本命名规则}
 	\label{table:handlernamingrule}
 	\begin{center}
-		\begin{tabular}{|p{7cm}|p{3.5cm}|}
+		\begin{tabular}{|p{4cm}|p{3cm}|}
 			\hline
 			\multirow{1}{*}{脚本名称}		 
 			& \multicolumn{1}{c|}{备注}\\			
@@ -966,7 +960,7 @@ fi
 	\caption{项目部署目录信息}
 	\label{table:projectdirectionayinfo}
 	\begin{center}
-		\begin{tabular}{|c|p{4cm}|p{4cm}|}
+		\begin{tabular}{|c|p{4cm}|p{2.5cm}|}
 			\hline
 			\multirow{1}{*}{环境}
 			& \multicolumn{1}{c|}{目录}
@@ -1382,7 +1376,16 @@ tail -f access.log | awk -F '[' '{print $2}' | awk 'BEGIN{key="";count=0}{if(key
 
 结果如图\ref{fig:websiteconcurrentaccess}所示：
 
+<<<<<<< HEAD
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{websiteconcurrentaccess.png}
+	\caption{查看服务器并发示例}
+	\label{fig:websiteconcurrentaccess}
+\end{figure}
+=======
 
+>>>>>>> f87cbf003425ef2238b5822f8803da5d4e368259
 
 \begin{lstlisting}[language=Bash]
 goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /data/html/hexo/public/go-access.html
@@ -1397,7 +1400,16 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 根据URL的访问频率统计信息如图\ref{fig:spideranalysis}所示，从统计图中可以看出，九成以上的请求都集中在一个URL。
 
+<<<<<<< HEAD
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.4]{spideranalysis.png}
+	\caption{访问URL统计}
+	\label{fig:spideranalysis}
+\end{figure}
+=======
 
+>>>>>>> f87cbf003425ef2238b5822f8803da5d4e368259
 
 根据IP的统计信息如图\ref{fig:ipstatistics}所示，从统计图中可以看出，5成以上的访问请求只服务了3个IP。
 
@@ -1437,7 +1449,7 @@ yes|cp -rf ${AUTO_BUILD_OUTPUT_PATH}/cms.war ${DEPOLY_PATH}
 ${TOMCAT_BIN_PATH}/startup.sh
 \end{lstlisting}
 
-\subsection{Non-resolvable parent POM for Could not find artifact}
+\subsection{Non-resolvable parent POM for Could not find artifact and 'parent.relativePath' points at wrong local POM}
 
 Maven构建时提示如下错误：
 
@@ -1546,7 +1558,7 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
 
 
-
+\subsection{crontab}
 
 
 
@@ -1732,19 +1744,6 @@ options(user 'postgres',password 'postgres');
 
 \section{日志中心(Logging Center)}
 
-根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
-
-\begin{lstlisting}[language=Bash]
-curl -XGET -H "Content-Type: application/json" http://localhost:9200/_all/_settings|jq '.'
-\end{lstlisting}
-
-修改Elastic配置：
-
-\begin{lstlisting}[language=Bash]
-curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_settings 
--d '{"index.blocks.read_only_allow_delete": null}'
-\end{lstlisting}
-
 对日志统一格式定义如下：
 
 
@@ -1791,13 +1790,6 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 	\includegraphics[scale=0.3]{javahprofanalysis.png}
 	\caption{Java内存对象分析}
 	\label{fig:javahprofanalysis}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.05]{elk-log-architecture.jpg}
-	\caption{ELK流程}
-	\label{fig:elklogarchitecture}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -1861,13 +1853,6 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 
 \section{WireGuard}
 
-初次搭建OpenVPN时，最深刻的感受就是配置复杂。相对于OpenVPN，WireGuard的优势主要体现在：配置简单方便，速度更快。在Mac下，输入如下命令安装WireGuard：
-
-\begin{lstlisting}[language=Bash]
-sudo brew install wireguard-tools
-\end{lstlisting}
-
-
 生成公钥和私钥：
 
 \begin{lstlisting}[language=Bash]
@@ -1878,7 +1863,7 @@ wg genkey | tee privatekey | wg pubkey > publickey
 
 \begin{lstlisting}[language=Bash]
 [Interface]　　
-Address = 192.168.2.1/24　　
+Address = 192.168.2.1　　
 PrivateKey = <server's privatekey>　　
 ListenPort = 51820　　
 
@@ -1887,35 +1872,22 @@ PublicKey = <client's publickey>　　
 AllowedIPs = 192.168.2.2/32
 \end{lstlisting}
 
-Peer表示节点，当有多个节点时，配置多个Peer即可。使用192.168.2.0/24子网作为VPN的地址空间。对于每台计算机，您需要在此范围内选择一个唯一的地址(192.168.0.1到192.168.0.254），并使用CIDR表示法指定地址和子网。对于客户端，这是配置：
+对于客户端，这是配置：
 
 \begin{lstlisting}[language=Bash]
 [Interface]　　
-Address = 192.168.2.2/24　　
+Address = 192.168.2.2　　
 PrivateKey = <client's privatekey>　　
-ListenPort = 51820
+ListenPort = 21841
 　　
-[Peer]
-# 服务端的公钥　　
+[Peer]　　
 PublicKey = <server's publickey>　　
 Endpoint = <server's ip>:51820　　
-AllowedIPs = 192.168.2.2/32　　
+AllowedIPs = 192.168.2.1/24　　
 # This is for if you're behind a NAT and　　
 # want the connection to be kept alive.　　
 PersistentKeepalive = 25
 \end{lstlisting}
-
-配置完毕后，输入如下命令启动网卡：
-
-\begin{lstlisting}[language=Bash]
-wg-quick up wg0
-\end{lstlisting}
-
-wg-quick是WireGuard用来启动网络设备的Bash脚本。
-
-\newpage
-~\vfill
-
 
 \chapter{Docker}
 
