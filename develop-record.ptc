@@ -1,4 +1,4 @@
-\select@language {english}
+\babel@toc {english}{}
 \contentsline {part}{\@mypartnumtocformat {I}{第一部}}{1}{part.1}
 \ttl@starttoc {default@1}
 \contentsline {chapter}{\numberline {1}第一章}{3}{chapter.1}
@@ -54,19 +54,20 @@
 \contentsline {paragraph}{'utf8' codec can't decode byte 0x8b in position 1: invalid start byte}{35}{section*.19}
 \contentsline {section}{\numberline {2.2}DB}{35}{section.2.2}
 \contentsline {subsection}{\numberline {2.2.1}Postgres}{35}{subsection.2.2.1}
-\contentsline {section}{\numberline {2.3}日志中心(Logging Center)}{36}{section.2.3}
-\contentsline {part}{\@mypartnumtocformat {II}{Tool}}{43}{part.2}
+\contentsline {section}{\numberline {2.3}配置管理中心(Configuration Management Center)}{36}{section.2.3}
+\contentsline {section}{\numberline {2.4}日志中心(Logging Center)}{36}{section.2.4}
+\contentsline {part}{\@mypartnumtocformat {II}{Tool}}{45}{part.2}
 \ttl@stoptoc {default@1}
 \ttl@starttoc {default@2}
-\contentsline {chapter}{\numberline {3}Widgets}{45}{chapter.3}
-\contentsline {section}{\numberline {3.1}WireGuard}{45}{section.3.1}
-\contentsline {chapter}{\numberline {4}Docker}{49}{chapter.4}
-\contentsline {section}{\numberline {4.1}Docker基础}{49}{section.4.1}
-\contentsline {subsection}{\numberline {4.1.1}为什么要用Docker}{49}{subsection.4.1.1}
-\contentsline {subsection}{\numberline {4.1.2}Docker安装}{50}{subsection.4.1.2}
-\contentsline {subsection}{\numberline {4.1.3}安装数据层}{50}{subsection.4.1.3}
-\contentsline {subsection}{\numberline {4.1.4}Docker导入导出}{51}{subsection.4.1.4}
-\contentsline {chapter}{\leavevmode {\color {ocre}Bibliography}}{53}{chapter*.20}
-\contentsline {section}{Books}{53}{section*.21}
-\contentsline {section}{Articles}{53}{section*.22}
+\contentsline {chapter}{\numberline {3}Widgets}{47}{chapter.3}
+\contentsline {section}{\numberline {3.1}WireGuard}{47}{section.3.1}
+\contentsline {chapter}{\numberline {4}Docker}{51}{chapter.4}
+\contentsline {section}{\numberline {4.1}Docker基础}{51}{section.4.1}
+\contentsline {subsection}{\numberline {4.1.1}为什么要用Docker}{51}{subsection.4.1.1}
+\contentsline {subsection}{\numberline {4.1.2}Docker安装}{52}{subsection.4.1.2}
+\contentsline {subsection}{\numberline {4.1.3}安装数据层}{52}{subsection.4.1.3}
+\contentsline {subsection}{\numberline {4.1.4}Docker导入导出}{53}{subsection.4.1.4}
+\contentsline {chapter}{\leavevmode {\color {ocre}Bibliography}}{55}{chapter*.20}
+\contentsline {section}{Books}{55}{section*.21}
+\contentsline {section}{Articles}{55}{section*.22}
 \contentsfinish 
