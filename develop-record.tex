@@ -625,7 +625,15 @@ addtohook={%
 
 \section{常见问题排查及解决}
 
-\paragraph{Windows同时连接内外网}
+\subsection{Linux版本查看}
+
+\begin{lstlisting}[language=Bash]
+cat /proc/version
+\end{lstlisting}
+
+Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
+
+\subsection{Windows同时连接内外网}
 
 如下命令让所有流量都走10.55.10.1：
 
