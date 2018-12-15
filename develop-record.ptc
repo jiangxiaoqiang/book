@@ -56,6 +56,8 @@
 \contentsline {subsection}{\numberline {2.2.1}Postgres}{35}{subsection.2.2.1}
 \contentsline {section}{\numberline {2.3}配置管理中心(Configuration Management Center)}{36}{section.2.3}
 \contentsline {section}{\numberline {2.4}日志中心(Logging Center)}{36}{section.2.4}
+\contentsline {section}{\numberline {2.5}Network}{37}{section.2.5}
+\contentsline {subsection}{\numberline {2.5.1}CIDR}{37}{subsection.2.5.1}
 \contentsline {part}{\@mypartnumtocformat {II}{Tool}}{45}{part.2}
 \ttl@stoptoc {default@1}
 \ttl@starttoc {default@2}

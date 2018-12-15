@@ -1797,6 +1797,13 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 \end{lstlisting}
 
 
+\section{Network}
+
+\subsection{CIDR}
+
+CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
+
+
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[scale=0.5]{resttempldatedefaulttimeout.png}
