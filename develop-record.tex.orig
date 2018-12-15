@@ -626,7 +626,15 @@ addtohook={%
 
 \section{常见问题排查及解决}
 
-\paragraph{Windows同时连接内外网}
+\subsection{Linux版本查看}
+
+\begin{lstlisting}[language=Bash]
+cat /proc/version
+\end{lstlisting}
+
+Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
+
+\subsection{Windows同时连接内外网}
 
 如下命令让所有流量都走10.55.10.1：
 
@@ -1860,6 +1868,19 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 
 \chapter{Widgets}
 
+\section{Consul}
+
+Consul是HashiCorp公司推出的开源工具，用于实现分布式系统的服务发现与配置。与其他分布式服务注册与发现的方案，比如 Airbnb的SmartStack等相比，Consul的方案更“一站式”，内置了服务注册与发现框 架、分布一致性协议实现、健康检查、Key/Value存储、多数据中心方案，不再需要依赖其他工具（比如ZooKeeper等）。Consul用Golang实现，因此具有天然可移植性(支持Linux、windows和Mac OS X)；安装包仅包含一个可执行文件，方便部署，与Docker等轻量级容器可无缝配合。 
+
+\begin{lstlisting}[language=Bash]
+# 启动代理
+./consul agent -dev -ui -config-dir /Users/fox/bin/consul.d/
+\end{lstlisting}
+
+
+启动后，访问地址http://localhost:8500/ui/即可。
+
+
 \section{WireGuard}
 
 初次搭建OpenVPN时，最深刻的感受就是配置复杂。相对于OpenVPN，WireGuard的优势主要体现在：配置简单方便，速度更快。在Mac下，输入如下命令安装WireGuard：
@@ -1888,8 +1909,7 @@ PublicKey = <client's publickey>　　
 AllowedIPs = 192.168.2.2/32
 \end{lstlisting}
 
-Peer表示节点，当有多个节点时，配置多个Peer即可。使用192.168.2.0/24子网作为VPN的地址空间。对于每台计算机，您需要在此范围内选择一个唯一的地址(192.168.0.1到192.168.0.254），并使用CIDR表示法指定地址和子网。对于客户端，这是配置：
-
+使用192.168.2.0/24子网作为我们VPN的地址空间。 对于每台计算机，您需要在此范围内选择一个唯一的地址(192.168.0.1到192.168.0.254），并使用CIDR表示法指定地址和子网。对于客户端，这是配置：
 \begin{lstlisting}[language=Bash]
 [Interface]　　
 Address = 192.168.2.2/24　　
@@ -1900,6 +1920,7 @@ ListenPort = 51820
 # 服务端的公钥　　
 PublicKey = <server's publickey>　　
 Endpoint = <server's ip>:51820　　
+
 AllowedIPs = 192.168.2.2/32　　
 # This is for if you're behind a NAT and　　
 # want the connection to be kept alive.　　
@@ -1916,7 +1937,6 @@ wg-quick是WireGuard用来启动网络设备的Bash脚本。
 
 \newpage
 ~\vfill
-
 
 \chapter{Docker}
 
@@ -2678,7 +2698,15 @@ addtohook={%
 
 \section{常见问题排查及解决}
 
-\paragraph{Windows同时连接内外网}
+\subsection{Linux版本查看}
+
+\begin{lstlisting}[language=Bash]
+cat /proc/version
+\end{lstlisting}
+
+Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
+
+\subsection{Windows同时连接内外网}
 
 如下命令让所有流量都走10.55.10.1：
 
@@ -3782,6 +3810,30 @@ options(user 'postgres',password 'postgres');
 
 现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。
 
+\section{配置管理中心(Configuration Management Center)}
+
+随着程序功能的日益复杂，程序的配置日益增多：各种功能的开关、参数的配置、服务器的地址。并且有对配置的各类要求，配置修改后实时生效，灰度发布，分环境、分集群管理配置，完善的权限、审核机制。并且随着采用分布式的开发模式，项目之间的相互引用随着服务的不断增多，相互之间的调用复杂度成不断升高，因此需要引用配置中心治理。常用的配置管理工具有：
+
+\begin{table}[htbp]
+	\caption{配置管理工具}
+	\label{table:configmanagementtool}
+	\begin{center}
+		\begin{tabular}{|c|c|p{8cm}|}
+			\hline
+			\multirow{1}{*}{工具名称}
+			& \multicolumn{1}{c|}{开发语言} 
+			& \multicolumn{1}{c|}{备注}\\			
+			\cline{1-3}
+			etcd &  Go  & 分布式键值存储，用于共享配置和服务发现 \\
+			\hline
+			consul & Go &  一款服务发现和配置的工具 \\
+			Doozer & Go & 分布式的一致性数据存储服务 \\
+			\hline							
+		\end{tabular}	
+	\end{center}
+\end{table}
+
+etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使用Go语言编写，并通过Raft一致性算法处理日志复制以保证强一致性。 Raft是一个来自Stanford的新的一致性算法。
 
 \section{日志中心(Logging Center)}
 
@@ -3941,7 +3993,6 @@ AllowedIPs = 192.168.2.2/32
 \end{lstlisting}
 
 使用192.168.2.0/24子网作为我们VPN的地址空间。 对于每台计算机，您需要在此范围内选择一个唯一的地址(192.168.0.1到192.168.0.254），并使用CIDR表示法指定地址和子网。对于客户端，这是配置：
-
 \begin{lstlisting}[language=Bash]
 [Interface]　　
 Address = 192.168.2.2/24　　
@@ -3952,6 +4003,7 @@ ListenPort = 51820
 # 服务端的公钥　　
 PublicKey = <server's publickey>　　
 Endpoint = <server's ip>:51820　　
+
 AllowedIPs = 192.168.2.2/32　　
 # This is for if you're behind a NAT and　　
 # want the connection to be kept alive.　　
@@ -3964,9 +4016,10 @@ PersistentKeepalive = 25
 wg-quick up wg0
 \end{lstlisting}
 
+wg-quick是WireGuard用来启动网络设备的Bash脚本。
+
 \newpage
 ~\vfill
-
 
 \chapter{Docker}
 
@@ -4100,4 +4153,4 @@ docker export MariaDB.tar MariaDB
 
 \end{document}
 
->>>>>>> ba99391d8b35042d3250ae1bd18902f2b5ad5f99
+>>>>>>> 03877d9c7acf72e86c43950de828dc623d7d542c
