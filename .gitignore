@@ -1,3 +1,7 @@
+*.DS_Store
+*.ilg
+*.idx
+*.orig
 *.ptc
 *.toc
 *.aux
