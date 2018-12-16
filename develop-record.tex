@@ -2037,7 +2037,7 @@ wg-quick是WireGuard用来启动网络设备的Bash脚本。现在本地跟服�
 traceroute -I www.baidu.com
 \end{lstlisting}
 
-I参数强制使用ICMP包请求以及确认回应，即使用ICMP Echo Request，Echo Reply and TTL-expired。在分析traceroute的结果时需要知道的是，如果路由封了type 11 (TTL-expired)， 中间的router全看不到，回显的是星号 ，但能看到packet到达了最后的destination；如果封了ICMP Echo Reply，中间的全能看到，最后的destination看不到。根据traceroute结果可知，发送的ICMP包的确经过WireGuard服务器到达了目标。使用tcpdump抓包：
+I参数强制使用ICMP包请求以及确认回应，即使用ICMP Echo Request，Echo Reply and TTL-expired。在分析traceroute的结果时需要知道的是，如果路由封了type 11 (TTL-expired)， 中间的router全看不到，回显的是星号，但能看到packet到达了最后的destination；如果封了ICMP Echo Reply，中间的全能看到，最后的destination看不到。根据traceroute结果可知，发送的ICMP包的确经过WireGuard服务器到达了目标。使用tcpdump抓包：
 
 \begin{lstlisting}[language=Bash]
 tcpdump -i eth0 -A -s 0 'tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'|grep "bilibili"
