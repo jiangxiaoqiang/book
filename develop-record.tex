@@ -1705,7 +1705,20 @@ urllib.request.install_opener(opener)
 req = urllib.request.Request(url)
 \end{lstlisting}
 
-在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。
+在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。
+
+\subsection{scrapy}
+
+\subsubsection{xpath}
+
+XPath为XML路径语言（XML Path Language），它是一种用来确定XML文档中某部分位置的语言。简单示例如下：
+
+\begin{lstlisting}[language=Python]
+sites = sel.xpath('//*[@id="detail_bullets_id"]/table/tr/td/div/ul/li') 
+\end{lstlisting}
+
+以上表达式过滤出亚马逊商品的详细列表信息，双斜杠加星号表示选取文档中的所有元素，@表示选取属性，需要加上中括号。
+
 
 \subsection{api}
 
