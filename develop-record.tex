@@ -2079,14 +2079,31 @@ I参数强制使用ICMP包请求以及确认回应，即使用ICMP Echo Request�
 tcpdump -i eth0 -A -s 0 'tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'|grep "bilibili"
 \end{lstlisting}
 
-bilibili/duckduckgo/yandex可以访问，baidu不可以，不知道什么原因。在配置的过程中，发现不同节点的机器不能使用重叠的子网，如果重叠，后面配置的节点无法联网，例如节点A设置了允许192.168.2.1至192.168.2.255的子网，CIDR的写法是192.168.2.0/24，那么节点B的IP就不能落在此范围内，如图\ref{fig:wireguardtunsafeclient}所示。客户端IP使用的是192.168.3.*子网，而不是192.168.2.*子网。连接上之后，可以直接访问192.168.2.*网段的节点，至此公司的PC、Google云服务器和家里的PC组成了一个局域网，只要连接到了Wireguard，在任何地点皆可以访问局域网的节点。
+bilibili/duckduckgo/yandex可以访问，baidu不可以，不知道什么原因。在配置的过程中，发现不同节点的机器不能使用重叠的子网，如果重叠，后面配置的节点无法联网，例如节点A设置了允许192.168.2.1至192.168.2.255的子网，CIDR的写法是192.168.2.0/24，那么节点B的IP就不能落在此范围内，如图\ref{fig:wireguardtunsafeclient}所示。客户端IP使用的是192.168.3.*子网，而不是192.168.2.*子网。连接上之后，可以直接访问192.168.2.*网段的节点，至此公司的PC、Google云服务器和家里的PC组成了一个局域网，只要通过公网IP连接到了Wireguard(10.142.0.2)，在任何地点皆可以访问局域网的节点。
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[scale=0.8]{wireguardtunsafeclient.jpg}
+	\includegraphics[scale=0.7]{wireguardtunsafeclient.jpg}
 	\caption{Wireguard Windows客户端tunsafe}
 	\label{fig:wireguardtunsafeclient}
 \end{figure}
+
+\subsection{应用}
+
+利用Google Cloud公网IP搭建Wireguard后，可以形成一个虚拟的局域网，同时可以利用此环境做许多事情，当然任何事情首先得遵守相关规定。例如可以访问Google，查找资料、可以访问Google学术，搜寻全球的论文、自己搭建集群环境、自己编写应用部署到Google Cloud、访问局域网你们的设备、搭建自己的博客、申请自己的域名映射到Google Cloud博客服务器等等。有了Wireguard搭建的VPN服务，还可以增加Google Cloud云主机的安全性，对外只暴露特定端口即可，其他应用可以直接通过内网IP进行访问。
+
+\subsubsection{ssh登录}
+
+使用Wireguad连接后，Google Cloud上的云虚拟机与本地的节点相当于在同一个局域网，那么可以使用普通的SSH直接登录到Google Cloud远程虚拟机。更进一步，可以将连接上Wireguad的所有节点当成是一个本地局域网，不同的主机在不同的物理位置，这样就可以更加方便的搭建集群环境。虽然由于物理主机像个太远造成的网络延时无法应用于实际的生产，但是作为平时的学习研究还是可以接受的。
+
+\begin{lstlisting}[language=Bash]
+# 编辑sshd配置，允许root用户登录(不安全)
+vim /etc/ssh/sshd_config
+# 重新启动ssh守护进程
+service sshd restart
+# 利用内网IP登录到Google Cloud主机
+ssh root@10.142.0.2
+\end{lstlisting}
 
 
 \newpage
