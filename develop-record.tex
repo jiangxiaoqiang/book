@@ -1983,7 +1983,13 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 
 \chapter{Widgets}
 
-\section{Consul}
+\section{Develop}
+
+\subsection{Medis}
+
+Redis的客户端百花齐放，不同语言的客户端都有，质量参差不齐，选择起来也是一头雾水。偶然发现Medis\footnote{\url{https://github.com/luin/medis}}客户端，开源、简洁，试用效果还可以。Medis是基于Electron, React, and Redux开发的一款工具，设计是在Mac上使用，不过由于Electron本身的跨平台特性，Widnows下也有相应的安装包\footnote{\url{https://github.com/classfellow/medis/releases/tag/win}}。Redis Desktop Manager安装非常费劲，Mac下的binary包需要收费，直接自己编译也相当麻烦的。需要注意的是，Medis只支持Redis 2.8及以上版本，因为SCAN命令是2.8版本才引入的特性，它可以获取key而不会阻塞服务器，这个特性在生产环境是非常重要的。
+
+\subsection{Consul}
 
 Consul是HashiCorp公司推出的开源工具，用于实现分布式系统的服务发现与配置。与其他分布式服务注册与发现的方案，比如 Airbnb的SmartStack等相比，Consul的方案更“一站式”，内置了服务注册与发现框 架、分布一致性协议实现、健康检查、Key/Value存储、多数据中心方案，不再需要依赖其他工具（比如ZooKeeper等）。Consul用Golang实现，因此具有天然可移植性(支持Linux、windows和Mac OS X)；安装包仅包含一个可执行文件，方便部署，与Docker等轻量级容器可无缝配合。 
 
