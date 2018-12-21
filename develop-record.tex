@@ -1681,9 +1681,16 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{Python练习}
 
+\subsection{Python规范}
+
+Python模块、类、函数等命名示例:module\_name, package\_name, ClassName, method\_name, ExceptionName, function\_name, GLOBAL\_VAR\_NAME, instance\_var\_name, function\_parameter\_name, local\_var\_name。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/#id16}}.
+
+
+
+
 添加Ambari的源：
 
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}[language=Bash]
 # 查看Linux版本信息
 cat /etc/redhat-release
 # 下载ambari资源
