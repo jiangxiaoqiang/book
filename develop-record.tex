@@ -1704,7 +1704,9 @@ urllib.request.install_opener(opener)
 req = urllib.request.Request(url)
 \end{lstlisting}
 
-在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。
+在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。最近发现可以生成一个代理的IP池，使用免费的代理来突破爬取速度的限制，经过比较，选择了proxy\_pool\footnote{\url{https://github.com/jhao104/proxy_pool}}。
+
+
 
 \subsection{scrapy}
 
