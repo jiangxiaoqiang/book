@@ -1683,21 +1683,45 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \subsection{Python规范}
 
-Python模块、类、函数等命名示例:module\_name, package\_name, ClassName, method\_name, ExceptionName, function\_name, GLOBAL\_VAR\_NAME, instance\_var\_name, function\_parameter\_name, local\_var\_name。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/#id16}}.
+Python之父Guido推荐的规范，Python模块、类、函数等命名示例如表\ref{table:pythonnamingspecification}所示。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/}}.
 
 
+\begin{table}[htbp]
+	\caption{Python命名规范}
+	\label{table:pythonnamingspecification}
+	\begin{center}
+		\begin{tabular}{|c|c|p{5cm}|}
+			\hline
+			\multirow{1}{*}{Type}
+			& \multicolumn{1}{c|}{Public} 
+			& \multicolumn{1}{c|}{Internal}\\			
+			\cline{1-3}
+			Modules &  lower\_with\_under	  & \_lower\_with\_under \\
+			\hline
+			Packages & lower\_with\_under &   \\
+			\hline
+			Classes & CapWords & \_CapWords \\
+			\hline
+			Exceptions & CapWords & \\
+			\hline
+			Functions &	lower\_with\_under() &	\_lower\_with\_under()\\
+			\hline 
+			Global/Class Constants &	CAPS\_WITH\_UNDER &\_CAPS\_WITH\_UNDER\\
+			\hline
+			Global/Class Variables &	lower\_with\_under &	\_lower\_with\_under\\
+			\hline
+			Instance Variables &	lower\_with\_under &	\_lower\_with\_under (protected) or \_\_lower\_with\_under (private)\\
+			\hline
+			Method Names &	lower\_with\_under() &	\_lower\_with\_under() (protected) or \_\_lower\_with\_under() (private)\\
+			\hline
+			Function/Method & Parameters &	lower\_with\_under\\
+			\hline	 
+			Local Variables &	lower\_with\_under	& \\
+			\hline							
+		\end{tabular}	
+	\end{center}
+\end{table}
 
-
-添加Ambari的源：
-
-\begin{lstlisting}[language=Bash]
-# 查看Linux版本信息
-cat /etc/redhat-release
-# 下载ambari资源
-wget http://s3.amazonaws.com/public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo
-
-cp ambari.repo /etc/yum.repos.d
-\end{lstlisting}
 
 
 \subsection{反反爬}
@@ -1993,6 +2017,20 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 \chapter{Widgets}
 
 \section{Develop}
+
+\subsection{Mybatis Aotogenerate}
+
+\paragraph{表模糊匹配}
+
+数据库中有一批表名称以book开头，如果需要生成这一批表的POJO、Mapper，可以在配置文件中做如下配置：
+
+\begin{lstlisting}[language=Bash]
+<table tableName="book%"></table>
+\end{lstlisting}
+
+
+
+
 
 \subsection{Medis}
 
