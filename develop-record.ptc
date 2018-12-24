@@ -1,4 +1,4 @@
-\babel@toc {english}{}
+\select@language {english}
 \contentsline {part}{\@mypartnumtocformat {I}{第一部}}{1}{part.1}
 \ttl@starttoc {default@1}
 \contentsline {chapter}{\numberline {1}第一章}{3}{chapter.1}
@@ -35,13 +35,14 @@
 \contentsline {subsection}{\numberline {1.1.18}Non-resolvable parent POM for Could not find artifact}{27}{subsection.1.1.18}
 \contentsline {subsection}{\numberline {1.1.19}LocalDateTime格式化}{28}{subsection.1.1.19}
 \contentsline {subsection}{\numberline {1.1.20}invalid constant type: 18}{30}{subsection.1.1.20}
+\contentsline {subsection}{\numberline {1.1.21}视频解析}{31}{subsection.1.1.21}
 \contentsline {section}{\numberline {1.2}编辑中}{31}{section.1.2}
 \contentsline {subsection}{\numberline {1.2.1}缓存雪崩(Cache stampede)}{31}{subsection.1.2.1}
 \contentsline {subsubsection}{锁(Lock)}{31}{section*.14}
 \contentsline {subsubsection}{设置过期标志更新缓存}{31}{section*.15}
 \contentsline {subsubsection}{为key设置不同的缓存失效时间}{31}{section*.16}
 \contentsline {subsection}{\numberline {1.2.2}TCPCopy}{31}{subsection.1.2.2}
-\contentsline {subsection}{\numberline {1.2.3}Could not get a resource from the pool}{31}{subsection.1.2.3}
+\contentsline {subsection}{\numberline {1.2.3}Could not get a resource from the pool}{32}{subsection.1.2.3}
 \contentsline {subsection}{\numberline {1.2.4}服务限流}{32}{subsection.1.2.4}
 \contentsline {paragraph}{网站流量识别与限制}{32}{section*.17}
 \contentsline {paragraph}{接口Nginx防止流量过载}{32}{section*.18}
@@ -76,7 +77,7 @@
 \contentsline {subsection}{\numberline {3.2.2}使用问题}{54}{subsection.3.2.2}
 \contentsline {subsection}{\numberline {3.2.3}可以连接，无法上网}{54}{subsection.3.2.3}
 \contentsline {subsection}{\numberline {3.2.4}应用}{55}{subsection.3.2.4}
-\contentsline {subsubsection}{ssh登录}{55}{section*.22}
+\contentsline {subsubsection}{ssh登录}{56}{section*.22}
 \contentsline {chapter}{\numberline {4}Docker}{59}{chapter.4}
 \contentsline {section}{\numberline {4.1}Docker基础}{59}{section.4.1}
 \contentsline {subsection}{\numberline {4.1.1}为什么要用Docker}{59}{subsection.4.1.1}

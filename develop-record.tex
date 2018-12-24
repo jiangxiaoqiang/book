@@ -626,6 +626,7 @@ addtohook={%
 
 \section{常见问题排查及解决}
 
+
 \subsection{yum工具}
 
 在使用yum命令时，输出如下错误：
@@ -1583,7 +1584,9 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
 
 
+\subsection{视频解析}
 
+有时需要获取腾讯视频等地址，可以使用点量视频解析\footnote{\url{http://old.flvurl.cn/}}，可以获取到视频到真实地址，腾讯视频在下载一段时间后，速度会降到几KB左右。
 
 
 
@@ -2108,10 +2111,13 @@ AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 \end{lstlisting}
 
-配置完毕后，输入如下命令启动网卡：
+配置完毕后，输入如下命令启动Wireguard：
 
 \begin{lstlisting}[language=Bash]
+# 启动Wireguard
 wg-quick up wg0
+# 停止Wireguard
+wg-quick down wg0
 \end{lstlisting}
 
 wg-quick是WireGuard用来启动网络设备的Bash脚本。现在本地跟服务器已经在同一个内网上，可以彼此通信。但本地现在是无法通过服务器连接到外面的网络，如果需要通过服务器连接到外面的网络，要在服务器上设置流量转发和NAT(Network Address Translation，网络地址转换)才可以。
