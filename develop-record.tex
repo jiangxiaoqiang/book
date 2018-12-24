@@ -626,6 +626,7 @@ addtohook={%
 
 \section{常见问题排查及解决}
 
+
 \subsection{yum工具}
 
 在使用yum命令时，输出如下错误：
@@ -1583,7 +1584,9 @@ Tomcat启动项目时提示错误：invalid constant type: 18，原因是Java 8�
 CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是一个轻量级的类库，但需要涉及到JVM的操作和指令；相比而言，Javassist要简单的多，完全是基于Java的API，但其性能相比前二者要差一些。
 
 
+\subsection{视频解析}
 
+有时需要获取腾讯视频等地址，可以使用点量视频解析\footnote{\url{http://old.flvurl.cn/}}，可以获取到视频到真实地址，腾讯视频在下载一段时间后，速度会降到几KB左右。
 
 
 
@@ -1683,21 +1686,45 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \subsection{Python规范}
 
-Python模块、类、函数等命名示例:module\_name, package\_name, ClassName, method\_name, ExceptionName, function\_name, GLOBAL\_VAR\_NAME, instance\_var\_name, function\_parameter\_name, local\_var\_name。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/#id16}}.
+Python之父Guido推荐的规范，Python模块、类、函数等命名示例如表\ref{table:pythonnamingspecification}所示。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/}}.
 
 
+\begin{table}[htbp]
+	\caption{Python命名规范}
+	\label{table:pythonnamingspecification}
+	\begin{center}
+		\begin{tabular}{|c|c|p{5cm}|}
+			\hline
+			\multirow{1}{*}{Type}
+			& \multicolumn{1}{c|}{Public} 
+			& \multicolumn{1}{c|}{Internal}\\			
+			\cline{1-3}
+			Modules &  lower\_with\_under	  & \_lower\_with\_under \\
+			\hline
+			Packages & lower\_with\_under &   \\
+			\hline
+			Classes & CapWords & \_CapWords \\
+			\hline
+			Exceptions & CapWords & \\
+			\hline
+			Functions &	lower\_with\_under() &	\_lower\_with\_under()\\
+			\hline 
+			Global/Class Constants &	CAPS\_WITH\_UNDER &\_CAPS\_WITH\_UNDER\\
+			\hline
+			Global/Class Variables &	lower\_with\_under &	\_lower\_with\_under\\
+			\hline
+			Instance Variables &	lower\_with\_under &	\_lower\_with\_under (protected) or \_\_lower\_with\_under (private)\\
+			\hline
+			Method Names &	lower\_with\_under() &	\_lower\_with\_under() (protected) or \_\_lower\_with\_under() (private)\\
+			\hline
+			Function/Method & Parameters &	lower\_with\_under\\
+			\hline	 
+			Local Variables &	lower\_with\_under	& \\
+			\hline							
+		\end{tabular}	
+	\end{center}
+\end{table}
 
-
-添加Ambari的源：
-
-\begin{lstlisting}[language=Bash]
-# 查看Linux版本信息
-cat /etc/redhat-release
-# 下载ambari资源
-wget http://s3.amazonaws.com/public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.4.2.0/ambari.repo
-
-cp ambari.repo /etc/yum.repos.d
-\end{lstlisting}
 
 
 \subsection{反反爬}
@@ -1711,9 +1738,25 @@ urllib.request.install_opener(opener)
 req = urllib.request.Request(url)
 \end{lstlisting}
 
-在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。
+在使用HTTPS代理时，需要Charles设置SSL解析。首先安装CA SSL证书，其次在代理设置中启用SSL代理。设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。最近发现可以生成一个代理的IP池，使用免费的代理来突破爬取速度的限制，经过比较，选择了proxy\_pool\footnote{\url{https://github.com/jhao104/proxy_pool}}。
 
-\subsection{scrapy}
+
+
+\subsection{Scrapy}
+
+\subsubsection{代理池(Proxy Pool)}
+
+一般限制了爬虫的网站，在使用同一个IP在一段时间内发送了超过规定数量的请求，或者调取速度过于频繁，会立即被加入黑名单，封禁一段时间(豆瓣一般是24小时)，所以如果需要大规模抓取数据，针对此种反爬手段就是建立一个代理集合，也就是代理池，请求通过分布在全球各地的代理机器转发。HTTP代理池使用的是开源项目，新代理IP的抓取与存储，代理IP有效性的维护与检测，代理IP库对外的获取接口皆统一由开源组件来管理了。应用中需要做的就是调取对应代理服务的接口，获取一个随机的代理IP。在Scrapy中定义一个代理Middleware如下代码片段所示：
+
+\begin{lstlisting}[language=Python]
+class ProxyMiddleware(object):
+    
+    def process_request(self, request, spider):
+      proxy_address = self.get_random_proxy()
+      request.meta["proxy"]="http://" + proxy_address
+\end{lstlisting}
+
+设置代理后，\textbf{每次发送请求都会重新设置新的代理IP，不用担心多个请求发送时会被封IP}，所以在使用代理的前提下可以在Scrapy爬取列表中同时设置多个请求URL，当需要大批量抓取数据时，可以调整请求URL的列表，中间的调度，可以交给Scrapy来处理，Scrapy可以方便的发送大规模的请求，而不需要费精力手动去管理线程，接收请求等，抓取到数据后，即可自动放入Pipline，可以理解为一个处理数据流的管道或者队列，在IP池足够多时，抓取的效率是非常可观的，前提是服务端能够承受大批量请求的压力。
 
 \subsubsection{xpath}
 
@@ -1990,7 +2033,27 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 
 \chapter{Widgets}
 
-\section{Consul}
+\section{Develop}
+
+\subsection{Mybatis Aotogenerate}
+
+\paragraph{表模糊匹配}
+
+数据库中有一批表名称以book开头，如果需要生成这一批表的POJO、Mapper，可以在配置文件中做如下配置：
+
+\begin{lstlisting}[language=Bash]
+<table tableName="book%"></table>
+\end{lstlisting}
+
+
+
+
+
+\subsection{Medis}
+
+Redis的客户端百花齐放，不同语言的客户端都有，质量参差不齐，选择起来也是一头雾水。偶然发现Medis\footnote{\url{https://github.com/luin/medis}}客户端，开源、简洁，试用效果还可以。Medis是基于Electron, React, and Redux开发的一款工具，设计是在Mac上使用，不过由于Electron本身的跨平台特性，Widnows下也有相应的安装包\footnote{\url{https://github.com/classfellow/medis/releases/tag/win}}。Redis Desktop Manager安装非常费劲，Mac下的binary包需要收费，直接自己编译也相当麻烦的。需要注意的是，Medis只支持Redis 2.8及以上版本，因为SCAN命令是2.8版本才引入的特性，它可以获取key而不会阻塞服务器，这个特性在生产环境是非常重要的。
+
+\subsection{Consul}
 
 Consul是HashiCorp公司推出的开源工具，用于实现分布式系统的服务发现与配置。与其他分布式服务注册与发现的方案，比如 Airbnb的SmartStack等相比，Consul的方案更“一站式”，内置了服务注册与发现框 架、分布一致性协议实现、健康检查、Key/Value存储、多数据中心方案，不再需要依赖其他工具（比如ZooKeeper等）。Consul用Golang实现，因此具有天然可移植性(支持Linux、windows和Mac OS X)；安装包仅包含一个可执行文件，方便部署，与Docker等轻量级容器可无缝配合。 
 
@@ -2062,10 +2125,13 @@ AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 \end{lstlisting}
 
-配置完毕后，输入如下命令启动网卡：
+配置完毕后，输入如下命令启动Wireguard：
 
 \begin{lstlisting}[language=Bash]
+# 启动Wireguard
 wg-quick up wg0
+# 停止Wireguard
+wg-quick down wg0
 \end{lstlisting}
 
 wg-quick是WireGuard用来启动网络设备的Bash脚本。现在本地跟服务器已经在同一个内网上，可以彼此通信。但本地现在是无法通过服务器连接到外面的网络，如果需要通过服务器连接到外面的网络，要在服务器上设置流量转发和NAT(Network Address Translation，网络地址转换)才可以。
