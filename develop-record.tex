@@ -1742,7 +1742,21 @@ req = urllib.request.Request(url)
 
 
 
-\subsection{scrapy}
+\subsection{Scrapy}
+
+\subsubsection{代理池(Proxy Pool)}
+
+一般限制了爬虫的网站，在使用同一个IP在一段时间内发送了超过规定数量的请求，或者调取速度过于频繁，会立即被加入黑名单，封禁一段时间(豆瓣一般是24小时)，所以如果需要大规模抓取数据，针对此种反爬手段就是建立一个代理集合，也就是代理池，请求通过分布在全球各地的代理机器转发。HTTP代理池使用的是开源项目，新代理IP的抓取与存储，代理IP有效性的维护与检测，代理IP库对外的获取接口皆统一由开源组件来管理了。应用中需要做的就是调取对应代理服务的接口，获取一个随机的代理IP。在Scrapy中定义一个代理Middleware如下代码片段所示：
+
+\begin{lstlisting}[language=Python]
+class ProxyMiddleware(object):
+    
+    def process_request(self, request, spider):
+      proxy_address = self.get_random_proxy()
+      request.meta["proxy"]="http://" + proxy_address
+\end{lstlisting}
+
+设置代理后，\textbf{每次发送请求都会重新设置新的代理IP，不用担心多个请求发送时会被封IP}，所以在使用代理的前提下可以在Scrapy爬取列表中同时设置多个请求URL，当需要大批量抓取数据时，可以调整请求URL的列表，中间的调度，可以交给Scrapy来处理，Scrapy可以方便的发送大规模的请求，而不需要费精力手动去管理线程，接收请求等，抓取到数据后，即可自动放入Pipline，可以理解为一个处理数据流的管道或者队列，在IP池足够多时，抓取的效率是非常可观的，前提是服务端能够承受大批量请求的压力。
 
 \subsubsection{xpath}
 
