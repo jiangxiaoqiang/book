@@ -1684,9 +1684,9 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{Python练习}
 
-\subsection{Python规范}
+\subsection{Python命名规范}
 
-Python之父Guido推荐的规范，Python模块、类、函数等命名示例如表\ref{table:pythonnamingspecification}所示。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/}}.
+Python之父Guido推荐的命名规范，Python模块、类、函数等命名示例如表\ref{table:pythonnamingspecification}所示。对类名使用大写字母开头的单词(如CapWords, 即Pascal风格), 但是模块名应该用小写加下划线的方式(如lower\_with\_under.py). 尽管已经有很多现存的模块使用类似于CapWords.py这样的命名, 但现在已经不鼓励这样做, 因为如果模块名碰巧和类名一致, 这会让人困扰\footnote{\url{https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/}}.
 
 
 \begin{table}[htbp]
@@ -1757,6 +1757,15 @@ class ProxyMiddleware(object):
 \end{lstlisting}
 
 设置代理后，\textbf{每次发送请求都会重新设置新的代理IP，不用担心多个请求发送时会被封IP}，所以在使用代理的前提下可以在Scrapy爬取列表中同时设置多个请求URL，当需要大批量抓取数据时，可以调整请求URL的列表，中间的调度，可以交给Scrapy来处理，Scrapy可以方便的发送大规模的请求，而不需要费精力手动去管理线程，接收请求等，抓取到数据后，即可自动放入Pipline，可以理解为一个处理数据流的管道或者队列，在IP池足够多时，抓取的效率是非常可观的，前提是服务端能够承受大批量请求的压力。
+
+\subsubsection{优化(Optimization)}
+
+提高并发数量，调整settings的CONCURRENT\_REQUESTS参数。将下载延迟设为0，这时需要相应的防ban措施，一般使用user agent轮转，构建user agent池，轮流选择其中之一来作为user agent。设置DOWNLOAD\_DELAY为0，此项配置会导致服务器会在同一时刻接收到大规模集中的访问，对服务器的影响较大，相当于短时间中增大服务器负载。当代理地址响应较慢时，可以适当调低DOWNLOAD\_TIMEOUT参数，如果不设置默认是180s，那么应用会等待较长时间，会影响爬取当效率。明智的做法时快速失败，快速重试，第一个地址响应较慢，可以快速的使用另一个地址进行尝试。
+
+\subsection{Google Spider}
+
+Google书籍链接的抓取地址：https://www.googleapis.com/books/v1/volumes?q=ab，其中q表示查询的关键字。为了数据爬取，构建一个公共的词库，目前使用清华大学的开放中文词库\footnote{\url{http://thuocl.thunlp.org/sendMessage}}。
+
 
 \subsubsection{xpath}
 
