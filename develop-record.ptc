@@ -55,39 +55,42 @@
 \contentsline {subsection}{\numberline {2.1.2}反反爬}{35}{subsection.2.1.2}
 \contentsline {subsection}{\numberline {2.1.3}Scrapy}{37}{subsection.2.1.3}
 \contentsline {subsubsection}{代理池(Proxy Pool)}{37}{section*.19}
-\contentsline {subsubsection}{优化(Optimization)}{38}{section*.20}
-\contentsline {subsection}{\numberline {2.1.4}Google Spider}{38}{subsection.2.1.4}
-\contentsline {subsubsection}{xpath}{38}{section*.21}
-\contentsline {subsection}{\numberline {2.1.5}api}{38}{subsection.2.1.5}
-\contentsline {paragraph}{'utf8' codec can't decode byte 0x8b in position 1: invalid start byte}{39}{section*.22}
-\contentsline {section}{\numberline {2.2}DB}{39}{section.2.2}
-\contentsline {subsection}{\numberline {2.2.1}Postgres}{39}{subsection.2.2.1}
-\contentsline {section}{\numberline {2.3}日志中心(Logging Center)}{40}{section.2.3}
-\contentsline {section}{\numberline {2.4}配置管理中心(Configuration Management Center)}{41}{section.2.4}
-\contentsline {section}{\numberline {2.5}Network}{42}{section.2.5}
-\contentsline {subsection}{\numberline {2.5.1}CIDR}{42}{subsection.2.5.1}
-\contentsline {part}{\@mypartnumtocformat {II}{Tool}}{49}{part.2}
+\contentsline {subsubsection}{优化(Optimization)}{39}{section*.20}
+\contentsline {subsection}{\numberline {2.1.4}Google Spider}{39}{subsection.2.1.4}
+\contentsline {subsubsection}{xpath}{39}{section*.21}
+\contentsline {subsection}{\numberline {2.1.5}api}{39}{subsection.2.1.5}
+\contentsline {paragraph}{'utf8' codec can't decode byte 0x8b in position 1: invalid start byte}{40}{section*.22}
+\contentsline {section}{\numberline {2.2}DB}{40}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}Postgres}{40}{subsection.2.2.1}
+\contentsline {section}{\numberline {2.3}日志中心(Logging Center)}{41}{section.2.3}
+\contentsline {section}{\numberline {2.4}配置管理中心(Configuration Management Center)}{42}{section.2.4}
+\contentsline {section}{\numberline {2.5}Network}{43}{section.2.5}
+\contentsline {subsection}{\numberline {2.5.1}CIDR}{43}{subsection.2.5.1}
+\contentsline {part}{\@mypartnumtocformat {II}{Tool}}{51}{part.2}
 \ttl@stoptoc {default@1}
 \ttl@starttoc {default@2}
-\contentsline {chapter}{\numberline {3}Widgets}{51}{chapter.3}
-\contentsline {section}{\numberline {3.1}Develop}{51}{section.3.1}
-\contentsline {subsection}{\numberline {3.1.1}Mybatis Aotogenerate}{51}{subsection.3.1.1}
-\contentsline {paragraph}{表模糊匹配}{51}{section*.23}
-\contentsline {subsection}{\numberline {3.1.2}Medis}{51}{subsection.3.1.2}
-\contentsline {subsection}{\numberline {3.1.3}Consul}{52}{subsection.3.1.3}
-\contentsline {section}{\numberline {3.2}WireGuard}{52}{section.3.2}
-\contentsline {subsection}{\numberline {3.2.1}WireGuard配置}{52}{subsection.3.2.1}
-\contentsline {subsection}{\numberline {3.2.2}使用问题}{54}{subsection.3.2.2}
-\contentsline {subsection}{\numberline {3.2.3}可以连接，无法上网}{54}{subsection.3.2.3}
-\contentsline {subsection}{\numberline {3.2.4}应用}{55}{subsection.3.2.4}
-\contentsline {subsubsection}{ssh登录}{56}{section*.24}
-\contentsline {chapter}{\numberline {4}Docker}{59}{chapter.4}
-\contentsline {section}{\numberline {4.1}Docker基础}{59}{section.4.1}
-\contentsline {subsection}{\numberline {4.1.1}为什么要用Docker}{59}{subsection.4.1.1}
-\contentsline {subsection}{\numberline {4.1.2}Docker安装}{60}{subsection.4.1.2}
-\contentsline {subsection}{\numberline {4.1.3}安装数据层}{60}{subsection.4.1.3}
-\contentsline {subsection}{\numberline {4.1.4}Docker导入导出}{61}{subsection.4.1.4}
-\contentsline {chapter}{\leavevmode {\color {ocre}Bibliography}}{63}{chapter*.25}
-\contentsline {section}{Books}{63}{section*.26}
-\contentsline {section}{Articles}{63}{section*.27}
+\contentsline {chapter}{\numberline {3}Widgets}{53}{chapter.3}
+\contentsline {section}{\numberline {3.1}Little Tool}{53}{section.3.1}
+\contentsline {subsection}{\numberline {3.1.1}traceroute}{53}{subsection.3.1.1}
+\contentsline {subsection}{\numberline {3.1.2}dig}{54}{subsection.3.1.2}
+\contentsline {section}{\numberline {3.2}Develop}{55}{section.3.2}
+\contentsline {subsection}{\numberline {3.2.1}Mybatis Aotogenerate}{55}{subsection.3.2.1}
+\contentsline {paragraph}{表模糊匹配}{55}{section*.23}
+\contentsline {subsection}{\numberline {3.2.2}Medis}{55}{subsection.3.2.2}
+\contentsline {subsection}{\numberline {3.2.3}Consul}{55}{subsection.3.2.3}
+\contentsline {section}{\numberline {3.3}WireGuard}{56}{section.3.3}
+\contentsline {subsection}{\numberline {3.3.1}WireGuard配置}{56}{subsection.3.3.1}
+\contentsline {subsection}{\numberline {3.3.2}使用问题}{58}{subsection.3.3.2}
+\contentsline {subsection}{\numberline {3.3.3}可以连接，无法上网}{58}{subsection.3.3.3}
+\contentsline {subsection}{\numberline {3.3.4}应用}{58}{subsection.3.3.4}
+\contentsline {subsubsection}{ssh登录}{59}{section*.24}
+\contentsline {chapter}{\numberline {4}Docker}{61}{chapter.4}
+\contentsline {section}{\numberline {4.1}Docker基础}{61}{section.4.1}
+\contentsline {subsection}{\numberline {4.1.1}为什么要用Docker}{61}{subsection.4.1.1}
+\contentsline {subsection}{\numberline {4.1.2}Docker安装}{62}{subsection.4.1.2}
+\contentsline {subsection}{\numberline {4.1.3}安装数据层}{62}{subsection.4.1.3}
+\contentsline {subsection}{\numberline {4.1.4}Docker导入导出}{63}{subsection.4.1.4}
+\contentsline {chapter}{\leavevmode {\color {ocre}Bibliography}}{65}{chapter*.25}
+\contentsline {section}{Books}{65}{section*.26}
+\contentsline {section}{Articles}{65}{section*.27}
 \contentsfinish 
