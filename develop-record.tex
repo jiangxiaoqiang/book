@@ -1758,7 +1758,26 @@ req = urllib.request.Request(url)
 
 设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。最近发现可以生成一个代理的IP池，使用免费的代理来突破爬取速度的限制，经过比较，选择了proxy\_pool\footnote{\url{https://github.com/jhao104/proxy_pool}}
 
+\subsection{Unable to write settings}
+
+在使用Visual Studio Code开发时，由于setting文件由版本管理工具Git管理时冲突，导致无法正确读取和改写配置文件。
+
 \subsection{Scrapy}
+
+Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
+
+\begin{lstlisting}[language=Bash]
+# 离线安装Twisted
+pip3 install Twisted-18.9.0-cp37-cp37m-win_amd64.whl
+# 安装Scrapy
+pip3 install scrapy
+\end{lstlisting}
+
+
+
+
+
+
 
 \subsubsection{代理池(Proxy Pool)}
 
@@ -2358,6 +2377,22 @@ docker import -o MariaDB.tar MariaDB
 docker export MariaDB.tar MariaDB
 \end{lstlisting}
 
+
+\part{Book}
+
+\chapter{Paper}
+
+\section{纸的种类}
+
+\subsection{宣纸(Xuan Paper)}
+
+宣纸又名泾县纸，出产于安徽省宣城泾县，以府治宣城为名，故称“宣纸”。宣纸是一种主要供中国毛笔书画以及装裱、拓片、水印等使用的高级艺术用纸张。宣纸拥有良好的润墨性、耐久性、不变形性以及抗虫性能，是中国纸的代表品种。宣纸起于唐代，历代相沿，由于宣纸有易于保存，经久不脆，不会褪色等特点，故有“纸寿千年”之誉\footnote{\url{https://zh.wikipedia.org/wiki/\%E5\%AE\%A3\%E7\%BA\%B8}}。
+
+\subsection{连史纸}
+
+\subsection{美浓和纸}
+
+美浓和纸的历史起源于正仓院珍藏的户籍。据说薪火传承的手抄纸至今已经有约1300年之久的历史。只有纯手工制作才能展现的质感与出色特质至今依然丝毫不变。
 
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
