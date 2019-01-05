@@ -1764,6 +1764,21 @@ req = urllib.request.Request(url)
 
 \subsection{Scrapy}
 
+Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
+
+\begin{lstlisting}[language=Bash]
+# 离线安装Twisted
+pip3 install Twisted-18.9.0-cp37-cp37m-win_amd64.whl
+# 安装Scrapy
+pip3 install scrapy
+\end{lstlisting}
+
+
+
+
+
+
+
 \subsubsection{代理池(Proxy Pool)}
 
 一般限制了爬虫的网站，在使用同一个IP在一段时间内发送了超过规定数量的请求，或者调取速度过于频繁，会立即被加入黑名单，封禁一段时间(豆瓣一般是24小时)，所以如果需要大规模抓取数据，针对此种反爬手段就是建立一个代理集合，也就是代理池，请求通过分布在全球各地的代理机器转发。HTTP代理池使用的是开源项目，新代理IP的抓取与存储，代理IP有效性的维护与检测，代理IP库对外的获取接口皆统一由开源组件来管理了。应用中需要做的就是调取对应代理服务的接口，获取一个随机的代理IP。在Scrapy中定义一个代理Middleware如下代码片段所示：
