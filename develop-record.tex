@@ -2105,6 +2105,20 @@ ping6 ipv6.baidu.com
 
 输出PING6(56=40+8+8 bytes) local ip --> 2400:da00:2::29。local ip是本机的IPv6地址。
 
+
+\subsection{ssh}
+
+使用如下命令动态代理：
+
+\begin{lstlisting}[language=Bash]
+# ssh利用Google云主机动态代理
+ssh -Nf -D 127.0.0.1:2000 google-cloud
+\end{lstlisting}
+
+服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
+
+
+
 \section{Develop}
 
 \subsection{Mybatis Aotogenerate}
