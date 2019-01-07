@@ -1882,11 +1882,12 @@ location ^~ /spider/api/ {
 
 在Mac上启动Postgres：
 
-\begin{lstlisting}[language=SQL]
-sudo brew services start postgresql
+\begin{lstlisting}[language=Bash]
 # 命令启动Postgresql
+sudo brew services start postgresql
 # /usr/local/var/postgres/dolphinpg为数据目录
-pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
+/usr/local/Cellar/postgresql/9.6.3/bin/pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+/usr/local/Cellar/postgresql/10.5/bin/pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
 \end{lstlisting}
 
 原来的数据列是integer类型，调整列的数据类型为varchar：
@@ -1920,6 +1921,50 @@ options(user 'postgres',password 'postgres');
 \subsubsection{CTID}
 
 Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.CTID每行记录再表中的物理位置。Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
+
+\subsubsection{常用SQL}
+
+查看单个表大小：
+
+\begin{lstlisting}[language=SQL]
+-- 数据库中单个表的大小（不包含索引）
+select pg_size_pretty(pg_relation_size('douban_book_id'));
+\end{lstlisting}
+
+查看Postgresql的锁：
+
+\begin{lstlisting}[language=SQL]
+SELECT   
+    procpid,   
+    start,   
+    now() - start AS lap,   
+    current_query   
+FROM   
+    (SELECT   
+        backendid,   
+        pg_stat_get_backend_pid(S.backendid) AS procpid,   
+        pg_stat_get_backend_activity_start(S.backendid) AS start,   
+       pg_stat_get_backend_activity(S.backendid) AS current_query   
+       FROM   
+        (SELECT pg_stat_get_backend_idset() AS backendid) AS S   
+    ) AS S ,pg_stat_activity pa  
+WHERE   
+   current_query <> '<IDLE>' and  procpid<> pg_backend_pid() and pa.pid=s.procpid and pa.state<>'idle'  
+ORDER BY   
+   lap DESC;
+\end{lstlisting}
+
+查询出PID后，直接kill即可。
+
+\subsubsection{WAL(Write-Ahead Logging)}
+
+PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL日志量会远远超过实际更新的数据量。 我们可以把这种现象起个名字,叫做“WAL写放大”，造成WAL写放大的主要原因有2点。
+
+1. 在checkpoint之后第一次修改页面，需要在WAL中输出整个page，即全页写(full page writes)。全页写的目的是防止在意外宕机时出现的数据块部分写导致数据库无法恢复。
+
+2. 更新记录时如果新记录位置(ctid)发生变更，索引记录也要相应变更，这个变更也要记入WAL。更严重的是索引记录的变更又有可能导致索引页的全页写，进一步加剧了WAL写放大。
+
+过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
 
 \section{日志中心(Logging Center)}
 
