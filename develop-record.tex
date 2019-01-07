@@ -1763,6 +1763,15 @@ req = urllib.request.Request(url)
 
 在使用Visual Studio Code开发时，由于setting文件由版本管理工具Git管理时冲突，导致无法正确读取和改写配置文件。
 
+\subsection{pipenv}
+
+Pipenv 附带包管理和虚拟环境支持，因此你可以使用一个工具来安装、卸载、跟踪和记录依赖性，并创建、使用和组织你的虚拟环境。你的应用程序可能依赖于某个特定版本的库，而那个库可能依赖于另一个特定版本的库，这些依赖关系如海龟般堆叠起来。当你的应用程序使用的两个库有冲突的依赖关系时，你的情况会变得很艰难。Pipenv 希望通过在一个名为 Pipfile.lock 的文件中跟踪应用程序相互依赖关系树来减轻这种痛苦。Pipfile.lock 还会验证生产中是否使用了正确版本的依赖关系。pipenv的locking环节真是慢，使用下面的命令直接跳过locking环节：
+
+\begin{lstlisting}[language=Bash]
+pipenv install psycopg2 --skip-lock
+\end{lstlisting}
+
+
 \subsection{Scrapy}
 
 Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
@@ -1880,12 +1889,19 @@ sudo brew services start postgresql
 pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
 \end{lstlisting}
 
+原来的数据列是integer类型，调整列的数据类型为varchar：
+
+\begin{lstlisting}[language=SQL]
+-- 将列类型调整为varchar
+alter table book alter column douban_id type varchar(64);
+\end{lstlisting}
+
 fdw是foreign-data wrapper的一个简称，可以叫外部封装数据,可以在本地数据库操作远程数据库.创建远程server:
 
 \begin{lstlisting}[language=SQL]
 create server server_remote 
 FOREIGN data wrapper postgres_fdw 
-OPTIONS(host '35.194.196.172', port '5432', dbname 'dolphin');
+OPTIONS(host '127.0.0.1', port '5432', dbname 'dolphin');
 
 -- 查看所有远程连接
 SELECT * from pg_foreign_server;
@@ -1901,6 +1917,9 @@ options(user 'postgres',password 'postgres');
 
 现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。
 
+\subsubsection{CTID}
+
+Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.CTID每行记录再表中的物理位置。Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
 
 \section{日志中心(Logging Center)}
 
@@ -2461,4 +2480,4 @@ docker export MariaDB.tar MariaDB
 
 \end{document}
 
->>>>>>> b66358889d94a30cdd9b0052c0139a455d118700
+
