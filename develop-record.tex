@@ -1820,7 +1820,7 @@ COPY fund_words_lib(word,remark) from '/Users/dolphin/Downloads/def_eng.csv' WIT
 COPY words(word) from '/Users/dolphin/source/pydolphin-service/dolphin/tool/file.csv' WITH CSV HEADER;
 \end{lstlisting}
 
-在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.
+在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.Google Book API\footnote{\url{https://developers.google.com/books/docs/v1/reference/volumes/list?hl=zh-CN}}支持翻页，每页最大40条数据。
 
 \subsubsection{xpath}
 
@@ -1916,7 +1916,16 @@ server server_remote
 options(user 'postgres',password 'postgres');
 \end{lstlisting}
 
-现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。
+现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。创建关联表：
+
+\begin{lstlisting}[language=SQL]
+CREATE FOREIGN TABLE fund_words_lib(word varchar,remark varchar,id bigint) 
+server server_remote
+options (schema_name 'public',table_name 'fund_words_lib');
+\end{lstlisting}
+
+本地的表和远程的表更新都会同步到对方。
+
 
 \subsubsection{CTID}
 
@@ -1965,6 +1974,20 @@ PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL�
 2. 更新记录时如果新记录位置(ctid)发生变更，索引记录也要相应变更，这个变更也要记入WAL。更严重的是索引记录的变更又有可能导致索引页的全页写，进一步加剧了WAL写放大。
 
 过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
+
+\subsubsection{跨库查询}
+
+PostgreSQL跨库访问有3种方法：Schema，dblink，postgres\_fdw，跨库查询示例如下：
+
+\begin{lstlisting}[language=SQL]
+select * 
+from dblink('host=127.0.0.1 dbname=dolphin user=postgres password=postgres','select * from fund_words_lib limit 1') 
+as fund_words_lib(word varchar,remark varchar,id bigint)
+\end{lstlisting}
+
+dblink执行一个远程查询命令。dblink is a module that supports connections to other PostgreSQL databases from within a database session.postgres\_fdw远程可写功能是9.3版本出来后才新加的，而dblink也可以在以前的postgresql版本中使用。
+
+
 
 \section{日志中心(Logging Center)}
 
