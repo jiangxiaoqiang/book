@@ -1763,6 +1763,15 @@ req = urllib.request.Request(url)
 
 在使用Visual Studio Code开发时，由于setting文件由版本管理工具Git管理时冲突，导致无法正确读取和改写配置文件。
 
+\subsection{pipenv}
+
+Pipenv 附带包管理和虚拟环境支持，因此你可以使用一个工具来安装、卸载、跟踪和记录依赖性，并创建、使用和组织你的虚拟环境。你的应用程序可能依赖于某个特定版本的库，而那个库可能依赖于另一个特定版本的库，这些依赖关系如海龟般堆叠起来。当你的应用程序使用的两个库有冲突的依赖关系时，你的情况会变得很艰难。Pipenv 希望通过在一个名为 Pipfile.lock 的文件中跟踪应用程序相互依赖关系树来减轻这种痛苦。Pipfile.lock 还会验证生产中是否使用了正确版本的依赖关系。pipenv的locking环节真是慢，使用下面的命令直接跳过locking环节：
+
+\begin{lstlisting}[language=Bash]
+pipenv install psycopg2 --skip-lock
+\end{lstlisting}
+
+
 \subsection{Scrapy}
 
 Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
@@ -1857,6 +1866,12 @@ location ^~ /spider/api/ {
 }
 \end{lstlisting}
 
+\paragraph{JsonResponse}
+
+第一个参数，data应该是一个字典类型，当 safe 这个参数被设置为：False ,那data可以填入任何能被转换为JSON格式的对象，比如list, tuple, set。 默认的safe 参数是 True. 如果你传入的data数据类型不是字典类型，那么它就会抛出 TypeError的异常。
+
+http http://localhost:8000/spider/api/v1/word
+
 \paragraph{'utf8' codec can't decode byte 0x8b in position 1: invalid start byte}
 
 由于默认请求头包含gzip格式，服务端在返回的时候，对消息体进行了压缩。客户端发送Accept-Encoding请求头表示接收的内容类型。Python默认不自动解压，无法识别，所以出现此问题。
@@ -1873,11 +1888,19 @@ location ^~ /spider/api/ {
 
 在Mac上启动Postgres：
 
-\begin{lstlisting}[language=SQL]
-sudo brew services start postgresql
+\begin{lstlisting}[language=Bash]
 # 命令启动Postgresql
+sudo brew services start postgresql
 # /usr/local/var/postgres/dolphinpg为数据目录
-pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
+/usr/local/Cellar/postgresql/9.6.3/bin/pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+/usr/local/Cellar/postgresql/10.5/bin/pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
+\end{lstlisting}
+
+原来的数据列是integer类型，调整列的数据类型为varchar：
+
+\begin{lstlisting}[language=SQL]
+-- 将列类型调整为varchar
+alter table book alter column douban_id type varchar(64);
 \end{lstlisting}
 
 fdw是foreign-data wrapper的一个简称，可以叫外部封装数据,可以在本地数据库操作远程数据库.创建远程server:
@@ -1885,7 +1908,7 @@ fdw是foreign-data wrapper的一个简称，可以叫外部封装数据,可以�
 \begin{lstlisting}[language=SQL]
 create server server_remote 
 FOREIGN data wrapper postgres_fdw 
-OPTIONS(host '35.194.196.172', port '5432', dbname 'dolphin');
+OPTIONS(host '127.0.0.1', port '5432', dbname 'dolphin');
 
 -- 查看所有远程连接
 SELECT * from pg_foreign_server;
@@ -1901,6 +1924,53 @@ options(user 'postgres',password 'postgres');
 
 现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。
 
+\subsubsection{CTID}
+
+Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.CTID每行记录再表中的物理位置。Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
+
+\subsubsection{常用SQL}
+
+查看单个表大小：
+
+\begin{lstlisting}[language=SQL]
+-- 数据库中单个表的大小（不包含索引）
+select pg_size_pretty(pg_relation_size('douban_book_id'));
+\end{lstlisting}
+
+查看Postgresql的锁：
+
+\begin{lstlisting}[language=SQL]
+SELECT   
+    procpid,   
+    start,   
+    now() - start AS lap,   
+    current_query   
+FROM   
+    (SELECT   
+        backendid,   
+        pg_stat_get_backend_pid(S.backendid) AS procpid,   
+        pg_stat_get_backend_activity_start(S.backendid) AS start,   
+       pg_stat_get_backend_activity(S.backendid) AS current_query   
+       FROM   
+        (SELECT pg_stat_get_backend_idset() AS backendid) AS S   
+    ) AS S ,pg_stat_activity pa  
+WHERE   
+   current_query <> '<IDLE>' and  procpid<> pg_backend_pid() and pa.pid=s.procpid and pa.state<>'idle'  
+ORDER BY   
+   lap DESC;
+\end{lstlisting}
+
+查询出PID后，直接kill即可。
+
+\subsubsection{WAL(Write-Ahead Logging)}
+
+PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL日志量会远远超过实际更新的数据量。 我们可以把这种现象起个名字,叫做“WAL写放大”，造成WAL写放大的主要原因有2点。
+
+1. 在checkpoint之后第一次修改页面，需要在WAL中输出整个page，即全页写(full page writes)。全页写的目的是防止在意外宕机时出现的数据块部分写导致数据库无法恢复。
+
+2. 更新记录时如果新记录位置(ctid)发生变更，索引记录也要相应变更，这个变更也要记入WAL。更严重的是索引记录的变更又有可能导致索引页的全页写，进一步加剧了WAL写放大。
+
+过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
 
 \section{日志中心(Logging Center)}
 
@@ -2461,4 +2531,4 @@ docker export MariaDB.tar MariaDB
 
 \end{document}
 
->>>>>>> b66358889d94a30cdd9b0052c0139a455d118700
+
