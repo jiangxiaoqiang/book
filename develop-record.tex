@@ -1987,6 +1987,9 @@ as fund_words_lib(word varchar,remark varchar,id bigint)
 
 dblink执行一个远程查询命令。dblink is a module that supports connections to other PostgreSQL databases from within a database session.postgres\_fdw远程可写功能是9.3版本出来后才新加的，而dblink也可以在以前的postgresql版本中使用。
 
+\subsection{异步流复制(Async Stream Replica)}
+
+基于Standby的异步流复制，这是PostgreSQL 9.x版本（2010.9）之后提供的一个功能，类似的功能在Oracle中是11g之后才提供的active dataguard和SQL Server 2012版本之后才提供的日志传送。PostgreSQL在数据目录下的pg\_xlog子目录中维护了一个WAL日志文件，该文件用于记录数据库文件的每次改变，这种日志文件机制提供了一种数据库热备份的方案，即：在把数据库使用文件系统的方式备份出来的同时也把相应的WAL日志进行备份，即使备份出来的数据块不一致，也可以重放WAL日志把备份的内容推到一致状态。这也就是基于时间点的备份（Point-in-Time Recovery），简称PITR。
 
 
 \section{日志中心(Logging Center)}
