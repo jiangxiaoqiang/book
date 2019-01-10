@@ -1866,6 +1866,12 @@ location ^~ /spider/api/ {
 }
 \end{lstlisting}
 
+\paragraph{JsonResponse}
+
+第一个参数，data应该是一个字典类型，当 safe 这个参数被设置为：False ,那data可以填入任何能被转换为JSON格式的对象，比如list, tuple, set。 默认的safe 参数是 True. 如果你传入的data数据类型不是字典类型，那么它就会抛出 TypeError的异常。
+
+http http://localhost:8000/spider/api/v1/word
+
 \paragraph{'utf8' codec can't decode byte 0x8b in position 1: invalid start byte}
 
 由于默认请求头包含gzip格式，服务端在返回的时候，对消息体进行了压缩。客户端发送Accept-Encoding请求头表示接收的内容类型。Python默认不自动解压，无法识别，所以出现此问题。
@@ -1879,6 +1885,12 @@ location ^~ /spider/api/ {
 \section{DB}
 
 \subsection{Postgres}
+
+查看Postgrsql日志：
+
+\begin{lstlisting}[language=Bash]
+tail -f /usr/local/var/postgres/server.log
+\end{lstlisting}
 
 在Mac上启动Postgres：
 
@@ -1980,8 +1992,10 @@ PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL�
 PostgreSQL跨库访问有3种方法：Schema，dblink，postgres\_fdw，跨库查询示例如下：
 
 \begin{lstlisting}[language=SQL]
+insert into fund_words_lib(word,remark,id)
 select * 
-from dblink('host=127.0.0.1 dbname=dolphin user=postgres password=postgres','select * from fund_words_lib limit 1') 
+from dblink('host=127.0.0.1 dbname=dolphin user=postgres password=postgres',
+			'select * from fund_words_lib where id > 69999 and id < 80000') 
 as fund_words_lib(word varchar,remark varchar,id bigint)
 \end{lstlisting}
 
