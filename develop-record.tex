@@ -1868,7 +1868,25 @@ location ^~ /spider/api/ {
 
 \paragraph{JsonResponse}
 
-第一个参数，data应该是一个字典类型，当 safe 这个参数被设置为：False ,那data可以填入任何能被转换为JSON格式的对象，比如list, tuple, set。 默认的safe 参数是 True. 如果你传入的data数据类型不是字典类型，那么它就会抛出 TypeError的异常。
+第一个参数，data应该是一个字典类型，当 safe 这个参数被设置为：False ,那data可以填入任何能被转换为JSON格式的对象，比如list, tuple, set。 默认的safe 参数是 True. 如果你传入的data数据类型不是字典类型，那么它就会抛出 TypeError的异常。在返回Json响应的时候，一般不会直接返回查询出来的结果，要进行一次简单的标准化封装，返回如下格式的数据：
+
+\begin{lstlisting}
+{
+    "code": "20000",
+    "data": {},
+    "message": "success"
+}
+\end{lstlisting}
+
+通过新增自定义响应CustomJsonResponse，封装成标准化的响应结果，效果如图\ref{fig:pythonreststandardresponse}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.7]{pythonreststandardresponse.png}
+	\caption{Django自定义标准化Json响应}
+	\label{fig:pythonreststandardresponse}
+\end{figure}
+
 
 http http://localhost:8000/spider/api/v1/word
 
