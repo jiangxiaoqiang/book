@@ -2633,6 +2633,48 @@ docker import -o MariaDB.tar MariaDB
 docker export MariaDB.tar MariaDB
 \end{lstlisting}
 
+\part{Network}
+
+\chapter{HTTP}
+
+\section{Web Server}
+
+\subsection{maxPostSize}
+
+maxPostSize=0表示post请求不限制大小,从 apache-tomcat-7.0.63开始，参数 maxPostSize 的含义改变： 如果将值设置为 0，表示 POST 最大值为 0，不限制 POST 大小需要将值设置为 -1。，在此版本之前设置为 0 表示不限制 POST 大小。The maximum size in bytes of the POST which will be handled by the container FORM URL parameter parsing. The limit can be disabled by setting this attribute to a value less than zero. If not specified, this attribute is set to 2097152 (2 megabytes)\footnote{\url{https://tomcat.apache.org/tomcat-8.0-doc/config/http.html}}.在7.0.63 版本之后要设置成小于0的数字才表示不受限制,另外此参数只适用于request的Content-Type为“application/x-www-form-urlencoded。排查此问题，可以在服务端查看接收到的消息体内容：
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.8]{loginrecievebody.jpg}
+	\caption{登录接收到的消息体}
+	\label{fig:loginrecievebody}
+\end{figure}
+
+从图\ref{fig:loginrecievebody}中可以看出，接收到的消息体为空，登录时用户名和密码放在消息体中，不可能为空，那么可以定位到由于服务端没有接收到请求的消息体导致程序问题。
+
+\subsection{URL自动重定向}
+
+在开启Fiddler代理的情况下(Fiddler代理端口8888)，在浏览器中访问8082端口时，不管输入什么地址，都会重定向到一个网址。查看8888端口占用情况：
+
+\begin{lstlisting}[language=Bash]
+netstat -ano|findstr 8888
+\end{lstlisting}
+
+a(all)选项表示显示所有连接和侦听端口，n(number)表示以数字形式显示地址和端口号,o(own)选项表示显示拥有的与每个连接关联的进程 ID。发现有3个进程占用此端口(Chrome/Fiddler/Nginx)，那么可以肯定是Nginx配置了自动跳转：
+
+\begin{lstlisting}[language=Bash]
+server {
+    listen       8888;
+    server_name  dolphin.spider.com;      
+
+    location / {
+        return 301 https://dolphin.spider.com:443$request_uri;
+    }
+}
+\end{lstlisting}
+
+将Nginx监听8888端口调整即可解决此问题。
+
 
 \part{Book}
 
