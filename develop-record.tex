@@ -1681,6 +1681,179 @@ redis为了避免客户端连接数过多，有一个timeout配置，意思是�
 
 Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
 
+\chapter{DB}
+
+\section{SSDB}
+
+Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。
+
+
+\subsection{Postgres}
+
+查看Postgrsql日志：
+
+\begin{lstlisting}[language=Bash]
+tail -f /usr/local/var/postgres/server.log
+\end{lstlisting}
+
+在Mac上启动Postgres：
+
+\begin{lstlisting}[language=Bash]
+# 命令启动Postgresql
+sudo brew services start postgresql
+# /usr/local/var/postgres/dolphinpg为数据目录
+/usr/local/Cellar/postgresql/9.6.3/bin/pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+/usr/local/Cellar/postgresql/10.5/bin/pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
+\end{lstlisting}
+
+原来的数据列是integer类型，调整列的数据类型为varchar：
+
+\begin{lstlisting}[language=SQL]
+-- 将列类型调整为varchar
+alter table book alter column douban_id type varchar(64);
+\end{lstlisting}
+
+fdw是foreign-data wrapper的一个简称，可以叫外部封装数据,可以在本地数据库操作远程数据库.创建远程server:
+
+\begin{lstlisting}[language=SQL]
+create server server_remote 
+FOREIGN data wrapper postgres_fdw 
+OPTIONS(host '127.0.0.1', port '5432', dbname 'dolphin');
+
+-- 查看所有远程连接
+SELECT * from pg_foreign_server;
+\end{lstlisting}
+
+在server\_remote下为角色postgres创建一个用户匹配信息，options里是用户名和密码。
+
+\begin{lstlisting}[language=SQL]
+create user mapping for postgres 
+server server_remote 
+options(user 'postgres',password 'postgres');
+\end{lstlisting}
+
+现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。创建关联表：
+
+\begin{lstlisting}[language=SQL]
+CREATE FOREIGN TABLE fund_words_lib(word varchar,remark varchar,id bigint) 
+server server_remote
+options (schema_name 'public',table_name 'fund_words_lib');
+\end{lstlisting}
+
+本地的表和远程的表更新都会同步到对方。
+
+
+\subsubsection{CTID}
+
+ctid：表示数据记录的物理行当信息，指的是 一条记录位于哪个数据块的哪个位移上面。格式(blockid,itemid)：拿其中(0,1)来说；0表示块id；1表示在这块第一条记录。Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM(vacuum: 回收未显示的物理位置；标明可以继续使用。) FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
+
+\subsubsection{常用SQL}
+
+查看单个表大小：
+
+\begin{lstlisting}[language=SQL]
+-- 数据库中单个表的大小（不包含索引）
+select pg_size_pretty(pg_relation_size('douban_book_id'));
+\end{lstlisting}
+
+查看Postgresql的锁：
+
+\begin{lstlisting}[language=SQL]
+SELECT   
+    procpid,   
+    start,   
+    now() - start AS lap,   
+    current_query   
+FROM   
+    (SELECT   
+        backendid,   
+        pg_stat_get_backend_pid(S.backendid) AS procpid,   
+        pg_stat_get_backend_activity_start(S.backendid) AS start,   
+       pg_stat_get_backend_activity(S.backendid) AS current_query   
+       FROM   
+        (SELECT pg_stat_get_backend_idset() AS backendid) AS S   
+    ) AS S ,pg_stat_activity pa  
+WHERE   
+   current_query <> '<IDLE>' and  procpid<> pg_backend_pid() and pa.pid=s.procpid and pa.state<>'idle'  
+ORDER BY   
+   lap DESC;
+\end{lstlisting}
+
+查询出PID后，直接kill即可。为表新增id自增序列:
+
+\begin{lstlisting}[language=SQL]
+-- 为表新增自增序列
+alter table public.spider_urls_pool alter column id set default nextval('public.scrapy_urls_id_seq');
+\end{lstlisting}
+
+新增唯一约束：
+
+\begin{lstlisting}[language=SQL]
+-- 爬取URL新增唯一约束
+alter table spider_urls_pool add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
+\end{lstlisting}
+
+\paragraph{去重}
+
+去除fund\_words\_lib表的重复数据\footnote{\url{https://stackoverflow.com/questions/6583916/delete-duplicate-records-in-postgresql}}：
+
+\begin{lstlisting}[language=SQL]
+delete from fund_words_lib fwl
+where fwl.ctid <>
+(
+	select min(fwl_emb.ctid)
+	from fund_words_lib fwl_emb
+	where fwl.word = fwl_emb.word
+)
+\end{lstlisting}
+
+此语句相当缓慢，6W多数据用了将近一个小时，慢的可以。
+
+\subsubsection{WAL(Write-Ahead Logging)}
+
+PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL日志量会远远超过实际更新的数据量。 我们可以把这种现象起个名字,叫做“WAL写放大”，造成WAL写放大的主要原因有2点。
+
+1. 在checkpoint之后第一次修改页面，需要在WAL中输出整个page，即全页写(full page writes)。全页写的目的是防止在意外宕机时出现的数据块部分写导致数据库无法恢复。
+
+2. 更新记录时如果新记录位置(ctid)发生变更，索引记录也要相应变更，这个变更也要记入WAL。更严重的是索引记录的变更又有可能导致索引页的全页写，进一步加剧了WAL写放大。
+
+过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
+
+\subsubsection{跨库查询}
+
+PostgreSQL跨库访问有3种方法：Schema，dblink，postgres\_fdw，跨库查询示例如下：
+
+\begin{lstlisting}[language=SQL]
+insert into fund_words_lib(word,remark,id)
+select * 
+from dblink('host=127.0.0.1 dbname=dolphin user=postgres password=postgres',
+			'select * from fund_words_lib where id > 69999 and id < 80000') 
+as fund_words_lib(word varchar,remark varchar,id bigint)
+\end{lstlisting}
+
+dblink执行一个远程查询命令。dblink is a module that supports connections to other PostgreSQL databases from within a database session.postgres\_fdw远程可写功能是9.3版本出来后才新加的，而dblink也可以在以前的postgresql版本中使用。
+
+\subsubsection{统计信息}
+
+pg\_stat\_statements模块提供一种方法追踪一个服务器所执行的所有 SQL 语句的执行统计信息，可以用于统计数据库的资源开销，分析TOP SQL。
+
+\begin{lstlisting}[language=SQL]
+-- 赋给执行函数权限
+grant execute on function pg_stat_statements_reset() to postgres;
+
+-- 放弃到目前为止搜集的所有统计
+-- 默认需超级用户权限
+select pg_stat_statements_reset();
+\end{lstlisting}
+
+
+\subsubsection{异步流复制(Async Stream Replica)}
+
+基于Standby的异步流复制，这是PostgreSQL 9.x版本（2010.9）之后提供的一个功能，类似的功能在Oracle中是11g之后才提供的active dataguard和SQL Server 2012版本之后才提供的日志传送。PostgreSQL在数据目录下的pg\_xlog子目录中维护了一个WAL日志文件，该文件用于记录数据库文件的每次改变，这种日志文件机制提供了一种数据库热备份的方案，即：在把数据库使用文件系统的方式备份出来的同时也把相应的WAL日志进行备份，即使备份出来的数据块不一致，也可以重放WAL日志把备份的内容推到一致状态。这也就是基于时间点的备份（Point-in-Time Recovery），简称PITR。
+
+
+
+
 \chapter{Python}
 
 \section{Python练习}
@@ -1726,14 +1899,34 @@ Python之父Guido推荐的命名规范，Python模块、类、函数等命名示
 	\end{center}
 \end{table}
 
+\subsection{str与bytes}
 
+Python 3中最重要的新特性可能就是将文本(text)和二进制数据做了更清晰的区分。文本总是用unicode进行编码，以str类型表示；而二进制数据以bytes类型表示。在python3中，不能以任何隐式方式将str和bytes类型二者混合使用。不可以将str和bytes类型进行拼接，不能在str中搜索bytes数据(反之亦然)，也不能将str作为参数传入需要bytes类型参数的函数(反之亦然)。只有在需要将string编码(encode)成byte的时候，比如：通过网络传输数据；或者需要将byte解码(decode)成string的时候，我们才会关注string和byte的区别。
+
+\begin{lstlisting}[language=Python]
+# convert bytes for network transfer
+data = bytes(encode_data_bytes,'utf8')
+req = urllib.request.Request(url=url,data = data,headers = headers,method='POST')
+\end{lstlisting}
+
+Python3 中，在字符引号前加‘b’，明确表示这是一个 bytes 类型的对象，实际上它就是一组二进制字节序列组成的数据，bytes 类型可以是 ASCII范围内的字符和其它十六进制形式的字符数据，但不能用中文等非ASCII字符表示。
+
+\subsection{序列化和反序列化}
+
+再将Python对象序列化到SSDB时，直接保存对象即可，不用转换为Json字符串后再保存，否则取出的数据有双斜杠转义，需要调取2次Json解析。Json解析如下代码片段所示：
+
+\begin{lstlisting}[language=Python]
+# ast(Abstract Syntax Trees)是python中的一个模块
+# 分析python的抽象语法树来对python的代码进行分析和修改
+book_object = ast.literal_eval(book_text_str)
+\end{lstlisting}
 
 \subsection{反反爬}
 
 在爬取豆瓣的过程中，爬取一段时间后，总是出现404错误。尝试添加HTTP请求头，模拟浏览器的请求。但是在添加请求头之后，没有产生预期的效果，所以采用Charles工具来验证请求头。首先在代码中设置Charles代理：
 
 \begin{lstlisting}[language=Python]
-proxy_support = urllib.request.ProxyHandler({'https': 'localhost:8888'})
+proxy_support = request.ProxyHandler({'https': 'localhost:8888'})
 opener = urllib.request.build_opener(proxy_support)
 urllib.request.install_opener(opener)
 req = urllib.request.Request(url)
@@ -1806,6 +1999,30 @@ class ProxyMiddleware(object):
 \subsubsection{优化(Optimization)}
 
 提高并发数量，调整settings的CONCURRENT\_REQUESTS参数。将下载延迟设为0，这时需要相应的防ban措施，一般使用user agent轮转，构建user agent池，轮流选择其中之一来作为user agent。设置DOWNLOAD\_DELAY为0，此项配置会导致服务器会在同一时刻接收到大规模集中的访问，对服务器的影响较大，相当于短时间中增大服务器负载。当代理地址响应较慢时，可以适当调低DOWNLOAD\_TIMEOUT参数，如果不设置默认是180s，那么应用会等待较长时间，会影响爬取当效率。明智的做法时快速失败，快速重试，第一个地址响应较慢，可以快速的使用另一个地址进行尝试。
+
+\subsubsection{Json序列化}
+
+在Scrapy爬取内容后，使用ScrapyJSONEncoder来转化为Json,再编码为bytes方式传输。ScrapyJSONEncode转化为Json：
+
+\begin{lstlisting}[language=SQL]
+_encoder = ScrapyJSONEncoder()
+encode_result = _encoder.encode(data)
+\end{lstlisting}
+
+转化为bytes：
+
+\begin{lstlisting}[language=SQL]
+encode_data_bytes = urllib.parse.quote_plus(encode_result)
+data = bytes(encode_data_bytes,'utf8')
+req = Request(url=url,data = data,headers = headers,method='POST')
+response = urllib.request.urlopen(req).read()
+response_text = str(response,'utf-8')
+\end{lstlisting}
+
+
+\subsection{callback不调用}
+
+是因为启用了allowed\_domains设置的缘故。allowed\_domains用于设置过滤爬取的域名，在插件OffsiteMiddleware启用的情况下（默认是启用的），不在此允许范围内的域名就会被过滤，因而不会进行爬取。但对于start\_urls里的起始爬取页面，它不过滤，仅过滤起始爬取页面以外的页面。
 
 \subsection{Google Spider}
 
@@ -1899,129 +2116,6 @@ http http://localhost:8000/spider/api/v1/word
 \end{lstlisting}
 
 去掉gzip压缩类型即可。
-
-\section{DB}
-
-\subsection{Postgres}
-
-查看Postgrsql日志：
-
-\begin{lstlisting}[language=Bash]
-tail -f /usr/local/var/postgres/server.log
-\end{lstlisting}
-
-在Mac上启动Postgres：
-
-\begin{lstlisting}[language=Bash]
-# 命令启动Postgresql
-sudo brew services start postgresql
-# /usr/local/var/postgres/dolphinpg为数据目录
-/usr/local/Cellar/postgresql/9.6.3/bin/pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
-/usr/local/Cellar/postgresql/10.5/bin/pg_ctl -D /usr/local/var/postgres/dolphinpg -l /usr/local/var/postgres/server.log start
-\end{lstlisting}
-
-原来的数据列是integer类型，调整列的数据类型为varchar：
-
-\begin{lstlisting}[language=SQL]
--- 将列类型调整为varchar
-alter table book alter column douban_id type varchar(64);
-\end{lstlisting}
-
-fdw是foreign-data wrapper的一个简称，可以叫外部封装数据,可以在本地数据库操作远程数据库.创建远程server:
-
-\begin{lstlisting}[language=SQL]
-create server server_remote 
-FOREIGN data wrapper postgres_fdw 
-OPTIONS(host '127.0.0.1', port '5432', dbname 'dolphin');
-
--- 查看所有远程连接
-SELECT * from pg_foreign_server;
-\end{lstlisting}
-
-在server\_remote下为角色postgres创建一个用户匹配信息，options里是用户名和密码。
-
-\begin{lstlisting}[language=SQL]
-create user mapping for postgres 
-server server_remote 
-options(user 'postgres',password 'postgres');
-\end{lstlisting}
-
-现在远程连接中需要连接的数据库为dolphin，需要用到的表为book，因此在完成上述创建后，就可以在本地创建外部表，表中的记录则完全和远程表中一样。远程book表和本地book表的新增都会同步到对方。创建关联表：
-
-\begin{lstlisting}[language=SQL]
-CREATE FOREIGN TABLE fund_words_lib(word varchar,remark varchar,id bigint) 
-server server_remote
-options (schema_name 'public',table_name 'fund_words_lib');
-\end{lstlisting}
-
-本地的表和远程的表更新都会同步到对方。
-
-
-\subsubsection{CTID}
-
-Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.CTID每行记录再表中的物理位置。Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
-
-\subsubsection{常用SQL}
-
-查看单个表大小：
-
-\begin{lstlisting}[language=SQL]
--- 数据库中单个表的大小（不包含索引）
-select pg_size_pretty(pg_relation_size('douban_book_id'));
-\end{lstlisting}
-
-查看Postgresql的锁：
-
-\begin{lstlisting}[language=SQL]
-SELECT   
-    procpid,   
-    start,   
-    now() - start AS lap,   
-    current_query   
-FROM   
-    (SELECT   
-        backendid,   
-        pg_stat_get_backend_pid(S.backendid) AS procpid,   
-        pg_stat_get_backend_activity_start(S.backendid) AS start,   
-       pg_stat_get_backend_activity(S.backendid) AS current_query   
-       FROM   
-        (SELECT pg_stat_get_backend_idset() AS backendid) AS S   
-    ) AS S ,pg_stat_activity pa  
-WHERE   
-   current_query <> '<IDLE>' and  procpid<> pg_backend_pid() and pa.pid=s.procpid and pa.state<>'idle'  
-ORDER BY   
-   lap DESC;
-\end{lstlisting}
-
-查询出PID后，直接kill即可。
-
-\subsubsection{WAL(Write-Ahead Logging)}
-
-PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL日志量会远远超过实际更新的数据量。 我们可以把这种现象起个名字,叫做“WAL写放大”，造成WAL写放大的主要原因有2点。
-
-1. 在checkpoint之后第一次修改页面，需要在WAL中输出整个page，即全页写(full page writes)。全页写的目的是防止在意外宕机时出现的数据块部分写导致数据库无法恢复。
-
-2. 更新记录时如果新记录位置(ctid)发生变更，索引记录也要相应变更，这个变更也要记入WAL。更严重的是索引记录的变更又有可能导致索引页的全页写，进一步加剧了WAL写放大。
-
-过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
-
-\subsubsection{跨库查询}
-
-PostgreSQL跨库访问有3种方法：Schema，dblink，postgres\_fdw，跨库查询示例如下：
-
-\begin{lstlisting}[language=SQL]
-insert into fund_words_lib(word,remark,id)
-select * 
-from dblink('host=127.0.0.1 dbname=dolphin user=postgres password=postgres',
-			'select * from fund_words_lib where id > 69999 and id < 80000') 
-as fund_words_lib(word varchar,remark varchar,id bigint)
-\end{lstlisting}
-
-dblink执行一个远程查询命令。dblink is a module that supports connections to other PostgreSQL databases from within a database session.postgres\_fdw远程可写功能是9.3版本出来后才新加的，而dblink也可以在以前的postgresql版本中使用。
-
-\subsection{异步流复制(Async Stream Replica)}
-
-基于Standby的异步流复制，这是PostgreSQL 9.x版本（2010.9）之后提供的一个功能，类似的功能在Oracle中是11g之后才提供的active dataguard和SQL Server 2012版本之后才提供的日志传送。PostgreSQL在数据目录下的pg\_xlog子目录中维护了一个WAL日志文件，该文件用于记录数据库文件的每次改变，这种日志文件机制提供了一种数据库热备份的方案，即：在把数据库使用文件系统的方式备份出来的同时也把相应的WAL日志进行备份，即使备份出来的数据块不一致，也可以重放WAL日志把备份的内容推到一致状态。这也就是基于时间点的备份（Point-in-Time Recovery），简称PITR。
 
 
 \section{日志中心(Logging Center)}
@@ -2543,6 +2637,12 @@ docker export MariaDB.tar MariaDB
 \part{Book}
 
 \chapter{Paper}
+
+\section{Font}
+
+\subsection{类型}
+
+
 
 \section{纸的种类}
 
