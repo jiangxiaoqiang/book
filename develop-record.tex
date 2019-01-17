@@ -1772,6 +1772,8 @@ pipenv install psycopg2 --skip-lock
 \end{lstlisting}
 
 
+
+
 \subsection{Scrapy}
 
 Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
@@ -1784,9 +1786,9 @@ pip3 install scrapy
 \end{lstlisting}
 
 
+\subsection{yield}
 
-
-
+yield在每次迭代中返回下一个数值，内存空间占用很小,通过 next() 不断返回数列的下一个数，内存占用始终为常数,想要保持第一版 fab 函数的简洁性，同时又要获得 iterable 的效果，yield 就派上用场了。
 
 
 \subsubsection{代理池(Proxy Pool)}
