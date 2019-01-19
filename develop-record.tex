@@ -1683,12 +1683,16 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \chapter{DB}
 
+\section{Redis}
+
+默认Redis是会以快照的形式将数据持久化到磁盘的（一个二进制文件，dump.rdb，这个文件名字可以指定），在配置文件中的格式是：save N M表示在N秒之内，Redis至少发生M次修改则Redis抓快照到磁盘。当然也可以手动执行save或者bgsave（异步）做快照。Redis持久化分别有RDB和AOF两种方式,Append-Only方法可以做到全部数据不丢失，但Redis的性能就要差些。AOF就可以做到全程持久化，只需要在配置文件中开启（默认是no），appendonly yes开启AOF之后，Redis每执行一个修改数据的命令，都会把它添加到AOF文件中，当Redis重启时，将会读取AOF文件进行“重放”以恢复到Redis关闭前的最后时刻。
+
 \section{SSDB}
 
-Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。
+Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。经过试用，发现文档太过于简洁，缺乏配套的工具，比如客户端就只有PHP SSDB Admin，客户端部署困难。
 
 
-\subsection{Postgres}
+\section{Postgres}
 
 查看Postgrsql日志：
 
@@ -1743,11 +1747,11 @@ options (schema_name 'public',table_name 'fund_words_lib');
 本地的表和远程的表更新都会同步到对方。
 
 
-\subsubsection{CTID}
+\subsection{CTID}
 
 ctid：表示数据记录的物理行当信息，指的是 一条记录位于哪个数据块的哪个位移上面。格式(blockid,itemid)：拿其中(0,1)来说；0表示块id；1表示在这块第一条记录。Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM(vacuum: 回收未显示的物理位置；标明可以继续使用。) FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
 
-\subsubsection{常用SQL}
+\subsection{常用SQL}
 
 查看单个表大小：
 
@@ -1809,7 +1813,7 @@ where fwl.ctid <>
 
 此语句相当缓慢，6W多数据用了将近一个小时，慢的可以。
 
-\subsubsection{WAL(Write-Ahead Logging)}
+\subsection{WAL(Write-Ahead Logging)}
 
 PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL日志量会远远超过实际更新的数据量。 我们可以把这种现象起个名字,叫做“WAL写放大”，造成WAL写放大的主要原因有2点。
 
@@ -1819,7 +1823,7 @@ PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL�
 
 过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
 
-\subsubsection{跨库查询}
+\subsection{跨库查询}
 
 PostgreSQL跨库访问有3种方法：Schema，dblink，postgres\_fdw，跨库查询示例如下：
 
@@ -1833,7 +1837,7 @@ as fund_words_lib(word varchar,remark varchar,id bigint)
 
 dblink执行一个远程查询命令。dblink is a module that supports connections to other PostgreSQL databases from within a database session.postgres\_fdw远程可写功能是9.3版本出来后才新加的，而dblink也可以在以前的postgresql版本中使用。
 
-\subsubsection{统计信息}
+\subsection{统计信息}
 
 pg\_stat\_statements模块提供一种方法追踪一个服务器所执行的所有 SQL 语句的执行统计信息，可以用于统计数据库的资源开销，分析TOP SQL。
 
@@ -1847,7 +1851,7 @@ select pg_stat_statements_reset();
 \end{lstlisting}
 
 
-\subsubsection{异步流复制(Async Stream Replica)}
+\subsection{异步流复制(Async Stream Replica)}
 
 基于Standby的异步流复制，这是PostgreSQL 9.x版本（2010.9）之后提供的一个功能，类似的功能在Oracle中是11g之后才提供的active dataguard和SQL Server 2012版本之后才提供的日志传送。PostgreSQL在数据目录下的pg\_xlog子目录中维护了一个WAL日志文件，该文件用于记录数据库文件的每次改变，这种日志文件机制提供了一种数据库热备份的方案，即：在把数据库使用文件系统的方式备份出来的同时也把相应的WAL日志进行备份，即使备份出来的数据块不一致，也可以重放WAL日志把备份的内容推到一致状态。这也就是基于时间点的备份（Point-in-Time Recovery），简称PITR。
 
@@ -1952,6 +1956,19 @@ req = urllib.request.Request(url)
 
 设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。最近发现可以生成一个代理的IP池，使用免费的代理来突破爬取速度的限制，经过比较，选择了proxy\_pool\footnote{\url{https://github.com/jhao104/proxy_pool}}
 
+\subsection{调试}
+
+在Visual Studio中新增条件断点如图\ref{fig:visualstudiocodeconditionbeakpoint}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.8]{visualstudiocodeconditionbeakpoint.jpg}
+	\caption{Visual Studio Code条件断点}
+	\label{fig:visualstudiocodeconditionbeakpoint}
+\end{figure}
+
+scrapy\_urls返回爬取网页的链接列表，list数据类型，如果列表为空，不保存。
+
 \subsection{Unable to write settings}
 
 在使用Visual Studio Code开发时，由于setting文件由版本管理工具Git管理时冲突，导致无法正确读取和改写配置文件。
@@ -2019,8 +2036,28 @@ response = urllib.request.urlopen(req).read()
 response_text = str(response,'utf-8')
 \end{lstlisting}
 
+\subsection{常见问题}
 
-\subsection{callback不调用}
+\subsubsection{No module named \_sqlite3}
+
+编译时没有包含sqlite,输入如下命令安装：
+
+\begin{lstlisting}[language=Bash]
+yum -y install sqlite-devel
+\end{lstlisting}
+
+重新配置(Re-configure)，重新编译(Re-compiled)Python3:
+
+\begin{lstlisting}[language=Bash]
+# 重新执行configure
+./configure --enable-loadable-sqlite-extensions
+# 编译
+make
+# 安装
+make install
+\end{lstlisting}
+
+\subsubsection{callback不调用}
 
 是因为启用了allowed\_domains设置的缘故。allowed\_domains用于设置过滤爬取的域名，在插件OffsiteMiddleware启用的情况下（默认是启用的），不在此允许范围内的域名就会被过滤，因而不会进行爬取。但对于start\_urls里的起始爬取页面，它不过滤，仅过滤起始爬取页面以外的页面。
 
@@ -2323,6 +2360,9 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 
 \section{Little Tool}
 
+
+
+
 \subsection{traceroute}
 
 通过traceroute我们可以知道信息从计算机到互联网另一端的主机是走的路由路径。Traceroute 程序的设计是利用ICMP及IP header的TTL（Time To Live）栏位（field）。首先，traceroute送出一个TTL是1的IP datagram（其实，每次送出的为3个40字节的包，包括源地址，目的地址和包发出的时间标签）到目的地，当路径上的第一个路由器 （router）收到这个datagram时，它将TTL减1。此时，TTL变为0了，所以该路由器会将此datagram丢掉，并送回一个 「ICMP time exceeded」消息（包括发IP包的源地址，IP包的所有内容及路由器的IP地址），traceroute 收到这个消息后， 便知道这个路由器存在于这个路径上，接着traceroute 再送出另一个TTL是2 的datagram，发现第2 个路由器...... 。traceroute 每次将送出的datagram的TTL 加1来发现另一个路由器，这个重复的动作一直持续到某个datagram 抵达目的地。当datagram到达目的地后，该主机并不会送回ICMP time exceeded消息，因为它已是目的地了，那么 traceroute如何得知目的地到达了呢？Traceroute 在送出UDP datagrams到目的地时，它所选择送达的port number 是一个一般应用程序都不会用的号码（30000 以上），所以当此 UDP datagram 到达目的地后该主机会送回一个「ICMP port unreachable」的消息，而当traceroute 收到这个消 息时，便知道目的地已经到达了。所以traceroute 在Server端也是没有所谓的Daemon程式。
@@ -2374,6 +2414,8 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 \begin{lstlisting}[language=Bash]
 # ssh利用Google云主机动态代理
 ssh -Nf -D 127.0.0.1:2000 google-cloud
+# 链接到192.168.1.11的流量转发到192.168.0.14
+ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 \end{lstlisting}
 
 服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
@@ -2636,6 +2678,13 @@ docker export MariaDB.tar MariaDB
 \part{Network}
 
 \chapter{HTTP}
+
+\section{工具}
+
+\subsection{Fiddler与Shadowsocks冲突}
+
+在安装了Fiddler后，浏览器直接通过Shadowsocks代理无法科学上网了。估计是流量无法经过HTTP代理层到Socket代理层。Socks 不要求应用程序遵循特定的操作系统平台，Socks 代理与应用层代理、 HTTP 层代理不同，Socks 代理只是简单地传递数据包，而不必关心是何种应用协议（比如FTP、HTTP和NNTP请求）。
+
 
 \section{Web Server}
 
