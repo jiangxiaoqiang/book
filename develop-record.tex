@@ -1687,6 +1687,10 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 默认Redis是会以快照的形式将数据持久化到磁盘的（一个二进制文件，dump.rdb，这个文件名字可以指定），在配置文件中的格式是：save N M表示在N秒之内，Redis至少发生M次修改则Redis抓快照到磁盘。当然也可以手动执行save或者bgsave（异步）做快照。Redis持久化分别有RDB和AOF两种方式,Append-Only方法可以做到全部数据不丢失，但Redis的性能就要差些。AOF就可以做到全程持久化，只需要在配置文件中开启（默认是no），appendonly yes开启AOF之后，Redis每执行一个修改数据的命令，都会把它添加到AOF文件中，当Redis重启时，将会读取AOF文件进行“重放”以恢复到Redis关闭前的最后时刻。
 
+\subsection{Redis消息队列}
+
+Redis不是为消息队列而设计的，其实不是做消息队列的理想选择，不过Redis简单，能够满足目前的需求，姑且用之。Redis的PUB/SUB机制，即发布-订阅模式。利用的Redis的列表(lists)数据结构。比较好的使用模式是，生产者lpush消息，消费者brpop消息，并设定超时时间，可以减少redis的压力。只有在Redis宕机且数据没有持久化的情况下丢失数据，可以根据业务通过AOF和缩短持久化间隔来保证很高的可靠性，而且也可以通过多个client来提高消费速度。但相对于专业的消息队列来说，该方案消息的状态过于简单(没有状态)，且没有ack机制，消息取出后消费失败依赖于client记录日志或者重新push到队列里面。RocketMQ没有成熟稳定的Python客户端，有一个小众客户端但是不支持Python3，RabbitMQ貌似主要由商业公司主导，虽然成熟稳定，但是使用貌似不够广泛，Kafka虽然主要的使用场景是大规模流式数据处理，但是考虑到使用的广泛性，和成熟的周边，还是选择Kafka，以后的日志处理估计也会用到它。
+
 \section{SSDB}
 
 Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。经过试用，发现文档太过于简洁，缺乏配套的工具，比如客户端就只有PHP SSDB Admin，客户端部署困难。
@@ -2351,6 +2355,46 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 	\label{fig:dependencyconflict}
 \end{figure}
 
+\chapter{MQ(Message Queue)}
+
+\section{Apache Kafka}
+
+\subsection{Producer}
+
+创建生产者提示kafka.errors.NoBrokersAvailable exception。此时需要配置服务端server.properties:
+
+\begin{lstlisting}[language=Bash]
+# Hostname and port the broker will 
+# advertise to producers and consumers. 
+# If not set, it uses the value for "listeners" if configured.  
+# Otherwise, it will use the value returned from 
+# java.net.InetAddress.getCanonicalHostName().
+advertised.listeners=PLAINTEXT://10.142.0.2:9092
+\end{lstlisting}
+
+将localhost调整为IP后，服务端消费时提示Broker may not be available，是由于为了支持外部访问Kafka，server.propertise文件中指定绑定IP，此时生产消费脚本也需要通过IP来进行。advertised.listeners为Kafka 0.9.x以后的版本新增配置，原来的advertise.host.name和port配置不建议再使用。使用命令创建Topic:
+
+\begin{lstlisting}[language=Bash]
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic dolphin-test
+\end{lstlisting}
+
+安装完成后，可以启动消费者，再使用生产者脚本发送信息，在消费端查看输出，即可验证Kafka：
+
+\begin{lstlisting}[language=Bash]
+# 消费dolphin-test主题消息
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic dolphin-test --from-beginning
+# 生产dolphin-test主题消息
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic dolphin-test
+\end{lstlisting}
+
+测试Kafka消息生产与消费过程如图\ref{fig:kafkasendingmessagetest}所示，生产者向主题dolphin-test发送Hello,Dolphin!消息，消费者消费到此条消息：
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.7]{kafkasendingmessagetest.png}
+	\caption{Kafka发送消息测试}
+	\label{fig:kafkasendingmessagetest}
+\end{figure}
 
 
 
@@ -2679,7 +2723,28 @@ docker export MariaDB.tar MariaDB
 
 \chapter{HTTP}
 
-\section{工具}
+\section{Fiddler}
+
+\subsection{排查Google Api拒绝原因}
+
+在抓取Google API数据的过程中，部署到部分机器上提示Connection was refused by other side: 111。原来是在本机调试的时候设置了代理，而部署到墙外服务器没有安装代理软件，其实根本不需要代理。去掉中间件(middleware)中的代理即可,移除如下代码片段：
+
+\begin{lstlisting}[language=Python]
+proxy_address = '127.0.0.1:8888'
+request.meta["proxy"]="https://" + proxy_address
+\end{lstlisting}
+
+当然也有可能是服务端识别到了爬虫的请求头。在使用urllib库时，默认的请求头是：Python-urllib/3.7，很明显不是浏览器发出，服务器会认为是自动的robot发出此请求，无情予以封锁。Python发出的HTTP请求头可以在Fiddler中查看：
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.9]{fiddlercapturerequestheader.png}
+	\caption{Fiddler查看Python HTTP请求头}
+	\label{fig:fiddlercapturerequestheader}
+\end{figure}
+
+同样的，可以通过Fiddler查看请求Google API的请求头，从而通过调整请求头，避免被服务端识别。有的服务器会检查refer请求头，只允许本站的链接，从而避免外链，避免其他网站链接嵌入从而消耗自身的宝贵服务器资源。
+
 
 \subsection{Fiddler与Shadowsocks冲突}
 
