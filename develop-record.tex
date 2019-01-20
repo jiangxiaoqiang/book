@@ -2369,10 +2369,22 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 # If not set, it uses the value for "listeners" if configured.  
 # Otherwise, it will use the value returned from 
 # java.net.InetAddress.getCanonicalHostName().
+# 这里配置的地址要保证生产者和消费者能够直接访问
 advertised.listeners=PLAINTEXT://10.142.0.2:9092
 \end{lstlisting}
 
-将localhost调整为IP后，服务端消费时提示Broker may not be available，是由于为了支持外部访问Kafka，server.propertise文件中指定绑定IP，此时生产消费脚本也需要通过IP来进行。advertised.listeners为Kafka 0.9.x以后的版本新增配置，原来的advertise.host.name和port配置不建议再使用。使用命令创建Topic:
+advertised监听的配置是有讲究的，掉这个坑里面整整一天。这个配置是生产者和消费者需要使用的，开始的时候配置的是内网的地址，这就出问题了，生产者拿到这个配置后一直向内网IP发送消息，由于Kafka部署在Google云上，机器在美国，根本不在同一个局域网，肯定是无法发送成功的，导致生产者一直超时，无法获取到元数据。所以这里需要配置公网的IP地址，调整后即可解决问题。如果没有设置，将会使用listeners的配置，如果listeners也没有配置，将使用java.net.InetAddress.getCanonicalHostName()来获取这个hostname和port。将localhost调整为IP后，服务端消费时提示Broker may not be available，是由于为了支持外部访问Kafka，server.propertise文件中指定绑定IP，此时生产消费脚本也需要通过IP来进行。advertised.listeners为Kafka 0.9.x以后的版本新增配置，原来的advertise.host.name和port配置不建议再使用。同时在Python初始化的时候添加API版本参数。
+
+\begin{lstlisting}[language=Python]
+producer = KafkaProducer(
+  bootstrap_servers=['mq-server:9092'],
+  api_version_auto_timeout_ms=10000,
+  # fix no broker avaliable problem
+  api_version = (0, 10)
+)
+\end{lstlisting}
+
+出现此错误KafkaTimeoutError('Failed to update metadata after 60.0 secs.')是由于Python的Kafka客户端版本不匹配，服务端安装的是最新的2.x版本，而客户端最高支持1.1版本，所以会出现此问题，降低服务端版本即可解决此问题。使用命令创建Topic:
 
 \begin{lstlisting}[language=Bash]
 bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic dolphin-test
@@ -2382,9 +2394,9 @@ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 -
 
 \begin{lstlisting}[language=Bash]
 # 消费dolphin-test主题消息
-bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic dolphin-test --from-beginning
+bin/kafka-console-consumer.sh --bootstrap-server 10.142.0.2:9092 --topic dolphin-test --from-beginning
 # 生产dolphin-test主题消息
-bin/kafka-console-producer.sh --broker-list localhost:9092 --topic dolphin-test
+bin/kafka-console-producer.sh --broker-list 10.142.0.2:9092 --topic dolphin-test
 \end{lstlisting}
 
 测试Kafka消息生产与消费过程如图\ref{fig:kafkasendingmessagetest}所示，生产者向主题dolphin-test发送Hello,Dolphin!消息，消费者消费到此条消息：
@@ -2395,7 +2407,6 @@ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic dolphin-test
 	\caption{Kafka发送消息测试}
 	\label{fig:kafkasendingmessagetest}
 \end{figure}
-
 
 
 \part{Tool}
