@@ -1864,7 +1864,7 @@ select pg_stat_statements_reset();
 
 \chapter{Python}
 
-\section{Python练习}
+\section{Python基础(Python Fundation)}
 
 \subsection{Python命名规范}
 
@@ -1906,6 +1906,12 @@ Python之父Guido推荐的命名规范，Python模块、类、函数等命名示
 		\end{tabular}	
 	\end{center}
 \end{table}
+
+\subsection{为什么要使用类}
+
+在编写Python的过程中，突然发现很多模块是直接使用的方法，而没有在模块中定义类，突然想起Python既然用方法都可以完成的任务，为什么要使用类呢？不用类可以吗？带着这个疑问，查找了一番资料，发现本质的区别在于FP(Functional Programming)和OOP(Object-oriented Programming)，仿佛又进入了一个圣战领域。Python既可以进行函数式编程，也可以进行面像对象编程，得分析具体的使用场景。
+
+
 
 \subsection{str与bytes}
 
@@ -2158,6 +2164,25 @@ http http://localhost:8000/spider/api/v1/word
 
 去掉gzip压缩类型即可。
 
+\section{Django}
+
+\subsection{使用事务(Using Transaction)}
+
+在爬取数据获取爬取链接时，由于同步运行有多个客户端，为了避免客户端获取到相同的链接，需要在查询接口中开启事务来避免此种情况。
+
+\begin{lstlisting}[language=Python]
+# Avoid multi spider get the same key word
+# Make each query atomic
+# Pay attention the performance issue by transaction
+@transaction.atomic
+def get(self,request):
+	serializer = WordSerializer()
+	result = serializer.get()
+	serializer1 = WordSerializer(result, many=True)
+	return  CustomJsonResponse(data=serializer1.data, code="20000", desc='get word success' )
+  
+\end{lstlisting}
+
 
 \section{日志中心(Logging Center)}
 
@@ -2218,33 +2243,6 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 \end{table}
 
 etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使用Go语言编写，并通过Raft一致性算法处理日志复制以保证强一致性。 Raft是一个来自Stanford的新的一致性算法。
-
-
-
-\section{Network}
-
-\subsection{CIDR}
-
-CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
-
-
-\begin{table}[htbp]
-	\caption{IPv4 CIDR}
-	\label{table:ipv4cidr}
-	\begin{center}
-		\begin{tabular}{|c|c|c|p{3cm}|}
-			\hline
-			\multirow{1}{*}{地址格式}
-			& \multicolumn{1}{c|}{网段}
-			& \multicolumn{1}{c|}{子网掩码} 
-			& \multicolumn{1}{c|}{主机数}\\			
-			\cline{1-4}
-			a.b.c.0/24 & +0.0.0.255 &  255.255.255.0  & 256 \\
-			\hline							
-		\end{tabular}	
-	\end{center}
-\end{table}
-
 
 
 \begin{table}[htbp]
@@ -2763,6 +2761,28 @@ request.meta["proxy"]="https://" + proxy_address
 
 
 \section{Web Server}
+
+\subsection{CIDR(Classless Inter-Domain Routing)}
+
+CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
+
+
+\begin{table}[htbp]
+	\caption{IPv4 CIDR}
+	\label{table:ipv4cidr}
+	\begin{center}
+		\begin{tabular}{|c|c|c|p{3cm}|}
+			\hline
+			\multirow{1}{*}{地址格式}
+			& \multicolumn{1}{c|}{网段}
+			& \multicolumn{1}{c|}{子网掩码} 
+			& \multicolumn{1}{c|}{主机数}\\			
+			\cline{1-4}
+			a.b.c.0/24 & +0.0.0.255 &  255.255.255.0  & 256 \\
+			\hline							
+		\end{tabular}	
+	\end{center}
+\end{table}
 
 \subsection{maxPostSize}
 
