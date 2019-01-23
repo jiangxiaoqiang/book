@@ -1683,12 +1683,20 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \chapter{DB}
 
+\section{Redis}
+
+默认Redis是会以快照的形式将数据持久化到磁盘的（一个二进制文件，dump.rdb，这个文件名字可以指定），在配置文件中的格式是：save N M表示在N秒之内，Redis至少发生M次修改则Redis抓快照到磁盘。当然也可以手动执行save或者bgsave（异步）做快照。Redis持久化分别有RDB和AOF两种方式,Append-Only方法可以做到全部数据不丢失，但Redis的性能就要差些。AOF就可以做到全程持久化，只需要在配置文件中开启（默认是no），appendonly yes开启AOF之后，Redis每执行一个修改数据的命令，都会把它添加到AOF文件中，当Redis重启时，将会读取AOF文件进行“重放”以恢复到Redis关闭前的最后时刻。
+
+\subsection{Redis消息队列}
+
+Redis不是为消息队列而设计的，其实不是做消息队列的理想选择，不过Redis简单，能够满足目前的需求，姑且用之。Redis的PUB/SUB机制，即发布-订阅模式。利用的Redis的列表(lists)数据结构。比较好的使用模式是，生产者lpush消息，消费者brpop消息，并设定超时时间，可以减少redis的压力。只有在Redis宕机且数据没有持久化的情况下丢失数据，可以根据业务通过AOF和缩短持久化间隔来保证很高的可靠性，而且也可以通过多个client来提高消费速度。但相对于专业的消息队列来说，该方案消息的状态过于简单(没有状态)，且没有ack机制，消息取出后消费失败依赖于client记录日志或者重新push到队列里面。RocketMQ没有成熟稳定的Python客户端，有一个小众客户端但是不支持Python3，RabbitMQ貌似主要由商业公司主导，虽然成熟稳定，但是使用貌似不够广泛，Kafka虽然主要的使用场景是大规模流式数据处理，但是考虑到使用的广泛性，和成熟的周边，还是选择Kafka，以后的日志处理估计也会用到它。
+
 \section{SSDB}
 
-Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。
+Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。经过试用，发现文档太过于简洁，缺乏配套的工具，比如客户端就只有PHP SSDB Admin，客户端部署困难。
 
 
-\subsection{Postgres}
+\section{Postgres}
 
 查看Postgrsql日志：
 
@@ -1743,11 +1751,11 @@ options (schema_name 'public',table_name 'fund_words_lib');
 本地的表和远程的表更新都会同步到对方。
 
 
-\subsubsection{CTID}
+\subsection{CTID}
 
 ctid：表示数据记录的物理行当信息，指的是 一条记录位于哪个数据块的哪个位移上面。格式(blockid,itemid)：拿其中(0,1)来说；0表示块id；1表示在这块第一条记录。Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM(vacuum: 回收未显示的物理位置；标明可以继续使用。) FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
 
-\subsubsection{常用SQL}
+\subsection{常用SQL}
 
 查看单个表大小：
 
@@ -1809,7 +1817,7 @@ where fwl.ctid <>
 
 此语句相当缓慢，6W多数据用了将近一个小时，慢的可以。
 
-\subsubsection{WAL(Write-Ahead Logging)}
+\subsection{WAL(Write-Ahead Logging)}
 
 PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL日志量会远远超过实际更新的数据量。 我们可以把这种现象起个名字,叫做“WAL写放大”，造成WAL写放大的主要原因有2点。
 
@@ -1819,7 +1827,7 @@ PostgreSQL在写入频繁的场景中，会产生大量的WAL日志，而且WAL�
 
 过量的WAL输出会对系统资源造成很大的消耗，因此需要进行适当的优化。
 
-\subsubsection{跨库查询}
+\subsection{跨库查询}
 
 PostgreSQL跨库访问有3种方法：Schema，dblink，postgres\_fdw，跨库查询示例如下：
 
@@ -1833,7 +1841,7 @@ as fund_words_lib(word varchar,remark varchar,id bigint)
 
 dblink执行一个远程查询命令。dblink is a module that supports connections to other PostgreSQL databases from within a database session.postgres\_fdw远程可写功能是9.3版本出来后才新加的，而dblink也可以在以前的postgresql版本中使用。
 
-\subsubsection{统计信息}
+\subsection{统计信息}
 
 pg\_stat\_statements模块提供一种方法追踪一个服务器所执行的所有 SQL 语句的执行统计信息，可以用于统计数据库的资源开销，分析TOP SQL。
 
@@ -1847,7 +1855,7 @@ select pg_stat_statements_reset();
 \end{lstlisting}
 
 
-\subsubsection{异步流复制(Async Stream Replica)}
+\subsection{异步流复制(Async Stream Replica)}
 
 基于Standby的异步流复制，这是PostgreSQL 9.x版本（2010.9）之后提供的一个功能，类似的功能在Oracle中是11g之后才提供的active dataguard和SQL Server 2012版本之后才提供的日志传送。PostgreSQL在数据目录下的pg\_xlog子目录中维护了一个WAL日志文件，该文件用于记录数据库文件的每次改变，这种日志文件机制提供了一种数据库热备份的方案，即：在把数据库使用文件系统的方式备份出来的同时也把相应的WAL日志进行备份，即使备份出来的数据块不一致，也可以重放WAL日志把备份的内容推到一致状态。这也就是基于时间点的备份（Point-in-Time Recovery），简称PITR。
 
@@ -1856,7 +1864,7 @@ select pg_stat_statements_reset();
 
 \chapter{Python}
 
-\section{Python练习}
+\section{Python基础(Python Fundation)}
 
 \subsection{Python命名规范}
 
@@ -1898,6 +1906,12 @@ Python之父Guido推荐的命名规范，Python模块、类、函数等命名示
 		\end{tabular}	
 	\end{center}
 \end{table}
+
+\subsection{为什么要使用类}
+
+在编写Python的过程中，突然发现很多模块是直接使用的方法，而没有在模块中定义类，突然想起Python既然用方法都可以完成的任务，为什么要使用类呢？不用类可以吗？带着这个疑问，查找了一番资料，发现本质的区别在于FP(Functional Programming)和OOP(Object-oriented Programming)，仿佛又进入了一个圣战领域。Python既可以进行函数式编程，也可以进行面像对象编程，得分析具体的使用场景。
+
+
 
 \subsection{str与bytes}
 
@@ -1952,6 +1966,19 @@ req = urllib.request.Request(url)
 
 设置完毕后，在每次请求时，可以在Charles中捕捉到请求，并查看应用实际的请求头。最终发现是由于设置的Agent请求头未生效导致。豆瓣对单个IP爬取数据的频率有限制，只能够降低请求对频率来获取数据。最近发现可以生成一个代理的IP池，使用免费的代理来突破爬取速度的限制，经过比较，选择了proxy\_pool\footnote{\url{https://github.com/jhao104/proxy_pool}}
 
+\subsection{调试}
+
+在Visual Studio中新增条件断点如图\ref{fig:visualstudiocodeconditionbeakpoint}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.8]{visualstudiocodeconditionbeakpoint.jpg}
+	\caption{Visual Studio Code条件断点}
+	\label{fig:visualstudiocodeconditionbeakpoint}
+\end{figure}
+
+scrapy\_urls返回爬取网页的链接列表，list数据类型，如果列表为空，不保存。
+
 \subsection{Unable to write settings}
 
 在使用Visual Studio Code开发时，由于setting文件由版本管理工具Git管理时冲突，导致无法正确读取和改写配置文件。
@@ -1964,6 +1991,11 @@ Pipenv 附带包管理和虚拟环境支持，因此你可以使用一个工具�
 pipenv install psycopg2 --skip-lock
 \end{lstlisting}
 
+在没有关联Python路径的情况下指定Python路径：
+
+\begin{lstlisting}[language=Python]
+pipenv install --python /usr/bin/python3
+\end{lstlisting}
 
 \subsection{Scrapy}
 
@@ -2019,8 +2051,28 @@ response = urllib.request.urlopen(req).read()
 response_text = str(response,'utf-8')
 \end{lstlisting}
 
+\subsection{常见问题}
 
-\subsection{callback不调用}
+\subsubsection{No module named \_sqlite3}
+
+编译时没有包含sqlite,输入如下命令安装：
+
+\begin{lstlisting}[language=Bash]
+yum -y install sqlite-devel
+\end{lstlisting}
+
+重新配置(Re-configure)，重新编译(Re-compiled)Python3:
+
+\begin{lstlisting}[language=Bash]
+# 重新执行configure
+./configure --enable-loadable-sqlite-extensions
+# 编译
+make
+# 安装
+make install
+\end{lstlisting}
+
+\subsubsection{callback不调用}
 
 是因为启用了allowed\_domains设置的缘故。allowed\_domains用于设置过滤爬取的域名，在插件OffsiteMiddleware启用的情况下（默认是启用的），不在此允许范围内的域名就会被过滤，因而不会进行爬取。但对于start\_urls里的起始爬取页面，它不过滤，仅过滤起始爬取页面以外的页面。
 
@@ -2117,6 +2169,25 @@ http http://localhost:8000/spider/api/v1/word
 
 去掉gzip压缩类型即可。
 
+\section{Django}
+
+\subsection{使用事务(Using Transaction)}
+
+在爬取数据获取爬取链接时，由于同步运行有多个客户端，为了避免客户端获取到相同的链接，需要在查询接口中开启事务来避免此种情况。
+
+\begin{lstlisting}[language=Python]
+# Avoid multi spider get the same key word
+# Make each query atomic
+# Pay attention the performance issue by transaction
+@transaction.atomic
+def get(self,request):
+	serializer = WordSerializer()
+	result = serializer.get()
+	serializer1 = WordSerializer(result, many=True)
+	return  CustomJsonResponse(data=serializer1.data, code="20000", desc='get word success' )
+  
+\end{lstlisting}
+
 
 \section{日志中心(Logging Center)}
 
@@ -2177,33 +2248,6 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 \end{table}
 
 etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使用Go语言编写，并通过Raft一致性算法处理日志复制以保证强一致性。 Raft是一个来自Stanford的新的一致性算法。
-
-
-
-\section{Network}
-
-\subsection{CIDR}
-
-CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
-
-
-\begin{table}[htbp]
-	\caption{IPv4 CIDR}
-	\label{table:ipv4cidr}
-	\begin{center}
-		\begin{tabular}{|c|c|c|p{3cm}|}
-			\hline
-			\multirow{1}{*}{地址格式}
-			& \multicolumn{1}{c|}{网段}
-			& \multicolumn{1}{c|}{子网掩码} 
-			& \multicolumn{1}{c|}{主机数}\\			
-			\cline{1-4}
-			a.b.c.0/24 & +0.0.0.255 &  255.255.255.0  & 256 \\
-			\hline							
-		\end{tabular}	
-	\end{center}
-\end{table}
-
 
 
 \begin{table}[htbp]
@@ -2314,6 +2358,102 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 	\label{fig:dependencyconflict}
 \end{figure}
 
+\chapter{MQ(Message Queue)}
+
+\section{Apache Kafka}
+
+\subsection{Producer}
+
+创建生产者提示kafka.errors.NoBrokersAvailable exception。此时需要配置服务端server.properties:
+
+\begin{lstlisting}[language=Bash]
+# Hostname and port the broker will 
+# advertise to producers and consumers. 
+# If not set, it uses the value for "listeners" if configured.  
+# Otherwise, it will use the value returned from 
+# java.net.InetAddress.getCanonicalHostName().
+# 这里配置的地址要保证生产者和消费者能够直接访问
+advertised.listeners=PLAINTEXT://10.142.0.2:9092
+\end{lstlisting}
+
+advertised监听的配置是有讲究的，掉这个坑里面整整一天。这个配置是生产者和消费者需要使用的，开始的时候配置的是内网的地址，这就出问题了，生产者拿到这个配置后一直向内网IP发送消息，由于Kafka部署在Google云上，机器在美国，根本不在同一个局域网，肯定是无法发送成功的，导致生产者一直超时，无法获取到元数据。所以这里需要配置公网的IP地址，调整后即可解决问题。如果没有设置，将会使用listeners的配置，如果listeners也没有配置，将使用java.net.InetAddress.getCanonicalHostName()来获取这个hostname和port。将localhost调整为IP后，服务端消费时提示Broker may not be available，是由于为了支持外部访问Kafka，server.propertise文件中指定绑定IP，此时生产消费脚本也需要通过IP来进行。advertised.listeners为Kafka 0.9.x以后的版本新增配置，原来的advertise.host.name和port配置不建议再使用。同时在Python初始化的时候添加API版本参数。
+
+\begin{lstlisting}[language=Python]
+producer = KafkaProducer(
+  bootstrap_servers=['mq-server:9092'],
+  api_version_auto_timeout_ms=10000,
+  # fix no broker avaliable problem
+  api_version = (0, 10)
+)
+\end{lstlisting}
+
+出现此错误KafkaTimeoutError('Failed to update metadata after 60.0 secs.')是由于Python的Kafka客户端版本不匹配，服务端安装的是最新的2.x版本，而客户端最高支持1.1版本，所以会出现此问题，降低服务端版本即可解决此问题。使用命令创建Topic:
+
+\begin{lstlisting}[language=Bash]
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic dolphin-test
+\end{lstlisting}
+
+安装完成后，可以启动消费者，再使用生产者脚本发送信息，在消费端查看输出，即可验证Kafka：
+
+\begin{lstlisting}[language=Bash]
+# 消费dolphin-test主题消息
+bin/kafka-console-consumer.sh --bootstrap-server 10.142.0.2:9092 --topic dolphin-spider-google-book-bookinfo --from-beginning
+# 生产dolphin-test主题消息
+bin/kafka-console-producer.sh --broker-list 10.142.0.2:9092 --topic dolphin-test
+\end{lstlisting}
+
+测试Kafka消息生产与消费过程如图\ref{fig:kafkasendingmessagetest}所示，生产者向主题dolphin-test发送Hello,Dolphin!消息，消费者消费到此条消息：
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.7]{kafkasendingmessagetest.png}
+	\caption{Kafka发送消息测试}
+	\label{fig:kafkasendingmessagetest}
+\end{figure}
+
+\subsection{Consumer}
+
+Kafka消费者Python客户端如下代码片段所示(不同Kafka版本略有区别)：
+
+
+\begin{lstlisting}[language=Python]
+consumer = KafkaConsumer('dolphin-test',
+                         bootstrap_servers=['mq-server:9092'],
+                         group_id = "console-consumer-30308",
+                         consumer_timeout_ms=5000)
+
+def consume_bookinfo(self):
+    while True:        
+        for msg in self.consumer:
+            recv = "%s:%d:%d: key=%s value=%s" % (msg.topic, msg.partition, msg.offset, msg.key, msg.value)
+            print(recv)
+\end{lstlisting}
+
+console-consumer-30308表示消费控制台组的消息，可以使用命令将消息推送到控制台，在代码中使用客户端获取，调试消费着非常方便，参数group\_id必须要指定。dolphin-test是消息的主题。Java版本的消费者客户端如下代码片段所示：
+
+\begin{lstlisting}[language=Java]
+Properties props = new Properties();
+props.put("bootstrap.servers", "mq-server:9092");
+props.put("group.id", "console-consumer-30308");
+props.put("enable.auto.commit", "true");
+props.put("auto.commit.interval.ms", "1000");
+props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+consumer.subscribe(Arrays.asList("dolphin-test", "dolphin-spider-google-book-bookinfo"));
+while (true) {
+    ConsumerRecords<String, String> records = consumer.poll(100);
+    for(ConsumerRecord<String, String> record :records){
+       System.out.println("value:" + record.value());
+    }
+}
+\end{lstlisting}
+
+group.id是一个字符串，唯一标识一个Consumer Group。多个消费者或消费者实例(Consumer Instance)，它们共享一个公共的ID，即Group ID。组内的所有消费者协调在一起来消费订阅主题(Subscribed Topics)的所有分区(Partition)。当然，每个分区只能由同一个消费组内的一个Consumer来消费。在Consumer中可以自定义Group ID(不需要Producer生产数据时指定)，当Consumer消费数据后，Group ID自动注册到服务端。使用如下命令查看当前Group ID有哪些Topic：
+
+\begin{lstlisting}[language=Bash]
+bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --describe --group google-book
+\end{lstlisting}
 
 
 
@@ -2322,6 +2462,9 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 \chapter{Widgets}
 
 \section{Little Tool}
+
+
+
 
 \subsection{traceroute}
 
@@ -2374,6 +2517,8 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 \begin{lstlisting}[language=Bash]
 # ssh利用Google云主机动态代理
 ssh -Nf -D 127.0.0.1:2000 google-cloud
+# 链接到192.168.1.11的流量转发到192.168.0.14
+ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 \end{lstlisting}
 
 服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
@@ -2637,7 +2782,57 @@ docker export MariaDB.tar MariaDB
 
 \chapter{HTTP}
 
+\section{Fiddler}
+
+\subsection{排查Google Api拒绝原因}
+
+在抓取Google API数据的过程中，部署到部分机器上提示Connection was refused by other side: 111。原来是在本机调试的时候设置了代理，而部署到墙外服务器没有安装代理软件，其实根本不需要代理。去掉中间件(middleware)中的代理即可,移除如下代码片段：
+
+\begin{lstlisting}[language=Python]
+proxy_address = '127.0.0.1:8888'
+request.meta["proxy"]="https://" + proxy_address
+\end{lstlisting}
+
+当然也有可能是服务端识别到了爬虫的请求头。在使用urllib库时，默认的请求头是：Python-urllib/3.7，很明显不是浏览器发出，服务器会认为是自动的robot发出此请求，无情予以封锁。Python发出的HTTP请求头可以在Fiddler中查看：
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.9]{fiddlercapturerequestheader.png}
+	\caption{Fiddler查看Python HTTP请求头}
+	\label{fig:fiddlercapturerequestheader}
+\end{figure}
+
+同样的，可以通过Fiddler查看请求Google API的请求头，从而通过调整请求头，避免被服务端识别。有的服务器会检查refer请求头，只允许本站的链接，从而避免外链，避免其他网站链接嵌入从而消耗自身的宝贵服务器资源。
+
+
+\subsection{Fiddler与Shadowsocks冲突}
+
+在安装了Fiddler后，浏览器直接通过Shadowsocks代理无法科学上网了。估计是流量无法经过HTTP代理层到Socket代理层。Socks 不要求应用程序遵循特定的操作系统平台，Socks 代理与应用层代理、 HTTP 层代理不同，Socks 代理只是简单地传递数据包，而不必关心是何种应用协议（比如FTP、HTTP和NNTP请求）。
+
+
 \section{Web Server}
+
+\subsection{CIDR(Classless Inter-Domain Routing)}
+
+CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
+
+
+\begin{table}[htbp]
+	\caption{IPv4 CIDR}
+	\label{table:ipv4cidr}
+	\begin{center}
+		\begin{tabular}{|c|c|c|p{3cm}|}
+			\hline
+			\multirow{1}{*}{地址格式}
+			& \multicolumn{1}{c|}{网段}
+			& \multicolumn{1}{c|}{子网掩码} 
+			& \multicolumn{1}{c|}{主机数}\\			
+			\cline{1-4}
+			a.b.c.0/24 & +0.0.0.255 &  255.255.255.0  & 256 \\
+			\hline							
+		\end{tabular}	
+	\end{center}
+\end{table}
 
 \subsection{maxPostSize}
 
