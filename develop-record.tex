@@ -2397,7 +2397,7 @@ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 -
 
 \begin{lstlisting}[language=Bash]
 # 消费dolphin-test主题消息
-bin/kafka-console-consumer.sh --bootstrap-server 10.142.0.2:9092 --topic dolphin-test --from-beginning
+bin/kafka-console-consumer.sh --bootstrap-server 10.142.0.2:9092 --topic dolphin-spider-google-book-bookinfo --from-beginning
 # 生产dolphin-test主题消息
 bin/kafka-console-producer.sh --broker-list 10.142.0.2:9092 --topic dolphin-test
 \end{lstlisting}
@@ -2410,6 +2410,51 @@ bin/kafka-console-producer.sh --broker-list 10.142.0.2:9092 --topic dolphin-test
 	\caption{Kafka发送消息测试}
 	\label{fig:kafkasendingmessagetest}
 \end{figure}
+
+\subsection{Consumer}
+
+Kafka消费者Python客户端如下代码片段所示(不同Kafka版本略有区别)：
+
+
+\begin{lstlisting}[language=Python]
+consumer = KafkaConsumer('dolphin-test',
+                         bootstrap_servers=['mq-server:9092'],
+                         group_id = "console-consumer-30308",
+                         consumer_timeout_ms=5000)
+
+def consume_bookinfo(self):
+    while True:        
+        for msg in self.consumer:
+            recv = "%s:%d:%d: key=%s value=%s" % (msg.topic, msg.partition, msg.offset, msg.key, msg.value)
+            print(recv)
+\end{lstlisting}
+
+console-consumer-30308表示消费控制台组的消息，可以使用命令将消息推送到控制台，在代码中使用客户端获取，调试消费着非常方便，参数group\_id必须要指定。dolphin-test是消息的主题。Java版本的消费者客户端如下代码片段所示：
+
+\begin{lstlisting}[language=Java]
+Properties props = new Properties();
+props.put("bootstrap.servers", "mq-server:9092");
+props.put("group.id", "console-consumer-30308");
+props.put("enable.auto.commit", "true");
+props.put("auto.commit.interval.ms", "1000");
+props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+consumer.subscribe(Arrays.asList("dolphin-test", "dolphin-spider-google-book-bookinfo"));
+while (true) {
+    ConsumerRecords<String, String> records = consumer.poll(100);
+    for(ConsumerRecord<String, String> record :records){
+       System.out.println("value:" + record.value());
+    }
+}
+\end{lstlisting}
+
+group.id是一个字符串，唯一标识一个Consumer Group。多个消费者或消费者实例(Consumer Instance)，它们共享一个公共的ID，即Group ID。组内的所有消费者协调在一起来消费订阅主题(Subscribed Topics)的所有分区(Partition)。当然，每个分区只能由同一个消费组内的一个Consumer来消费。在Consumer中可以自定义Group ID(不需要Producer生产数据时指定)，当Consumer消费数据后，Group ID自动注册到服务端。使用如下命令查看当前Group ID有哪些Topic：
+
+\begin{lstlisting}[language=Bash]
+bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --describe --group google-book
+\end{lstlisting}
+
 
 
 \part{Tool}
