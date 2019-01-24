@@ -1750,6 +1750,22 @@ options (schema_name 'public',table_name 'fund_words_lib');
 
 本地的表和远程的表更新都会同步到对方。
 
+\subsection{count慢}
+
+count(*)慢这个不是pg的问题，任何MVCC(Multi-Version Concurrency Control,多版本并发控制)的数据库在count(*)时都是扫全表的。 MySQL之所以快是因为MyISAM引擎相当不严谨（ACID方面，不支持事务），它对表row总行数有个计数器。而MySQL支持（准确说是部分支持）事务的innodb引擎做count(*)就是扫全表照样慢。如果有人从数据库中读数据的同时，有另外的人写入数据，有可能读数据的人会看到『半写』或者不一致的数据。有很多种方法来解决这个问题，叫做并发控制方法。最简单的方法，通过加锁，让所有的读者等待写者工作完成，但是这样效率会很差。MVCC 使用了一种不同的手段，每个连接到数据库的读者，在某个瞬间看到的是数据库的一个快照，写者写操作造成的变化在写操作完成之前（或者数据库事务提交之前）对于其他的读者来说是不可见的。当一个 MVCC 数据库需要更一个一条数据记录的时候，它不会直接用新数据覆盖旧数据，而是将旧数据标记为过时（obsolete）并在别处增加新版本的数据。这样就会有存储多个版本的数据，但是只有一个是最新的。这种方式允许读者读取在他读之前已经存在的数据，即使这些在读的过程中半路被别人修改、删除了，也对先前正在读的用户没有影响。这种多版本的方式避免了填充删除操作在内存和磁盘存储结构造成的空洞的开销，但是需要系统周期性整理（sweep through）以真实删除老的、过时的数据\footnote{资料来源：\url{https://en.wikipedia.org/wiki/Multiversion_concurrency_control}}。针对count需要全表扫描的问题，可以直接从pg\_class统计表中查看表的行数，缺点是统计表中的数据不是实时的。从pg\_class查看数据如下代码片段所示：
+
+\begin{lstlisting}[language=SQL]
+-- 查看book表的行数
+select reltuples::int as total 
+from pg_class 
+where relname = 'book' 
+and relnamespace = 
+(
+	select oid 
+	from pg_namespace 
+	where nspname = 'public'
+);
+\end{lstlisting}
 
 \subsection{CTID}
 
@@ -1859,8 +1875,11 @@ select pg_stat_statements_reset();
 
 基于Standby的异步流复制，这是PostgreSQL 9.x版本（2010.9）之后提供的一个功能，类似的功能在Oracle中是11g之后才提供的active dataguard和SQL Server 2012版本之后才提供的日志传送。PostgreSQL在数据目录下的pg\_xlog子目录中维护了一个WAL日志文件，该文件用于记录数据库文件的每次改变，这种日志文件机制提供了一种数据库热备份的方案，即：在把数据库使用文件系统的方式备份出来的同时也把相应的WAL日志进行备份，即使备份出来的数据块不一致，也可以重放WAL日志把备份的内容推到一致状态。这也就是基于时间点的备份（Point-in-Time Recovery），简称PITR。
 
+\subsection{规范(Specification)}
 
+\paragraph{强制性规范}
 
+\textbf{不要使用count(列名)或count(常量)来替代count(*)}，count(*)就是SQL92定义的标准统计行数的语法，跟数据库无关，跟NULL和非NULL无关。说明：count(*)会统计NULL值（真实行数），而count(列名)不会统计\footnote{\url{http://www.postgres.cn/news/viewone/1/157}}。
 
 \chapter{Python}
 
@@ -2455,7 +2474,9 @@ group.id是一个字符串，唯一标识一个Consumer Group。多个消费者�
 bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --describe --group google-book
 \end{lstlisting}
 
+\subsection{Offset}
 
+Kafka消费者在会保存其消费的进度，也就是offset，存储的位置根据选用的kafka api不同而不同。
 
 \part{Tool}
 
