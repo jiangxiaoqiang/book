@@ -2110,6 +2110,10 @@ COPY words(word) from '/Users/dolphin/source/pydolphin-service/dolphin/tool/file
 
 在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.Google Book API\footnote{\url{https://developers.google.com/books/docs/v1/reference/volumes/list?hl=zh-CN}}支持翻页，每页最大40条数据。
 
+\subsubsection{速度限制}
+
+Google API使用令牌桶算法来衡量请求数并确定每秒查询数 (QPS) 速率。这样做的目的是阻止恶意的或不可控的软件大量调用API服务器，影响其他用户。例如，如果某个失控的客户端意外产生数以千计的线程来同时调用API，API 服务器就会在发现后返回一个 RateExceededError，要求调用软件减速。
+
 \subsubsection{xpath}
 
 XPath为XML路径语言（XML Path Language），它是一种用来确定XML文档中某部分位置的语言。简单示例如下：
@@ -2474,9 +2478,44 @@ group.id是一个字符串，唯一标识一个Consumer Group。多个消费者�
 bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --describe --group google-book
 \end{lstlisting}
 
-\subsection{Offset}
+\subsection{常用命令}
 
-Kafka消费者在会保存其消费的进度，也就是offset，存储的位置根据选用的kafka api不同而不同。
+查看所有Topic的信息：
+
+\begin{lstlisting}[language=Bash]
+bin/kafka-topics.sh --zookeeper localhost:2181 --list
+
+# 查看当前Broker中的所有组
+bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --list
+
+# 查看主题dolphin-spider-google-book-bookinfo信息
+bin/kafka-topics.sh --zookeeper localhost:2181 --describe --topic dolphin-spider-google-book-bookinfo
+
+# 查看消费组google-book情况
+bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group google-book
+\end{lstlisting}
+
+查看消费堆积情况语句如下：
+
+\begin{lstlisting}[language=Bash]
+# 查看Kafka消息堆积情况
+bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --describe
+\end{lstlisting}
+
+输出结果如图\ref{fig:kafkaconsumecheck}所示，输出的内容可以知道消息主题是dolphin-spider-google-book-bookinfo，消息属于0分区(Partition),当前消费到第761条数据，总共有1386条数据，还有625条数据未消费(Lag Behand),消费者ID是dolphin-pipline-google-bookinfo-consumer-foolman-fe57df81-6dea-45                                                                    b6-a6f4-8972386a24ec,客户端ID是dolphin-pipline-google-bookinfo-consumer-foolman。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.7]{kafkaconsumecheck.png}
+	\caption{Kafka消费情况查看}
+	\label{fig:kafkaconsumecheck}
+\end{figure}
+
+
+\subsection{配置}
+
+Kafka消费者在会保存其消费的进度，也就是offset，存储的位置根据选用的kafka api不同而不同。消费者在创建时会有一个属性max.poll.interval.ms，该属性意思为kafka消费者在每一轮poll()调用之间的最大延迟,消费者在获取更多记录之前可以空闲的时间量的上限。如果此超时时间期满之前poll()没有被再次调用，则消费者被视为失败，并且分组将重新平衡，以便将分区重新分配给别的成员。kafkaConsumer调用一次轮询方法只是拉取一次消息。客户端为了不断拉取消息，会用一个外部循环不断调用消费者的轮询方法。每次轮询到消息，在处理完这一批消息后，才会继续下一次轮询。但如果一次轮询返回的结构没办法及时处理完成，会有什么后果呢？服务端约定了和客户端max.poll.interval.ms，两次poll最大间隔。如果客户端处理一批消息花费的时间超过了这个限制时间，服务端可能就会把消费者客户端移除掉，并触发rebalance。
+
 
 \part{Tool}
 
