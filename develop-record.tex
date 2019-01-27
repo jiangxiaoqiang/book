@@ -2434,6 +2434,24 @@ bin/kafka-console-producer.sh --broker-list 10.142.0.2:9092 --topic dolphin-test
 	\label{fig:kafkasendingmessagetest}
 \end{figure}
 
+\subsubsection{Key}
+
+Kafka发送消息时，key可以不用指定。如果不指定消息的key，则消息发送到的分区是随着时间不停变换的。如果指定了消息的key，则会根据消息的hash值和topic的分区数取模来获取分区的。如果应用有消息顺序性的需要，则可以通过指定消息的key和自定义分区类来将符合某种规则的消息发送到同一个分区。同一个分区消息是有序的，同一个分区只有一个消费者就可以保证消息的顺序性消费。
+
+\begin{lstlisting}[language=Python]
+log.segment.bytes=536870912
+log.retention.check.interval.ms=60000
+log.cleaner.enable=false
+# 数据文件保留多长时间
+# log.retention.bytes
+# log.retention.minutes
+# log.retention.hours任意一个达到要求，都会执行删除
+log.retention.minutes=300
+log.retention.hours=24
+\end{lstlisting}
+
+
+
 \subsection{Consumer}
 
 Kafka消费者Python客户端如下代码片段所示(不同Kafka版本略有区别)：
@@ -2478,6 +2496,29 @@ group.id是一个字符串，唯一标识一个Consumer Group。多个消费者�
 bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --describe --group google-book
 \end{lstlisting}
 
+\subsubsection{提高消费能力-多线程}
+
+接收到信息后，交给独立的线程处理：
+
+\begin{lstlisting}[language=Python]
+def sub_process_handle(self,bookinfo):     
+    number_of_threadings = len(threading.enumerate())
+    if(number_of_threadings < 15):
+        t = threading.Thread(target=self.background_process, args=(bookinfo,), kwargs={})
+        t.start()
+    else:
+        # If all threading running
+        # Using main thread to handle
+        # Slow down kafka consume speed
+        self.parse_bookinfo(bookinfo)
+\end{lstlisting}
+
+注意线程开启较多之后，需要增大数据库Session数量，Google Cloud限制了Postgrsql的最大连接数量，真是恼火，线程增加后出现此错误OperationalError('FATAL:  remaining connection slots are reserved for non-replication superuser connections')。
+
+\subsubsection{提高消费能力-多消费者}
+
+提高了partition数量，从而提高了consumer的并行能力，从而提高数据的消费能力。topic下的一个分区只能被同一个consumer group下的一个consumer线程来消费。为了实现传统Message Queue消息只被消费一次的语义，Kafka保证每条消息在同一个Consumer Group里只会被某一个Consumer消费。与传统Message Queue不同的是，Kafka还允许不同Consumer Group同时消费同一条消息，这一特性可以为消息的多元化处理提供支持。
+
 \subsection{常用命令}
 
 查看所有Topic的信息：
@@ -2514,7 +2555,27 @@ bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-bo
 
 \subsection{配置}
 
+\paragraph{max.poll.interval.ms}
+
 Kafka消费者在会保存其消费的进度，也就是offset，存储的位置根据选用的kafka api不同而不同。消费者在创建时会有一个属性max.poll.interval.ms，该属性意思为kafka消费者在每一轮poll()调用之间的最大延迟,消费者在获取更多记录之前可以空闲的时间量的上限。如果此超时时间期满之前poll()没有被再次调用，则消费者被视为失败，并且分组将重新平衡，以便将分区重新分配给别的成员。kafkaConsumer调用一次轮询方法只是拉取一次消息。客户端为了不断拉取消息，会用一个外部循环不断调用消费者的轮询方法。每次轮询到消息，在处理完这一批消息后，才会继续下一次轮询。但如果一次轮询返回的结构没办法及时处理完成，会有什么后果呢？服务端约定了和客户端max.poll.interval.ms，两次poll最大间隔。如果客户端处理一批消息花费的时间超过了这个限制时间，服务端可能就会把消费者客户端移除掉，并触发rebalance。
+
+\paragraph{消息过期}
+
+对于传统的message queue而言，一般会删除已经被消费的消息，而Kafka集群会保留所有的消息，无论其被消费与否。当然，因为磁盘限制，不可能永久保留所有数据（实际上也没必要），因此Kafka提供两种策略去删除旧数据。一是基于时间，二是基于partition文件大小。例如可以通过配置\$KAFKA\_HOME/config/server.properties，让Kafka删除一周前的数据，也可通过配置让Kafka在partition文件超过1GB时删除旧数据。
+
+\subsection{常见问题}
+
+\subsubsection{Commit cannot be completed since the group has already rebalanced}
+
+kafka设置了自动提交，但在规定的提交时间之内却没有处理完消息，导致消息自动提交出错，这样还会引发一个问题，就是当提交的消息不成功，kafka有重试机制，这样就会重新消费该消息，但消费又不成功，这样循环，会导致后面的消息堆积过多。在Consumer上调整消费者最大心跳时间间隔：
+
+\begin{lstlisting}[language=Bash]
+max_poll_interval_ms = 6000000
+\end{lstlisting}
+ 
+出现此问题最大的问题是消费者(Consumer)的消费能力不足，提交Offset的周期太长。可以增加Session的过期时间(session\_timeout\_ms)，但是最终的解决方案应该想办法提高消费端的消费能力。    
+
+\subsubsection{Heartbeat session expired, marking coordinator dead}
 
 
 \part{Tool}
