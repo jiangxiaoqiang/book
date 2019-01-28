@@ -1589,8 +1589,11 @@ CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是
 
 有时需要获取腾讯视频等地址，可以使用点量视频解析\footnote{\url{http://old.flvurl.cn/}}，可以获取到视频到真实地址，腾讯视频在下载一段时间后，速度会降到几KB左右。
 
+\section{Java}
 
+\subsection{编辑Jar包}
 
+由于目前线上的测试版本未经过严格测试，此时又需要更新一个微小特性。采用直接编辑jar包的方式来更新。直接用7zip工具打开jar文件，将编译好的新class替换掉7zip打开的jar包中的class即可。
 
 \section{编辑中}
 
@@ -2211,6 +2214,22 @@ def get(self,request):
   
 \end{lstlisting}
 
+\subsection{PgBouncer}
+
+PgBouncer是一个针对PostgreSQL数据库的轻量级连接池，任何目标应用都可以把PgBouncer当作一个 PostgreSQL 服务器来连接，然后PgBouncer会处理与服务器连接，或者是重用已存在的连接。PgBouncer的目标是降低因为新建到PostgreSQL的连接而导致的性能损失。为了在Google Cloud PostgreSQL限制数据库连接数的情况下，尽可能的提高数据库连接的效率，引入PgBouncer连接池组件。安装PgBouncer之前需要先安装libevent。
+
+\begin{lstlisting}[language=Bash]
+# 安装依赖
+yum install -y openssl openssl-devel libevent-devel python-docutils libtool automake autoconf
+# 安装libevent
+./configure --prefix=/home/pgsql/libevent
+# 安装PgBouncer
+./configure --prefix=/home/pgsql/pgbouncer/ --with-libevent=/home/pgsql/libevent/ 
+# 启动PgBouncer
+/home/pgsql/pgbouncer/bin/pgbouncer -d /etc/pgbouncer/pgbouncer.ini
+\end{lstlisting}
+
+提示错误FATAL @src/main.c:913 in function main(): unix socket is in use, cannot continue。
 
 \section{日志中心(Logging Center)}
 
@@ -2513,11 +2532,11 @@ def sub_process_handle(self,bookinfo):
         self.parse_bookinfo(bookinfo)
 \end{lstlisting}
 
-注意线程开启较多之后，需要增大数据库Session数量，Google Cloud限制了Postgrsql的最大连接数量，真是恼火，线程增加后出现此错误OperationalError('FATAL:  remaining connection slots are reserved for non-replication superuser connections')。
+注意线程开启较多之后，需要增大数据库Session数量，Google Cloud限制了PostgreSQL的最大连接数量，真是恼火，线程增加后出现此错误OperationalError('FATAL:  remaining connection slots are reserved for non-replication superuser connections')。
 
 \subsubsection{提高消费能力-多消费者}
 
-提高了partition数量，从而提高了consumer的并行能力，从而提高数据的消费能力。topic下的一个分区只能被同一个consumer group下的一个consumer线程来消费。为了实现传统Message Queue消息只被消费一次的语义，Kafka保证每条消息在同一个Consumer Group里只会被某一个Consumer消费。与传统Message Queue不同的是，Kafka还允许不同Consumer Group同时消费同一条消息，这一特性可以为消息的多元化处理提供支持。
+也可以提高Partition数量，从而提高Consumer的并行能力，从而提高数据的消费能力，不过目前Google Cloud数据库实例对PostgreSQL最大会话的限制(25个)会成为瓶颈。Topic下的一个分区只能被同一个Consumer Group下的一个Consumer线程来消费。为了实现传统Message Queue消息只被消费一次的语义，Kafka保证每条消息在同一个Consumer Group里只会被某一个Consumer消费。与传统Message Queue不同的是，Kafka还允许不同Consumer Group同时消费同一条消息，这一特性可以为消息的多元化处理提供支持。
 
 \subsection{常用命令}
 
@@ -2540,7 +2559,7 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 
 \begin{lstlisting}[language=Bash]
 # 查看Kafka消息堆积情况
-bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --describe
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --describe
 \end{lstlisting}
 
 输出结果如图\ref{fig:kafkaconsumecheck}所示，输出的内容可以知道消息主题是dolphin-spider-google-book-bookinfo，消息属于0分区(Partition),当前消费到第761条数据，总共有1386条数据，还有625条数据未消费(Lag Behand),消费者ID是dolphin-pipline-google-bookinfo-consumer-foolman-fe57df81-6dea-45                                                                    b6-a6f4-8972386a24ec,客户端ID是dolphin-pipline-google-bookinfo-consumer-foolman。
