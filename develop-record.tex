@@ -2229,7 +2229,7 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 /home/pgsql/pgbouncer/bin/pgbouncer -d /etc/pgbouncer/pgbouncer.ini
 \end{lstlisting}
 
-提示错误FATAL @src/main.c:913 in function main(): unix socket is in use, cannot continue。
+提示错误FATAL @src/main.c:913 in function main(): unix socket is in use, cannot continue。这个报错是套接字还在使用导致的启动失败，因为pgbouncer是可以socket连接，所以一般会有一个socket文件，通常这个文件默认在/tmp下面，一般以端口号码结尾，删除这个socket文件，再启动就正常。
 
 \section{日志中心(Logging Center)}
 
@@ -2403,6 +2403,12 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 \chapter{MQ(Message Queue)}
 
 \section{Apache Kafka}
+
+\subsection{基础概念}
+
+\paragraph{Rebalance}
+
+在某些条件下，partition要在consumer中重新分配。以下条件，会触发rebalance：有新的consumer加入，旧的consumer挂了，coordinator挂了，集群选举出新的coordinator，topic的partition新加，consumer调用unsubscrible()，取消topic的订阅。当consumers检测到要rebalance时，所有consumer都会重走上面的流程，进行步骤JoinGroup + SyncGroup。当一个consumer挂了，或者有新的consumer加入，其他consumers通过heartbeat知道要进行rebalance。
 
 \subsection{Producer}
 
@@ -2578,6 +2584,11 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 
 Kafka消费者在会保存其消费的进度，也就是offset，存储的位置根据选用的kafka api不同而不同。消费者在创建时会有一个属性max.poll.interval.ms，该属性意思为kafka消费者在每一轮poll()调用之间的最大延迟,消费者在获取更多记录之前可以空闲的时间量的上限。如果此超时时间期满之前poll()没有被再次调用，则消费者被视为失败，并且分组将重新平衡，以便将分区重新分配给别的成员。kafkaConsumer调用一次轮询方法只是拉取一次消息。客户端为了不断拉取消息，会用一个外部循环不断调用消费者的轮询方法。每次轮询到消息，在处理完这一批消息后，才会继续下一次轮询。但如果一次轮询返回的结构没办法及时处理完成，会有什么后果呢？服务端约定了和客户端max.poll.interval.ms，两次poll最大间隔。如果客户端处理一批消息花费的时间超过了这个限制时间，服务端可能就会把消费者客户端移除掉，并触发rebalance。
 
+\paragraph{auto\_offset\_reset}
+
+earliest：当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，从头开始消费。latest：当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，消费新产生的该分区下的数据。none：topic各分区都存在已提交的offset时，从offset后开始消费；只要有一个分区不存在已提交的offset，则抛出异常。注意一般情况下设置为earliest，设置为latest会忽略掉未消费的数据，直接从最新产生的消息进行消费，同时offset也会默认更新为最新。
+
+
 \paragraph{消息过期}
 
 对于传统的message queue而言，一般会删除已经被消费的消息，而Kafka集群会保留所有的消息，无论其被消费与否。当然，因为磁盘限制，不可能永久保留所有数据（实际上也没必要），因此Kafka提供两种策略去删除旧数据。一是基于时间，二是基于partition文件大小。例如可以通过配置\$KAFKA\_HOME/config/server.properties，让Kafka删除一周前的数据，也可通过配置让Kafka在partition文件超过1GB时删除旧数据。
@@ -2595,6 +2606,13 @@ max_poll_interval_ms = 6000000
 出现此问题最大的问题是消费者(Consumer)的消费能力不足，提交Offset的周期太长。可以增加Session的过期时间(session\_timeout\_ms)，但是最终的解决方案应该想办法提高消费端的消费能力。    
 
 \subsubsection{Heartbeat session expired, marking coordinator dead}
+
+提交Kafka Offset时，提示CommitFailedError: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member.This means that the time between subsequent calls to poll() was longer than the configured max\_poll\_interval\_ms, which typically implies that the poll loop is spending too much time message processing. You can address this either by increasing the rebalance timeout with max\_poll\_interval\_ms,or by reducing the maximum size of batches returned in poll() with max\_poll\_records.大概是由于Kafka消费者与心跳之间产生了死锁\footnote{\url{https://github.com/dpkp/kafka-python/issues/1544}}，不过死锁问题已经在1.4.4版本中修复，但是还是遇到了此问题\footnote{\url{https://github.com/dpkp/kafka-python/pull/1628}}。
+
+
+Heartbeat: local member\_id was not recognized; this consumer needs to re-join
+
+
 
 
 \part{Tool}
