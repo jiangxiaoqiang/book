@@ -2410,6 +2410,10 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 
 在某些条件下，partition要在consumer中重新分配。以下条件，会触发rebalance：有新的consumer加入，旧的consumer挂了，coordinator挂了，集群选举出新的coordinator，topic的partition新加，consumer调用unsubscrible()，取消topic的订阅。当consumers检测到要rebalance时，所有consumer都会重走上面的流程，进行步骤JoinGroup + SyncGroup。当一个consumer挂了，或者有新的consumer加入，其他consumers通过heartbeat知道要进行rebalance。
 
+\subsection{分区(Partition)}
+
+ProducerRecord 对象包含了目标主题、键和值。 Kafka的消息是一个个键值对， ProducerRecord对象可以只包含目标主题和值，键可以设置为默认的 null，不过大多数应用程序会用到键。键有两个用途 :可以作为消息的附加信息，也可以用来决定消息该被写到主题的哪个分区。拥有相同键的悄息将被写到同一个分区。
+
 \subsection{Producer}
 
 创建生产者提示kafka.errors.NoBrokersAvailable exception。此时需要配置服务端server.properties:
