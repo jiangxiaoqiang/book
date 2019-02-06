@@ -1879,7 +1879,7 @@ WHERE   T1.ctid < T2.ctid  -- delete the older versions
 
 PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USING子句里声明其它表。
 
-\paragraph{导入(Import)}
+\paragraph{导入导出(Import\&Export)}
 
 需要导入大表(4500W)到远程的Google Cloud，表的大小在5GB左右。直接试用pgAdmin的导入功能，由于服务器在国外，受限于网速，运行了2天没有导入完毕。先将导出的binary文件拷贝到Google Cloud主机上。再登录PostgreSQL客户端执行导入语句：
 
@@ -1887,7 +1887,16 @@ PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USIN
 \copy public.fund_words_lib(word,remark,id,state) from '/home/dolphin/dolphin-words' encoding 'utf8';
 \end{lstlisting}
 
-4500W数据在10多分钟导入完毕。COPY：只能管理员用户使用，并且导出的文件要和数据库在同一个主机上。\textbackslash COPY：普通数据库账号都可以用，并且可以从远端数据库将数据直接导出到本地。
+4500W数据在10多分钟导入完毕。COPY：只能管理员用户使用，并且导出的文件要和数据库在同一个主机上。\textbackslash COPY：普通数据库账号都可以用，并且可以从远端数据库将数据直接导出到本地。导出爬取的book数据：
+
+\begin{lstlisting}[language=Bash]
+# 登录PostgreSQL数据库
+psql -h bookdb -p 5432 dolphin postgres
+# 导出book数据到/home/dolphin/share目录
+\copy (select * from public.book) to '/home/dolphin/share/dolphin-book-binary-bak-201902062112' with Binary;
+\end{lstlisting}
+
+再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
 
 \subsection{事务(Transaction)}
 
