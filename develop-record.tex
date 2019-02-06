@@ -722,7 +722,12 @@ mkfs.vfat -F 32 /dev/sdb1
 
 运行一段时间后，系统翻页，偶尔返回空数据。经检查，服务端在使用RestTemplate调用接口时，偶尔会返回Read time out错误。Spring RestTemplate的Read time out默认超时时间是1秒，如图\ref{fig:resttempldatedefaulttimeout}所示。当接口的响应时间超过1秒时，会出现read time out错误。
 
-
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{resttempldatedefaulttimeout.png}
+	\caption{RestTemplate默认超时时间}
+	\label{fig:resttempldatedefaulttimeout}
+\end{figure}
 
 上图是Debug跟踪时查看的RestTemplate默认变量。由图中可以看出，默认超时时间是1秒。此时需要增大Read time out的默认超时时间。自定义Read time out超时时间如下代码片段所示：
 
@@ -1083,7 +1088,12 @@ group by clnt_ip,state,user_name
 
 结果如图\ref{fig:sessionstatistics}所示：
 
-
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.6]{sessionstatistics.png}
+	\caption{DB当前连接会话统计}
+	\label{fig:sessionstatistics}
+\end{figure}
 
 可以看出，活动的会话稳定在13个，离最大个数20已经不远，极有可能是数据库会话配置过小，导致用户增多时，无可用连接分配。为了验证推断，使用JMeter\footnote{\url{http://jmeter.apache.org/}}模拟多用户同时访问测试网站。逐步增加同时访问的用户的个数，当增加到80个时，网站无响应。检查后端日志，出现了线上的问题同样的日志输出，说明问题在此处，需要优化。DBCP当连接数超过最大连接数时，所有连接都会被断开[未找到权威出处]。经过考虑，逐步应用以下优化的方式。
 
@@ -1148,6 +1158,13 @@ echo "${current_time},${connect_size}" >> /home/monitor/dm-pool-"${current_date}
 \end{lstlisting}
 
 数据库实时Session监控脚本向csv中写入2列，当前的时间和当前时间点的活动Session的个数，每天生成一个csv文件。根据csv生成的折线图效果如图\ref{fig:dbsession}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{dbsession.bmp}
+	\caption{DB历史会话数统计}
+	\label{fig:dbsession}
+\end{figure}
 
 
 8:50到9:40时间段进行了压力测试，这个时间范围内数据库的活动Session有明显的增加。
@@ -1242,7 +1259,12 @@ jmap -dump:format=b,file=/opt/example.dump [pid]
 
 关键的问题是，在当前并发的情况下，不应该消耗如此大的内存。问题在哪里？使用JMap\footnote{\url{https://docs.oracle.com/javase/7/docs/technotes/tools/share/jmap.html}}(Java Memory Map)命令将运行时内存情况输出，采用MAT\footnote{\url{https://www.eclipse.org/mat/}}(The Eclipse Memory Analyzer)工具进行分析，查看内存中的大对象如图\ref{fig:javahprofanalysis}所示。
 
-
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.3]{javahprofanalysis.png}
+	\caption{Java内存对象分析}
+	\label{fig:javahprofanalysis}
+\end{figure}
 
 从Histogram图中可以看出，对象中byte数组的大小超过了8GB，每一个byte数组元素大小是102408208(约102MB)。怎么会有如此大对象？问题非常有可能就出在这些大对象上面了。下载Tomcat 8.0.53(注意下载的源码需要尽量服务器上运行的版本一致，InternalNioInputBuffer类在往后版本的Tomcat已经被移除)源码查看，找到如下代码片段：
 
@@ -1293,6 +1315,12 @@ set url = replace(url,'内网IP','公网IP')
 
 这两天不断有反馈原来很快的查询现在不知道什么原因变慢了，查看了变慢的页面后，确实速度不符合设计预期，正常情况下不应大于200ms，平均响应时间肯定不会超过1s，页面数据是放在接口缓存中。加上调用链路的开销，不应该有延迟。访问接口数据的流程如图\ref{fig:api-request}所示：
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.08]{api-request.jpg}
+	\caption{接口数据调用流程}
+	\label{fig:api-request}
+\end{figure}
 
 首先确定接口缓存有效，在接口服务器上请求接口服务：
 
@@ -1436,6 +1464,12 @@ goaccess -a -d -f /data/logs/fanhaobai.com.access.log -p /etc/goaccess.conf -o /
 
 根据URL的访问频率统计信息如图\ref{fig:spideranalysis}所示，从统计图中可以看出，九成以上的请求都集中在一个URL。
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.35]{spideranalysis.png}
+	\caption{访问URL统计}
+	\label{fig:spideranalysis}
+\end{figure}
 
 
 根据IP的统计信息如图\ref{fig:ipstatistics}所示，从统计图中可以看出，5成以上的访问请求只服务了3个IP。
@@ -1820,7 +1854,7 @@ alter table public.spider_urls_pool alter column id set default nextval('public.
 alter table spider_urls_pool add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
 \end{lstlisting}
 
-\paragraph{去重}
+\paragraph{去重(Remove Duplicate Rows)}
 
 去除fund\_words\_lib表的重复数据\footnote{\url{https://stackoverflow.com/questions/6583916/delete-duplicate-records-in-postgresql}}：
 
@@ -1834,7 +1868,31 @@ where fwl.ctid <>
 )
 \end{lstlisting}
 
-此语句相当缓慢，6W多数据用了将近一个小时，慢的可以。
+此语句相当缓慢，6W多数据用了将近一个小时，慢的可以。更加快速的方案4500W数据不到2分钟：
+
+\begin{lstlisting}[language=SQL]
+DELETE FROM dupes T1
+    USING   dupes T2
+WHERE   T1.ctid < T2.ctid  -- delete the older versions
+    AND T1.key  = T2.key;  -- add more columns if needed
+\end{lstlisting}
+
+PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USING子句里声明其它表。
+
+\paragraph{导入(Import)}
+
+需要导入大表(4500W)到远程的Google Cloud，表的大小在5GB左右。直接试用pgAdmin的导入功能，由于服务器在国外，受限于网速，运行了2天没有导入完毕。先将导出的binary文件拷贝到Google Cloud主机上。再登录PostgreSQL客户端执行导入语句：
+
+\begin{lstlisting}[language=Bash]
+\copy public.fund_words_lib(word,remark,id,state) from '/home/dolphin/dolphin-words' encoding 'utf8';
+\end{lstlisting}
+
+4500W数据在10多分钟导入完毕。COPY：只能管理员用户使用，并且导出的文件要和数据库在同一个主机上。\textbackslash COPY：普通数据库账号都可以用，并且可以从远端数据库将数据直接导出到本地。
+
+\subsection{事务(Transaction)}
+
+在PostgreSQL中循环插入时，总是没有见目标表数据量增长，原来是PostgreSQL的函数总是默认为一个事务，要执行完毕后再进行提交。而循环写入的数据总量有4500W，每个循环写入500条,需要所有4500W数据写入完毕后，才可以看到最终的效果，但是这不是需要的效果，再写入的过程总，能够看到写入的实时进度是最好的。所以尝试将写入单独放入一个子函数中，由父级函数来调用(也不得行)。
+
 
 \subsection{WAL(Write-Ahead Logging)}
 
@@ -2111,7 +2169,7 @@ COPY fund_words_lib(word,remark) from '/Users/dolphin/Downloads/def_eng.csv' WIT
 COPY words(word) from '/Users/dolphin/source/pydolphin-service/dolphin/tool/file.csv' WITH CSV HEADER;
 \end{lstlisting}
 
-在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.Google Book API\footnote{\url{https://developers.google.com/books/docs/v1/reference/volumes/list?hl=zh-CN}}支持翻页，每页最大40条数据。
+在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.Google Book API\footnote{\url{https://developers.google.com/books/docs/v1/reference/volumes/list?hl=zh-CN}}支持翻页，每页最大40条数据。Google Book不同的IP调用返回的结果不同，不同的分页参数返回的结果总数不同。
 
 \subsubsection{速度限制}
 
@@ -2233,7 +2291,16 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 
 \section{日志中心(Logging Center)}
 
-根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
+根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.05]{elk-log-architecture.jpg}
+	\caption{ELK流程}
+	\label{fig:elklogarchitecture}
+\end{figure}
+
+logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
 
 \begin{lstlisting}[language=Bash]
 curl -XGET -H "Content-Type: application/json" http://localhost:9200/_all/_settings|jq '.'
@@ -2314,54 +2381,6 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 
 etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使用Go语言编写，并通过Raft一致性算法处理日志复制以保证强一致性。 Raft是一个来自Stanford的新的一致性算法。
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{resttempldatedefaulttimeout.png}
-	\caption{RestTemplate默认超时时间}
-	\label{fig:resttempldatedefaulttimeout}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.6]{sessionstatistics.png}
-	\caption{DB当前连接会话统计}
-	\label{fig:sessionstatistics}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.5]{dbsession.bmp}
-	\caption{DB历史会话数统计}
-	\label{fig:dbsession}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.3]{javahprofanalysis.png}
-	\caption{Java内存对象分析}
-	\label{fig:javahprofanalysis}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.05]{elk-log-architecture.jpg}
-	\caption{ELK流程}
-	\label{fig:elklogarchitecture}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.08]{api-request.jpg}
-	\caption{接口数据调用流程}
-	\label{fig:api-request}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[scale=0.35]{spideranalysis.png}
-	\caption{访问URL统计}
-	\label{fig:spideranalysis}
-\end{figure}
 
 
 \begin{figure}[htbp]
@@ -2399,6 +2418,9 @@ etcd是由CoreOS开发并维护的，灵感来自于ZooKeeper和Doozer，它使�
 	\caption{依赖冲突}
 	\label{fig:dependencyconflict}
 \end{figure}
+
+\section{监控中心(Monitor Center)}
+
 
 \chapter{MQ(Message Queue)}
 
@@ -2611,12 +2633,15 @@ max_poll_interval_ms = 6000000
 
 \subsubsection{Heartbeat session expired, marking coordinator dead}
 
-提交Kafka Offset时，提示CommitFailedError: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member.This means that the time between subsequent calls to poll() was longer than the configured max\_poll\_interval\_ms, which typically implies that the poll loop is spending too much time message processing. You can address this either by increasing the rebalance timeout with max\_poll\_interval\_ms,or by reducing the maximum size of batches returned in poll() with max\_poll\_records.大概是由于Kafka消费者与心跳之间产生了死锁\footnote{\url{https://github.com/dpkp/kafka-python/issues/1544}}，不过死锁问题已经在1.4.4版本中修复，但是还是遇到了此问题\footnote{\url{https://github.com/dpkp/kafka-python/pull/1628}}。
+提交Kafka Offset时，提示CommitFailedError: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member.This means that the time between subsequent calls to poll() was longer than the configured max\_poll\_interval\_ms, which typically implies that the poll loop is spending too much time message processing. You can address this either by increasing the rebalance timeout with max\_poll\_interval\_ms,or by reducing the maximum size of batches returned in poll() with max\_poll\_records.大概是由于Kafka消费者与心跳之间产生了死锁\footnote{\url{https://github.com/dpkp/kafka-python/issues/1544}}，不过死锁问题已经在1.4.4版本中修复，但是还是遇到了此问题\footnote{\url{https://github.com/dpkp/kafka-python/pull/1628}}。订阅一组topic后，当调用poll(long）时，消费者将自动加入到组中。只要持续的调用poll，消费者将一直保持可用，并继续从分配的分区中接收消息。此外，消费者向服务器定时发送心跳。如果消费者崩溃或无法在session.timeout.ms配置的时间内发送心跳，则消费者将被视为死亡，并且其分区将被重新分配。消费可能遇到“活锁(livelock)”的情况，它持续的发送心跳，但是没有处理。为了预防消费者在这种情况下一直持有分区，使用max.poll.interval.ms活跃检测机制。在此基础上，如果调用的poll的频率大于最大间隔，则客户端将主动地离开组，以便其他消费者接管该分区。发生这种情况时，offset出现提交失败（调用commitSync()引发的CommitFailedException）。这是一种安全机制，保障只有活动成员能够提交offset。所以要留在组中，必须持续调用poll。将消费者调整为poll的方式解决此问题：
 
-
-Heartbeat: local member\_id was not recognized; this consumer needs to re-join
-
-
+\begin{lstlisting}[language=Python]
+msg_pack = self.consumer.poll(timeout_ms=5000,max_records=1)
+for messages in msg_pack.items():
+    for message in messages:
+        if(isinstance(message,TopicPartition)):
+            logger.info("TopicPartition: %s", TopicPartition)
+\end{lstlisting}
 
 
 \part{Tool}
@@ -2625,7 +2650,7 @@ Heartbeat: local member\_id was not recognized; this consumer needs to re-join
 
 \section{Little Tool}
 
-
+\subsection{title}
 
 
 \subsection{traceroute}
@@ -3034,6 +3059,9 @@ server {
 
 
 \part{Book}
+
+人类从古至今，总共有多少本书，答案是129,864,880\footnote{\url{http://booksearch.blogspot.com/2010/08/books-of-world-stand-up-and-be-counted.html}}。
+
 
 \chapter{Paper}
 
