@@ -660,6 +660,8 @@ export PYTHONPATH=/usr/lib64/python3.6/site-packages/
 
 \begin{lstlisting}[language=Bash]
 cat /proc/version
+# 查看RedHat版本
+cat /etc/redhat-release
 \end{lstlisting}
 
 Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
@@ -1894,9 +1896,27 @@ PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USIN
 psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据到/home/dolphin/share目录
 \copy (select * from public.book) to '/home/dolphin/share/dolphin-book-binary-bak-201902062112' with Binary;
+# 导出book数据
+\copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
+# 备份数据库
+pg_dump -h bookdb -U postgres dolphin > ./dolphin-201902100030.bak
+http http://localhost:8000/spider/api/v1/consumer?is_generate_url=1
 \end{lstlisting}
 
 再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
+
+\paragraph{正则匹配}
+
+找到关键字表中word列为数字的行：
+
+\begin{lstlisting}[language=SQL]
+select * 
+from fund_words_lib 
+where word ~ '^[0-9\.]+$' 
+limit 2;
+\end{lstlisting}
+
+
 
 \subsection{事务(Transaction)}
 
@@ -2000,7 +2020,9 @@ Python之父Guido推荐的命名规范，Python模块、类、函数等命名示
 
 在编写Python的过程中，突然发现很多模块是直接使用的方法，而没有在模块中定义类，突然想起Python既然用方法都可以完成的任务，为什么要使用类呢？不用类可以吗？带着这个疑问，查找了一番资料，发现本质的区别在于FP(Functional Programming)和OOP(Object-oriented Programming)，仿佛又进入了一个圣战领域。Python既可以进行函数式编程，也可以进行面像对象编程，得分析具体的使用场景。
 
+\subsection{远程调试(Remote debugging)}
 
+The Python Visual Studio Debugger engine implements the Visual Studio Code debug protocol and is used as the debug engine in Visual Studio and Visual Studio Code.
 
 \subsection{str与bytes}
 
@@ -2097,11 +2119,17 @@ pip3 install Twisted-18.9.0-cp37-cp37m-win_amd64.whl
 pip3 install scrapy
 \end{lstlisting}
 
+有事离线安装也会失败，可以采用源码编译的方式：
 
+\begin{lstlisting}[language=Bash]
+wget https://twistedmatrix.com/Releases/Twisted/17.1/Twisted-17.1.0.tar.bz2
+tar -jxvf Twisted-17.1.0.tar.bz2
+cd Twisted-17.1.0
+# 多个Python版本时，指定具体版本号
+python3.7 setup.py install
+\end{lstlisting}
 
-
-
-
+在解压tar.bz2包时，有时会提示tar (child): lbzip2: Cannot exec: No such file or directory，注意要安装依赖包bzip2。
 
 \subsubsection{代理池(Proxy Pool)}
 
@@ -2139,6 +2167,21 @@ req = Request(url=url,data = data,headers = headers,method='POST')
 response = urllib.request.urlopen(req).read()
 response_text = str(response,'utf-8')
 \end{lstlisting}
+
+\subsubsection{Spider参数传递}
+
+在爬虫中获取爬取的关键字，将进行2次服务器端请求，所以通过参数将爬取的关键字传入爬虫。
+
+\begin{lstlisting}[language=Python]
+try:
+	# This will raise an exception if scrapy fails
+	# which is probably a good idea in most scenarios
+	run(["scrapy", "crawl", "googlebook", "-a", "arg=" + scrapy_url],check=True)
+except BaseException as e:
+	logger.error(e)
+\end{lstlisting}
+
+将scrapy\_url传入Spider。注意捕获异常时是BaseException不是Exception。
 
 \subsection{常见问题}
 
@@ -2584,6 +2627,12 @@ def sub_process_handle(self,bookinfo):
 查看所有Topic的信息：
 
 \begin{lstlisting}[language=Bash]
+# 启动Kafka
+bin/kafka-server-start.sh config/server.properties
+
+# 启动Zookeeper
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
 bin/kafka-topics.sh --zookeeper localhost:2181 --list
 
 # 查看当前Broker中的所有组
@@ -2652,6 +2701,19 @@ for messages in msg_pack.items():
             logger.info("TopicPartition: %s", TopicPartition)
 \end{lstlisting}
 
+\chapter{OS}
+
+\section{Linux}
+
+\subsection{命令}
+
+查找大文件：
+
+\begin{lstlisting}[language=Bash]
+find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
+\end{lstlisting}
+
+查找操作系统中大于800MB的文件。让find在打印出一个文件名之后接着输出一个NULL字符 ('\textbackslash 0') 而不是换行符, 然后再告诉xargs也用NULL字符来作为记录的分隔符。
 
 \part{Tool}
 
@@ -2977,6 +3039,12 @@ docker export MariaDB.tar MariaDB
 \end{lstlisting}
 
 \part{Network}
+
+\chapter{Web Service}
+
+\section{Java Web Service}
+
+再Intellij Idea中新建Axis Web Serive客户端时，Intellij Idea会在填入WSDL(网络服务描述语言,Web Services Description Language)链接后请求服务器，对链接做有效性检查。所以在创建客户端时，要保证Web Service服务端的联通，否则客户端会提示WSDL url is not valid。获取天气信息的测试地址\footnote{\url{:http://ws.webxml.com.cn/WebServices/WeatherWS.asmx?wsdl}}。
 
 \chapter{HTTP}
 
