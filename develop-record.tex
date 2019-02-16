@@ -1760,6 +1760,8 @@ tail -f /usr/local/var/postgres/server.log
 在Mac上启动Postgres：
 
 \begin{lstlisting}[language=Bash]
+# CentOS 7重启Postgresql
+systemctl restart postgresql-9.6.service
 # 命令启动Postgresql
 sudo brew services start postgresql
 # /usr/local/var/postgres/dolphinpg为数据目录
@@ -2824,6 +2826,33 @@ ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 
 服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
 
+\subsubsection{ssh登录Google Cloud}
+
+需要打开允许ssh登录、允许密码登录选项：
+
+\begin{lstlisting}[language=Bash]
+# 允许通过密码登录（不安全）
+PasswordAuthentication yes
+# 允许root用户登录（不安全）
+PermitRootLogin yes
+\end{lstlisting}
+
+\subsubsection{ssh重启失败}
+
+使用命令查看状态时一直停留在activating状态，是由于selinux导致，临时关闭selinux即可。
+
+\begin{lstlisting}[language=Bash]
+# 查看SELinux状态
+/usr/sbin/sestatus -v
+# 关闭SELinux
+setenforce 0
+\end{lstlisting}
+
+修改配置文件需要重启机器：修改/etc/selinux/config文件，将SELINUX=enforcing改为SELINUX=disabled，重启机器即可永久修改。如果调整了ssh端口，登录时指定端口：
+
+\begin{lstlisting}[language=Bash]
+gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin-xiaoqiang"  --ssh-flag="-p 1234"
+\end{lstlisting}
 
 
 \section{Develop}
@@ -2883,7 +2912,7 @@ sudo brew install wireguard-tools
 wg genkey | tee privatekey | wg pubkey > publickey
 \end{lstlisting}
 
-在服务器上，配置以下内容：
+在服务器/etc/wireguard/wireguard.conf上，配置以下内容：
 
 \begin{lstlisting}[language=Bash]
 [Interface]　　
@@ -2922,6 +2951,8 @@ PersistentKeepalive = 25
 
 \begin{lstlisting}[language=Bash]
 # 启动Wireguard
+# wg0表示配置文件的名字
+# 默认会到/etc/wireguard目录下寻找
 wg-quick up wg0
 # 停止Wireguard
 wg-quick down wg0
@@ -2953,6 +2984,20 @@ bilibili/duckduckgo/yandex可以访问，baidu不可以，不知道什么原因�
 	\caption{Wireguard Windows客户端tunsafe}
 	\label{fig:wireguardtunsafeclient}
 \end{figure}
+
+确保服务器开启了IPv4转发：
+
+\begin{lstlisting}[language=Bash]
+# 临时开启IPv4转发
+sysctl net.ipv4.ip_forward=1
+\end{lstlisting}
+
+编辑 /etc/sysctl.conf 文件，查找到 net.ipv4.ip\_forward 这一行，改成 1开启转发，永久生效。iptables 里 filter 表的 FORWARD 链的 policy 是否为 ACCEPT。 nat 表的POSTROUTING链里是否已经做了出口的 NAT。如果还没有，使用以下命令加上：
+
+\begin{lstlisting}[language=Bash]
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+\end{lstlisting}
+
 
 \subsection{应用}
 
