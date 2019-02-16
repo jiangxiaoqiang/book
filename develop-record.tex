@@ -1720,6 +1720,20 @@ redis为了避免客户端连接数过多，有一个timeout配置，意思是�
 
 Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
 
+\chapter{Spring}
+
+\section{常见问题}
+
+\subsection{无法读取配置}
+
+Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
+
+\begin{lstlisting}[language=Java]
+@PropertySource(value = { "file:c:/application.properties" },encoding = "utf-8")
+\end{lstlisting}
+
+@PropertySource注解用于指定目录，指定编码读取properties文件。
+
 \chapter{DB}
 
 \section{Redis}
@@ -2720,6 +2734,29 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 \chapter{Widgets}
 
 \section{Little Tool}
+
+\subsection{Shadowsocks}
+
+当前Shadowsocks有多个实现支持，以自由软件形式发布的主要有原始Shadowsocks（以Python语言编写）、Shadowsocks-libev（分支项目openwrt-Shadowsocks）、Shadowsocks-rust、Shadowsocks-go/go-Shadowsocks2、libQtShadowsocks、Shadowsocks-qt5（仅作为客户端）、Shadowsocks-android（仅作为客户端）、Shadowsocks-windows（仅作为客户端）、ShadowsocksX-NG（仅作为客户端）、Outline、V2Ray、Brook等等，还有为数甚多的免费软件及专有软件（多数是iOS上运行的，如shadowrocket、Surge等），如下是服务端的配置示例。
+
+\begin{lstlisting}
+{
+	"server":"0.0.0.0",
+	"server_port":1080,
+	"local_address":"127.0.0.1",
+	"local_port":1080,
+	"password":"password",
+	"timeout":300,
+	"method":"aes-256-cfb"
+}
+\end{lstlisting}
+
+CFB模式(密文反馈:Cipher feedback)，CFB能够将块密文（Block Cipher）转换为流密文（Stream Cipher）。ShadowSocks现在主流的加密方式有两种：aes-256-cfb 和 rc4-md5 前者加密强度高（指的并不是安全性高而是更难被 GFW 检测出来）
+但系统开销会更大一点，它是很多一键包默认的加密方式，
+后者加密解密速度比前者快得多，但安全性不够。如果是用在路由器上，因为很多路由器 CPU 速度都在 500MHz 以下，性能并不强，
+使用 aes-256-cfb 多出来的那点性能开销在路由器上可能会构成一个影响性能的大问题，
+所以，之前使用在路由器上的加密方式一般都选 rc4-md5。
+
 
 \subsection{Scoop}
 
