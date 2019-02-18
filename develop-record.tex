@@ -1822,6 +1822,72 @@ and relnamespace =
 );
 \end{lstlisting}
 
+\subsection{约束}
+
+设置自增序列：
+
+\begin{lstlisting}[language=SQL]
+alter table public.book 
+alter column id 
+set default nextval('public.book_id_seq');
+# 添加主键
+alter table book add primary key (id) ;
+# 添加唯一约束
+ALTER TABLE book
+ADD UNIQUE (name,isbn,isbn10)
+\end{lstlisting}
+
+\subsection{pgAgent}
+
+PostgreSQL定时任务真是麻烦，要编译pgAgent，安装pgAgent之前要安装cmake、wxWidgets。首先采用如下命令安装cmake：
+
+\begin{lstlisting}[language=Bash]
+# 安装gcc编译工具
+yum install gcc*
+./configure --prefix=/usr/local/cmake-3.13.4
+make
+make install
+\end{lstlisting}
+
+运行如下命令安装wxWidgets：
+
+\begin{lstlisting}[language=Bash]
+./configure --enable-shared=no --enable-unicode=yes
+yum -y install gtk2-devel binutils-devel
+make
+make install
+\end{lstlisting}
+
+编译安装pgAdmin:
+
+\begin{lstlisting}[language=Bash]
+# 未将cmake写入环境变量
+# 所以此处写的绝对路径
+/usr/local/cmake-3.9.6/bin/cmake ./
+make
+make install
+\end{lstlisting}
+
+在安装的过程中可能会提示No PostgreSQL installation could be found。此时需要将PostgreSQL的路径写入环境变量中，此处写入的home目录下的profile。
+
+\begin{lstlisting}[language=Bash]
+export PATH=$PATH:/usr/pgsql-9.6/bin
+\end{lstlisting}
+
+编译时可能会提示：Unable to find the requested Boost libraries.此时安装相应的boost-devel依赖包即可:
+
+\begin{lstlisting}[language=Bash]
+yum install boost-devel
+\end{lstlisting}
+
+编译时可能会提示:fatal error: libpq-fe.h: No such file or directory.安装相应的依赖包即可:
+
+\begin{lstlisting}[language=Bash]
+yum install postgresql-devel
+\end{lstlisting}
+
+此时,即可成功编译pgAgent.
+
 \subsection{CTID}
 
 ctid：表示数据记录的物理行当信息，指的是 一条记录位于哪个数据块的哪个位移上面。格式(blockid,itemid)：拿其中(0,1)来说；0表示块id；1表示在这块第一条记录。Difference against Oracle is that CTID is unique only inside particular table. Because PostgreSQL have separate databases on one server and stores every table in separate file on the disk.Note that although the ctid can be used to locate the row version very quickly, a row's ctid will change each time it is updated or moved by VACUUM(vacuum: 回收未显示的物理位置；标明可以继续使用。) FULL. Therefore ctid is useless as a long-term row identifier. The OID, or even better a user-defined serial number, should be used to identify logical rows.
@@ -1990,6 +2056,19 @@ select pg_stat_statements_reset();
 \chapter{Python}
 
 \section{Python基础(Python Fundation)}
+
+\subsection{Python安装}
+
+CentOS下安装Python3.6：
+
+\begin{lstlisting}[language=Bash]
+yum install https://centos7.iuscommunity.org/ius-release.rpm
+yum install python36u python36u-devel python36u-pip
+# Twisted依赖python36u-devel包
+pip3.6 install Twisted
+\end{lstlisting}
+
+需要注意的细节是安装的时候3个包皆需一起安装，否则后期也需要手工安装pip等工具\footnote{\url{https://stackoverflow.com/questions/50408941/recommended-way-to-install-pip3-on-centos7}}。
 
 \subsection{Python命名规范}
 
@@ -2721,6 +2800,10 @@ for messages in msg_pack.items():
 
 \section{Linux}
 
+\subsection{环境变量(Environment Variable)}
+
+在使用云环境时环境变量优先写在当前用户下的profile文件中，避免写到全局的profile中，因为在使用远程ssh时，局部profile不太会影响到全局应用，一旦由于全局profile设置不当导致ssh启动失败，后续就比较麻烦，。
+
 \subsection{命令}
 
 查找大文件：
@@ -2853,6 +2936,20 @@ setenforce 0
 \begin{lstlisting}[language=Bash]
 gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin-xiaoqiang"  --ssh-flag="-p 1234"
 \end{lstlisting}
+
+\subsubsection{Google Cloud SSH重启失败}
+
+手贱修改了服务器的环境变量，导致Google Cloud ssh守护重启失败，无法远程登录。
+
+\begin{lstlisting}[language=Bash]
+# 移除原始实例
+gcloud compute instances create dolphin-xiaoqiang-recover --disk name=dolphin-xiaoqiang,boot=yes,auto-delete=no
+# 创建新实例（使用上一个实例的磁盘）
+gcloud compute instances create dolphin-xiaoqiang-recover --zone=asia-east1-b --disk name=dolphin-xiaoqiang,boot=
+yes,auto-delete=no
+\end{lstlisting}
+
+重新挂载磁盘到新实例上无法解决问题，删除原有实例重新创建，为了避免此问题，可以定时创建实例快照，从快照恢复实例，此次教训不可谓不深刻。
 
 
 \section{Develop}
@@ -2998,6 +3095,18 @@ sysctl net.ipv4.ip_forward=1
 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 \end{lstlisting}
 
+在本地加上路由，把流量转发到 wg0 接口上:
+
+\begin{lstlisting}[language=Bash]
+ip route add <endpoint>/32 via <出口接口的网关IP> dev <出口接口>
+ip route add 34.80.1.136 via 192.168.3.2 dev 192.168.3.1
+ip route add default via 192.168.3.2 dev wireguard src 192.168.3.1
+# 添加目标为 0.0.0.0，子网掩码为 0.0.0.0
+# 下一个跃点地址为 192.168.43.26，跃点数为 7 的路由
+route add 0.0.0.0 mask 0.0.0.0 192.168.43.26 metric 55
+# 删除目标为 10.41.0.0，子网掩码为 255.255.0.0 的路由
+route delete 0.0.0.0 mask 0.0.0.0
+\end{lstlisting}
 
 \subsection{应用}
 
