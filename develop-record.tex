@@ -1822,7 +1822,7 @@ and relnamespace =
 );
 \end{lstlisting}
 
-\subsection{约束}
+\subsection{约束(Constraint)}
 
 设置自增序列：
 
@@ -2755,6 +2755,14 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 	\caption{Kafka消费情况查看}
 	\label{fig:kafkaconsumecheck}
 \end{figure}
+
+重置offset:
+
+\begin{lstlisting}[language=Bash]
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --topic dolphin-spider-google-book-bookinfo --reset-offsets --to-earliest --execute
+\end{lstlisting}
+
+
 
 
 \subsection{配置}
