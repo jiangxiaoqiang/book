@@ -1625,6 +1625,19 @@ CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是
 
 有时需要获取腾讯视频等地址，可以使用点量视频解析\footnote{\url{http://old.flvurl.cn/}}，可以获取到视频到真实地址，腾讯视频在下载一段时间后，速度会降到几KB左右。
 
+\subsection{Git clone慢}
+
+Git克隆GitHub仓库时特别慢，如果开启了代理，配置Git也同时使用代理编辑home目录下的.gitconfig文件：
+
+\begin{lstlisting}[language=Bash]
+[http]
+         proxy = socks5://127.0.0.1:1080
+[https]
+         proxy = socks5://127.0.0.1:1080
+\end{lstlisting}
+
+
+
 \section{Java}
 
 \subsection{编辑Jar包}
@@ -2823,8 +2836,6 @@ ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 \end{lstlisting}
 
 服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
-
-
 
 \section{Develop}
 
