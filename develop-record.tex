@@ -1636,6 +1636,13 @@ Git克隆GitHub仓库时特别慢，如果开启了代理，配置Git也同时�
          proxy = socks5://127.0.0.1:1080
 \end{lstlisting}
 
+\subsection{Homwbrew更新慢}
+
+brew用curl下载，所以给curl挂上socks5的代理。在~/.curlrc文件中输入代理地址即可。
+
+\begin{lstlisting}[language=Bash]
+proxy = "127.0.0.1:1080"
+\end{lstlisting}
 
 
 \section{Java}
@@ -1733,11 +1740,24 @@ redis为了避免客户端连接数过多，有一个timeout配置，意思是�
 
 Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
 
+\chapter{前端}
+
+\section{React}
+
+\subsection{编码规范(Coding Guidline)}
+
+\begin{itemize}
+\item {HTML/JSX 属性使用双引号,JS 使用单引号}
+\end{itemize}
+
+
+
+
 \chapter{Spring}
 
 \section{常见问题}
 
-\subsection{无法读取配置}
+\subsection{配置(Configuration)}
 
 Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
 
@@ -1745,7 +1765,8 @@ Spring通过属性注入配置ConfigurationProperties无法读取到配置文件
 @PropertySource(value = { "file:c:/application.properties" },encoding = "utf-8")
 \end{lstlisting}
 
-@PropertySource注解用于指定目录，指定编码读取properties文件。
+@PropertySource注解用于指定目录，指定编码读取properties文件。t通常在自定义配置后，也不能删除默认的spring.datasource配置。
+
 
 \chapter{DB}
 
@@ -1773,6 +1794,8 @@ tail -f /usr/local/var/postgres/server.log
 在Mac上启动Postgres：
 
 \begin{lstlisting}[language=Bash]
+# CentOS 7重启Postgresql
+systemctl restart postgresql-9.6.service
 # 命令启动Postgresql
 sudo brew services start postgresql
 # /usr/local/var/postgres/dolphinpg为数据目录
@@ -1832,6 +1855,72 @@ and relnamespace =
 	where nspname = 'public'
 );
 \end{lstlisting}
+
+\subsection{约束(Constraint)}
+
+设置自增序列：
+
+\begin{lstlisting}[language=SQL]
+alter table public.book 
+alter column id 
+set default nextval('public.book_id_seq');
+# 添加主键
+alter table book add primary key (id) ;
+# 添加唯一约束
+ALTER TABLE book
+ADD UNIQUE (name,isbn,isbn10)
+\end{lstlisting}
+
+\subsection{pgAgent}
+
+PostgreSQL定时任务真是麻烦，要编译pgAgent，安装pgAgent之前要安装cmake、wxWidgets。首先采用如下命令安装cmake：
+
+\begin{lstlisting}[language=Bash]
+# 安装gcc编译工具
+yum install gcc*
+./configure --prefix=/usr/local/cmake-3.13.4
+make
+make install
+\end{lstlisting}
+
+运行如下命令安装wxWidgets：
+
+\begin{lstlisting}[language=Bash]
+./configure --enable-shared=no --enable-unicode=yes
+yum -y install gtk2-devel binutils-devel
+make
+make install
+\end{lstlisting}
+
+编译安装pgAdmin:
+
+\begin{lstlisting}[language=Bash]
+# 未将cmake写入环境变量
+# 所以此处写的绝对路径
+/usr/local/cmake-3.9.6/bin/cmake ./
+make
+make install
+\end{lstlisting}
+
+在安装的过程中可能会提示No PostgreSQL installation could be found。此时需要将PostgreSQL的路径写入环境变量中，此处写入的home目录下的profile。
+
+\begin{lstlisting}[language=Bash]
+export PATH=$PATH:/usr/pgsql-9.6/bin
+\end{lstlisting}
+
+编译时可能会提示：Unable to find the requested Boost libraries.此时安装相应的boost-devel依赖包即可:
+
+\begin{lstlisting}[language=Bash]
+yum install boost-devel
+\end{lstlisting}
+
+编译时可能会提示:fatal error: libpq-fe.h: No such file or directory.安装相应的依赖包即可:
+
+\begin{lstlisting}[language=Bash]
+yum install postgresql-devel
+\end{lstlisting}
+
+此时,即可成功编译pgAgent.
 
 \subsection{CTID}
 
@@ -2001,6 +2090,19 @@ select pg_stat_statements_reset();
 \chapter{Python}
 
 \section{Python基础(Python Fundation)}
+
+\subsection{Python安装}
+
+CentOS下安装Python3.6：
+
+\begin{lstlisting}[language=Bash]
+yum install https://centos7.iuscommunity.org/ius-release.rpm
+yum install python36u python36u-devel python36u-pip
+# Twisted依赖python36u-devel包
+pip3.6 install Twisted
+\end{lstlisting}
+
+需要注意的细节是安装的时候3个包皆需一起安装，否则后期也需要手工安装pip等工具\footnote{\url{https://stackoverflow.com/questions/50408941/recommended-way-to-install-pip3-on-centos7}}。
 
 \subsection{Python命名规范}
 
@@ -2688,6 +2790,14 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 	\label{fig:kafkaconsumecheck}
 \end{figure}
 
+重置offset:
+
+\begin{lstlisting}[language=Bash]
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --topic dolphin-spider-google-book-bookinfo --reset-offsets --to-earliest --execute
+\end{lstlisting}
+
+
+
 
 \subsection{配置}
 
@@ -2731,6 +2841,10 @@ for messages in msg_pack.items():
 \chapter{OS}
 
 \section{Linux}
+
+\subsection{环境变量(Environment Variable)}
+
+在使用云环境时环境变量优先写在当前用户下的profile文件中，避免写到全局的profile中，因为在使用远程ssh时，局部profile不太会影响到全局应用，一旦由于全局profile设置不当导致ssh启动失败，后续就比较麻烦，。
 
 \subsection{命令}
 
@@ -2837,6 +2951,52 @@ ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 
 服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
 
+<<<<<<< HEAD
+=======
+\subsubsection{ssh登录Google Cloud}
+
+需要打开允许ssh登录、允许密码登录选项：
+
+\begin{lstlisting}[language=Bash]
+# 允许通过密码登录（不安全）
+PasswordAuthentication yes
+# 允许root用户登录（不安全）
+PermitRootLogin yes
+\end{lstlisting}
+
+\subsubsection{ssh重启失败}
+
+使用命令查看状态时一直停留在activating状态，是由于selinux导致，临时关闭selinux即可。
+
+\begin{lstlisting}[language=Bash]
+# 查看SELinux状态
+/usr/sbin/sestatus -v
+# 关闭SELinux
+setenforce 0
+\end{lstlisting}
+
+修改配置文件需要重启机器：修改/etc/selinux/config文件，将SELINUX=enforcing改为SELINUX=disabled，重启机器即可永久修改。如果调整了ssh端口，登录时指定端口：
+
+\begin{lstlisting}[language=Bash]
+gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin-xiaoqiang"  --ssh-flag="-p 1234"
+\end{lstlisting}
+
+\subsubsection{Google Cloud SSH重启失败}
+
+手贱修改了服务器的环境变量，导致Google Cloud ssh守护重启失败，无法远程登录。
+
+\begin{lstlisting}[language=Bash]
+# 移除原始实例
+gcloud compute instances create dolphin-xiaoqiang-recover --disk name=dolphin-xiaoqiang,boot=yes,auto-delete=no
+# 创建新实例（使用上一个实例的磁盘）
+gcloud compute instances create dolphin-xiaoqiang-recover --zone=asia-east1-b --disk name=dolphin-xiaoqiang,boot=
+yes,auto-delete=no
+\end{lstlisting}
+
+重新挂载磁盘到新实例上无法解决问题，删除原有实例重新创建，为了避免此问题，可以定时创建实例快照，从快照恢复实例，此次教训不可谓不深刻。
+
+
+>>>>>>> 1637637d5f7dfff279f0e301b1cd81ea4461d2a4
 \section{Develop}
 
 \subsection{Mybatis Aotogenerate}
@@ -2894,7 +3054,7 @@ sudo brew install wireguard-tools
 wg genkey | tee privatekey | wg pubkey > publickey
 \end{lstlisting}
 
-在服务器上，配置以下内容：
+在服务器/etc/wireguard/wireguard.conf上，配置以下内容：
 
 \begin{lstlisting}[language=Bash]
 [Interface]　　
@@ -2933,6 +3093,8 @@ PersistentKeepalive = 25
 
 \begin{lstlisting}[language=Bash]
 # 启动Wireguard
+# wg0表示配置文件的名字
+# 默认会到/etc/wireguard目录下寻找
 wg-quick up wg0
 # 停止Wireguard
 wg-quick down wg0
@@ -2964,6 +3126,32 @@ bilibili/duckduckgo/yandex可以访问，baidu不可以，不知道什么原因�
 	\caption{Wireguard Windows客户端tunsafe}
 	\label{fig:wireguardtunsafeclient}
 \end{figure}
+
+确保服务器开启了IPv4转发：
+
+\begin{lstlisting}[language=Bash]
+# 临时开启IPv4转发
+sysctl net.ipv4.ip_forward=1
+\end{lstlisting}
+
+编辑 /etc/sysctl.conf 文件，查找到 net.ipv4.ip\_forward 这一行，改成 1开启转发，永久生效。iptables 里 filter 表的 FORWARD 链的 policy 是否为 ACCEPT。 nat 表的POSTROUTING链里是否已经做了出口的 NAT。如果还没有，使用以下命令加上：
+
+\begin{lstlisting}[language=Bash]
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+\end{lstlisting}
+
+在本地加上路由，把流量转发到 wg0 接口上:
+
+\begin{lstlisting}[language=Bash]
+ip route add <endpoint>/32 via <出口接口的网关IP> dev <出口接口>
+ip route add 34.80.1.136 via 192.168.3.2 dev 192.168.3.1
+ip route add default via 192.168.3.2 dev wireguard src 192.168.3.1
+# 添加目标为 0.0.0.0，子网掩码为 0.0.0.0
+# 下一个跃点地址为 192.168.43.26，跃点数为 7 的路由
+route add 0.0.0.0 mask 0.0.0.0 192.168.43.26 metric 55
+# 删除目标为 10.41.0.0，子网掩码为 255.255.0.0 的路由
+route delete 0.0.0.0 mask 0.0.0.0
+\end{lstlisting}
 
 \subsection{应用}
 
