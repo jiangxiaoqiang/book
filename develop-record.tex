@@ -2231,8 +2231,13 @@ pipenv install psycopg2 --skip-lock
 \begin{lstlisting}[language=Python]
 pipenv install --python /usr/bin/python3
 \end{lstlisting}
+<<<<<<< .mine\begin{lstlisting}[language=Python]
+pipenv install --python /usr/bin/python3
+\end{lstlisting}
 
-\subsection{Scrapy}
+=======
+
+>>>>>>> .theirs\subsection{Scrapy}
 
 Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
 
@@ -2243,7 +2248,8 @@ pip3 install Twisted-18.9.0-cp37-cp37m-win_amd64.whl
 pip3 install scrapy
 \end{lstlisting}
 
-有事离线安装也会失败，可以采用源码编译的方式：
+有时离线安装也会失败，可以采用源码编译的方式：
+
 
 \begin{lstlisting}[language=Bash]
 wget https://twistedmatrix.com/Releases/Twisted/17.1/Twisted-17.1.0.tar.bz2
@@ -2253,9 +2259,24 @@ cd Twisted-17.1.0
 python3.7 setup.py install
 \end{lstlisting}
 
+
 在解压tar.bz2包时，有时会提示tar (child): lbzip2: Cannot exec: No such file or directory，注意要安装依赖包bzip2。
 
-\subsubsection{代理池(Proxy Pool)}
+
+<<<<<<< .mine\begin{lstlisting}[language=Bash]
+wget https://twistedmatrix.com/Releases/Twisted/17.1/Twisted-17.1.0.tar.bz2
+tar -jxvf Twisted-17.1.0.tar.bz2
+cd Twisted-17.1.0
+# 多个Python版本时，指定具体版本号
+python3.7 setup.py install
+\end{lstlisting}
+=======\subsection{yield}
+>>>>>>> .theirs
+<<<<<<< .mine在解压tar.bz2包时，有时会提示tar (child): lbzip2: Cannot exec: No such file or directory，注意要安装依赖包bzip2。
+=======yield在每次迭代中返回下一个数值，内存空间占用很小,通过 next() 不断返回数列的下一个数，内存占用始终为常数,想要保持第一版 fab 函数的简洁性，同时又要获得 iterable 的效果，yield 就派上用场了。
+>>>>>>> .theirs
+<<<<<<< .mine=======
+>>>>>>> .theirs\subsubsection{代理池(Proxy Pool)}
 
 一般限制了爬虫的网站，在使用同一个IP在一段时间内发送了超过规定数量的请求，或者调取速度过于频繁，会立即被加入黑名单，封禁一段时间(豆瓣一般是24小时)，所以如果需要大规模抓取数据，针对此种反爬手段就是建立一个代理集合，也就是代理池，请求通过分布在全球各地的代理机器转发。HTTP代理池使用的是开源项目，新代理IP的抓取与存储，代理IP有效性的维护与检测，代理IP库对外的获取接口皆统一由开源组件来管理了。应用中需要做的就是调取对应代理服务的接口，获取一个随机的代理IP。在Scrapy中定义一个代理Middleware如下代码片段所示：
 
@@ -2344,6 +2365,7 @@ COPY fund_words_lib(word,remark) from '/Users/dolphin/Downloads/def_eng.csv' WIT
 # 导入词库
 COPY words(word) from '/Users/dolphin/source/pydolphin-service/dolphin/tool/file.csv' WITH CSV HEADER;
 \end{lstlisting}
+
 
 在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.Google Book API\footnote{\url{https://developers.google.com/books/docs/v1/reference/volumes/list?hl=zh-CN}}支持翻页，每页最大40条数据。Google Book不同的IP调用返回的结果不同，不同的分页参数返回的结果总数不同。
 
@@ -2469,13 +2491,15 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 
 根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
 
+
+
+
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[scale=0.05]{elk-log-architecture.jpg}
 	\caption{ELK流程}
 	\label{fig:elklogarchitecture}
 \end{figure}
-
 logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
 
 \begin{lstlisting}[language=Bash]
