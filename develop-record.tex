@@ -1757,16 +1757,17 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{常见问题}
 
-<<<<<<< .mine\subsection{/tmp/spring.log (Permission denied)}
-=======\subsection{配置(Configuration)}
->>>>>>> .theirs\subsection{/tmp/spring.log (Permission denied)}
+
+
+\subsection{/tmp/spring.log (Permission denied)}
 
 启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
 \begin{lstlisting}[language=XML]
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
 \end{lstlisting}
-<<<<<<< .mine启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
+
+启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
 \begin{lstlisting}[language=XML]
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
@@ -1775,8 +1776,9 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 
 
-\subsection{无法读取配置}
-=======>>>>>>> .theirs
+\subsection{配置(Configuration)}
+
+
 Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
 
 \begin{lstlisting}[language=Java]
