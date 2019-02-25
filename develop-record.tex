@@ -1724,6 +1724,17 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{常见问题}
 
+\subsection{/tmp/spring.log (Permission denied)}
+
+启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
+
+\begin{lstlisting}[language=XML]
+<include resource="org/springframework/boot/logging/logback/base.xml"/>
+\end{lstlisting}
+
+
+
+
 \subsection{无法读取配置}
 
 Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
@@ -1886,7 +1897,25 @@ yum install boost-devel
 yum install postgresql-devel
 \end{lstlisting}
 
-此时,即可成功编译pgAgent.
+此时,即可成功编译pgAgent.在使用pgAgent之前，要先启动pgAgent:
+
+\begin{lstlisting}[language=Bash]
+pgagent -s /var/lib/pgsql/9.6/data/pgagent.log hostaddr=127.0.0.1 port=5432 dbname=dolphin user=postgres password=postgres
+\end{lstlisting}
+
+使用pgAgent的过程中发现建立了任务后，一直没有运行定时任务。调整日志级别参数查看详细的过程：
+
+\begin{lstlisting}[language=Bash]
+pgagent -t 30 -l 2 -s /var/lib/pgsql/9.6/data/pgagent.log hostaddr=127.0.0.1 port=5432 dbname=postgres user=postgres password=postgres
+\end{lstlisting}
+
+日志级别默认是0，ERROR时才会输出信息，调整为DEBUG级别查看详细输出。任务Step数据库连接配置：
+
+\begin{lstlisting}[language=Bash]
+host=127.0.0.1 port=5432 dbname=dolphin user=postgres password=postgres connect_timeout=10
+\end{lstlisting}
+
+
 
 \subsection{CTID}
 
