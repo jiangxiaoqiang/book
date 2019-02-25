@@ -1757,15 +1757,33 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{常见问题}
 
-\subsection{配置(Configuration)}
+<<<<<<< .mine\subsection{/tmp/spring.log (Permission denied)}
+=======\subsection{配置(Configuration)}
+>>>>>>> .theirs\subsection{/tmp/spring.log (Permission denied)}
 
+启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
+
+\begin{lstlisting}[language=XML]
+<include resource="org/springframework/boot/logging/logback/base.xml"/>
+\end{lstlisting}
+<<<<<<< .mine启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
+
+\begin{lstlisting}[language=XML]
+<include resource="org/springframework/boot/logging/logback/base.xml"/>
+\end{lstlisting}
+
+
+
+
+\subsection{无法读取配置}
+=======>>>>>>> .theirs
 Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
 
 \begin{lstlisting}[language=Java]
 @PropertySource(value = { "file:c:/application.properties" },encoding = "utf-8")
 \end{lstlisting}
 
-@PropertySource注解用于指定目录，指定编码读取properties文件。t通常在自定义配置后，也不能删除默认的spring.datasource配置。
+@PropertySource注解用于指定目录，指定编码读取properties文件。通常在自定义配置后，也不能删除默认的spring.datasource配置。
 
 
 \chapter{DB}
@@ -1920,7 +1938,26 @@ yum install boost-devel
 yum install postgresql-devel
 \end{lstlisting}
 
-此时,即可成功编译pgAgent.
+
+此时,即可成功编译pgAgent.在使用pgAgent之前，要先启动pgAgent:
+
+\begin{lstlisting}[language=Bash]
+pgagent -s /var/lib/pgsql/9.6/data/pgagent.log hostaddr=127.0.0.1 port=5432 dbname=dolphin user=postgres password=postgres
+\end{lstlisting}
+
+使用pgAgent的过程中发现建立了任务后，一直没有运行定时任务。调整日志级别参数查看详细的过程：
+
+\begin{lstlisting}[language=Bash]
+pgagent -t 30 -l 2 -s /var/lib/pgsql/9.6/data/pgagent.log hostaddr=127.0.0.1 port=5432 dbname=postgres user=postgres password=postgres
+\end{lstlisting}
+
+日志级别默认是0，ERROR时才会输出信息，调整为DEBUG级别查看详细输出。任务Step数据库连接配置：
+
+\begin{lstlisting}[language=Bash]
+host=127.0.0.1 port=5432 dbname=dolphin user=postgres password=postgres connect_timeout=10
+\end{lstlisting}
+
+
 
 \subsection{CTID}
 
@@ -2237,7 +2274,12 @@ pipenv install psycopg2 --skip-lock
 pipenv install --python /usr/bin/python3
 \end{lstlisting}
 
-\subsection{Scrapy}
+
+
+
+
+
+
 
 Scrapy需要依赖Twisted模块，Twisted模块需要依赖Visual C++\footnote{下载地址2019年1月可用，链接为：\url{https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads}}模块，但是进入网站却貌似没有找到独立模块的下载地址，安装Visual Studio不太现实，几个GB。这个网站\footnote{\url{https://www.lfd.uci.edu/~gohlke/pythonlibs/\#twisted}}已经有集成的包，下载集成好的包，直接离线安装即可。
 
@@ -2248,7 +2290,21 @@ pip3 install Twisted-18.9.0-cp37-cp37m-win_amd64.whl
 pip3 install scrapy
 \end{lstlisting}
 
-有事离线安装也会失败，可以采用源码编译的方式：
+
+有时离线安装也会失败，可以采用源码编译的方式：
+
+
+\begin{lstlisting}[language=Bash]
+wget https://twistedmatrix.com/Releases/Twisted/17.1/Twisted-17.1.0.tar.bz2
+tar -jxvf Twisted-17.1.0.tar.bz2
+cd Twisted-17.1.0
+# 多个Python版本时，指定具体版本号
+python3.7 setup.py install
+\end{lstlisting}
+
+
+在解压tar.bz2包时，有时会提示tar (child): lbzip2: Cannot exec: No such file or directory，注意要安装依赖包bzip2。
+
 
 \begin{lstlisting}[language=Bash]
 wget https://twistedmatrix.com/Releases/Twisted/17.1/Twisted-17.1.0.tar.bz2
@@ -2259,6 +2315,12 @@ python3.7 setup.py install
 \end{lstlisting}
 
 在解压tar.bz2包时，有时会提示tar (child): lbzip2: Cannot exec: No such file or directory，注意要安装依赖包bzip2。
+
+\subsection{yield}
+
+
+yield在每次迭代中返回下一个数值，内存空间占用很小,通过 next() 不断返回数列的下一个数，内存占用始终为常数,想要保持第一版 fab 函数的简洁性，同时又要获得 iterable 的效果，yield 就派上用场了。
+
 
 \subsubsection{代理池(Proxy Pool)}
 
@@ -2349,6 +2411,7 @@ COPY fund_words_lib(word,remark) from '/Users/dolphin/Downloads/def_eng.csv' WIT
 # 导入词库
 COPY words(word) from '/Users/dolphin/source/pydolphin-service/dolphin/tool/file.csv' WITH CSV HEADER;
 \end{lstlisting}
+
 
 在抓取Google API数据时，在浏览器和终端可以请求到数据，但是Scrapy的下载器却不能请求到数据，是由于浏览器和终端默认使用的Google API的IPv6地址，而Scrapy目前未支持IPv6导致，IPv4无法直接访问Google服务\footnote{\url{https://github.com/scrapy/scrapy/issues/3528}}.Google Book API\footnote{\url{https://developers.google.com/books/docs/v1/reference/volumes/list?hl=zh-CN}}支持翻页，每页最大40条数据。Google Book不同的IP调用返回的结果不同，不同的分页参数返回的结果总数不同。
 
@@ -2474,13 +2537,15 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 
 根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
 
+
+
+
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[scale=0.05]{elk-log-architecture.jpg}
 	\caption{ELK流程}
 	\label{fig:elklogarchitecture}
 \end{figure}
-
 logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
 
 \begin{lstlisting}[language=Bash]
@@ -2951,8 +3016,7 @@ ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 
 服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
 
-<<<<<<< HEAD
-=======
+
 \subsubsection{ssh登录Google Cloud}
 
 需要打开允许ssh登录、允许密码登录选项：
@@ -2996,7 +3060,7 @@ yes,auto-delete=no
 重新挂载磁盘到新实例上无法解决问题，删除原有实例重新创建，为了避免此问题，可以定时创建实例快照，从快照恢复实例，此次教训不可谓不深刻。
 
 
->>>>>>> 1637637d5f7dfff279f0e301b1cd81ea4461d2a4
+
 \section{Develop}
 
 \subsection{Mybatis Aotogenerate}
