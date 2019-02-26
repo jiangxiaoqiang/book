@@ -658,10 +658,18 @@ export PYTHONPATH=/usr/lib64/python3.6/site-packages/
 
 \subsection{Linux版本查看}
 
+Linux版本可分为内核版本(Kernel Version)和系统版本(System Version)，内核由内核小组维护，内核外集成不同的软件形成不同发行版本。
+
 \begin{lstlisting}[language=Bash]
+# 查看Linux内核版本
 cat /proc/version
+uname -a
+
 # 查看RedHat版本
+# 此种方式只适合查看Redhat系列(Redhat/CentOS/Fedora)
 cat /etc/redhat-release
+# 适用所有的Linux版本
+cat /etc/issue
 \end{lstlisting}
 
 Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
