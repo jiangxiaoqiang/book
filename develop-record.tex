@@ -1962,7 +1962,7 @@ pgagent -t 30 -l 2 -s /var/lib/pgsql/9.6/data/pgagent.log hostaddr=127.0.0.1 por
 host=127.0.0.1 port=5432 dbname=dolphin user=postgres password=postgres connect_timeout=10
 \end{lstlisting}
 
-
+启动pgaent时，注意连接的数据库，只有连接到正确的库，才会执行对应库下建立的定时任务。建立pgagent任务后，要检查任务执行语句在哪个数据库，要在postgres数据库上新增了pgagent插件之后，才会在树上显示pgAgent Jobs。
 
 \subsection{CTID}
 
@@ -2823,15 +2823,19 @@ def sub_process_handle(self,bookinfo):
 
 \subsection{常用命令}
 
-查看所有Topic的信息：
+Apache Kafka常用的命令，启动Apache Kafka：
 
 \begin{lstlisting}[language=Bash]
-# 启动Kafka
-bin/kafka-server-start.sh config/server.properties
+# Step 1:启动Zookeeper
+/home/dolphin/software/kafka_2.12-1.1.0/bin/zookeeper-server-start.sh /home/dolphin/software/kafka_2.12-1.1.0/config/zookeeper.properties
 
-# 启动Zookeeper
-bin/zookeeper-server-start.sh config/zookeeper.properties
+# Step 2:启动Apache Kafka
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-server-start.sh /home/dolphin/software/kafka_2.12-1.1.0/config/server.properties
+\end{lstlisting}
 
+查看主题信息：
+
+\begin{lstlisting}[language=Bash]
 bin/kafka-topics.sh --zookeeper localhost:2181 --list
 
 # 查看当前Broker中的所有组
@@ -3049,6 +3053,10 @@ setenforce 0
 \begin{lstlisting}[language=Bash]
 gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin-xiaoqiang"  --ssh-flag="-p 1234"
 \end{lstlisting}
+
+\subsubsection{ssh安全}
+
+一旦测试并且验证了你的公钥可以登录，就可以取消密码登录，这样你的远程服务器就不会被暴力密码攻击。
 
 \subsubsection{Google Cloud SSH重启失败}
 
