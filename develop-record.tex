@@ -658,10 +658,18 @@ export PYTHONPATH=/usr/lib64/python3.6/site-packages/
 
 \subsection{Linux版本查看}
 
+Linux版本可分为内核版本(Kernel Version)和系统版本(System Version)，内核由内核小组维护，内核外集成不同的软件形成不同发行版本。
+
 \begin{lstlisting}[language=Bash]
+# 查看Linux内核版本
 cat /proc/version
+uname -a
+
 # 查看RedHat版本
+# 此种方式只适合查看Redhat系列(Redhat/CentOS/Fedora)
 cat /etc/redhat-release
+# 适用所有的Linux版本
+cat /etc/issue
 \end{lstlisting}
 
 Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
@@ -1757,16 +1765,17 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{常见问题}
 
-<<<<<<< .mine\subsection{/tmp/spring.log (Permission denied)}
-=======\subsection{配置(Configuration)}
->>>>>>> .theirs\subsection{/tmp/spring.log (Permission denied)}
+
+
+\subsection{/tmp/spring.log (Permission denied)}
 
 启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
 \begin{lstlisting}[language=XML]
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
 \end{lstlisting}
-<<<<<<< .mine启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
+
+启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
 \begin{lstlisting}[language=XML]
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
@@ -1775,8 +1784,9 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 
 
-\subsection{无法读取配置}
-=======>>>>>>> .theirs
+\subsection{配置(Configuration)}
+
+
 Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
 
 \begin{lstlisting}[language=Java]
