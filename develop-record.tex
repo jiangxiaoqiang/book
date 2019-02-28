@@ -1119,14 +1119,14 @@ group by clnt_ip,state,user_name
 做了以上优化后，可以提高网站的并发服务量，降低由于访问量过大造成网站不可用的概率，20个连接确实太小，综合评估数据库现有的连接资源(500)，调整后连接数分配情况：
 
 \begin{table}[htbp]
-	\caption{应用连接个数分配情况}
+	\caption{应用连接数分配情况}
 	\label{table:projectdirectionayinfo}
 	\begin{center}
-		\begin{tabular}{|p{3cm}|c|p{2cm}|}
+		\begin{tabular}{|p{5cm}|c|p{2cm}|}
 			\hline
 			\multirow{1}{*}{环境}
 			& \multicolumn{1}{c|}{IP} 
-			& \multicolumn{1}{c|}{连接个数}\\			
+			& \multicolumn{1}{c|}{连接数}\\			
 			\cline{1-3}
 			主机 &  192.168.1.1  & 100 \\
 			\hline
@@ -1769,11 +1769,6 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \subsection{/tmp/spring.log (Permission denied)}
 
-启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
-
-\begin{lstlisting}[language=XML]
-<include resource="org/springframework/boot/logging/logback/base.xml"/>
-\end{lstlisting}
 
 启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
