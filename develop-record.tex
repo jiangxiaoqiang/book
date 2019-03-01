@@ -658,10 +658,18 @@ export PYTHONPATH=/usr/lib64/python3.6/site-packages/
 
 \subsection{Linux版本查看}
 
+Linux版本可分为内核版本(Kernel Version)和系统版本(System Version)，内核由内核小组维护，内核外集成不同的软件形成不同发行版本。
+
 \begin{lstlisting}[language=Bash]
+# 查看Linux内核版本
 cat /proc/version
+uname -a
+
 # 查看RedHat版本
+# 此种方式只适合查看Redhat系列(Redhat/CentOS/Fedora)
 cat /etc/redhat-release
+# 适用所有的Linux版本
+cat /etc/issue
 \end{lstlisting}
 
 Linux 内核提供了一种通过 /proc 文件系统，在运行时访问内核内部数据结构、改变内核设置的机制。proc文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。
@@ -1647,6 +1655,10 @@ proxy = "127.0.0.1:1080"
 
 \section{Java}
 
+\subsection{UML图}
+
+UML部署图描述了一个运行时的硬件结点，以及在这些结点上运行的软件组件的静态视图。 部署图显示了系统的硬件，安装在硬件上的软件，以及用于连接异构的机器之间的中间件。构件图描述系统的模块结构，抽象层次较高。组件图(Component Diagram)又称为构件图，他描述的是在软件系统中遵从并实现一组接口的物理的、可替换的软件模块。
+
 \subsection{编辑Jar包}
 
 由于目前线上的测试版本未经过严格测试，此时又需要更新一个微小特性。采用直接编辑jar包的方式来更新。直接用7zip工具打开jar文件，将编译好的新class替换掉7zip打开的jar包中的class即可。
@@ -1757,16 +1769,17 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 \section{常见问题}
 
-<<<<<<< .mine\subsection{/tmp/spring.log (Permission denied)}
-=======\subsection{配置(Configuration)}
->>>>>>> .theirs\subsection{/tmp/spring.log (Permission denied)}
+
+
+\subsection{/tmp/spring.log (Permission denied)}
 
 启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
 \begin{lstlisting}[language=XML]
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
 \end{lstlisting}
-<<<<<<< .mine启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
+
+启动应用程序时，提示权限拒绝。是由于在logback.xml配置中引入了spring默认的日志配置，spring将日志写入到默认的文件夹tmp下，而普通用户没有权限写入文件内容到此文件夹，导致此问题。去掉默认的引入即可：
 
 \begin{lstlisting}[language=XML]
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
@@ -1775,8 +1788,9 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 
 
 
-\subsection{无法读取配置}
-=======>>>>>>> .theirs
+\subsection{配置(Configuration)}
+
+
 Spring通过属性注入配置ConfigurationProperties无法读取到配置文件，可采用手工添加PropertySource来解决：
 
 \begin{lstlisting}[language=Java]
@@ -1957,7 +1971,7 @@ pgagent -t 30 -l 2 -s /var/lib/pgsql/9.6/data/pgagent.log hostaddr=127.0.0.1 por
 host=127.0.0.1 port=5432 dbname=dolphin user=postgres password=postgres connect_timeout=10
 \end{lstlisting}
 
-
+启动pgaent时，注意连接的数据库，只有连接到正确的库，才会执行对应库下建立的定时任务。建立pgagent任务后，要检查任务执行语句在哪个数据库，要在postgres数据库上新增了pgagent插件之后，才会在树上显示pgAgent Jobs。
 
 \subsection{CTID}
 
@@ -2130,7 +2144,7 @@ select pg_stat_statements_reset();
 
 \subsection{Python安装}
 
-CentOS下安装Python3.6：
+CentOS下通过yum命令安装Python3.6：
 
 \begin{lstlisting}[language=Bash]
 yum install https://centos7.iuscommunity.org/ius-release.rpm
@@ -2139,7 +2153,13 @@ yum install python36u python36u-devel python36u-pip
 pip3.6 install Twisted
 \end{lstlisting}
 
-需要注意的细节是安装的时候3个包皆需一起安装，否则后期也需要手工安装pip等工具\footnote{\url{https://stackoverflow.com/questions/50408941/recommended-way-to-install-pip3-on-centos7}}。
+需要注意的细节是安装的时候3个包皆需一起安装，否则后期也需要手工安装pip等工具\footnote{\url{https://stackoverflow.com/questions/50408941/recommended-way-to-install-pip3-on-centos7}}。从源码编译安装Python:
+
+\begin{lstlisting}[language=Bash]
+wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tar.xz
+tar -xvJf Python-3.6.2.tar.xz
+./configure prefix=/usr/local/python3
+\end{lstlisting}
 
 \subsection{Python命名规范}
 
@@ -2818,15 +2838,19 @@ def sub_process_handle(self,bookinfo):
 
 \subsection{常用命令}
 
-查看所有Topic的信息：
+Apache Kafka常用的命令，启动Apache Kafka：
 
 \begin{lstlisting}[language=Bash]
-# 启动Kafka
-bin/kafka-server-start.sh config/server.properties
+# Step 1:启动Zookeeper
+/home/dolphin/software/kafka_2.12-1.1.0/bin/zookeeper-server-start.sh /home/dolphin/software/kafka_2.12-1.1.0/config/zookeeper.properties
 
-# 启动Zookeeper
-bin/zookeeper-server-start.sh config/zookeeper.properties
+# Step 2:启动Apache Kafka
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-server-start.sh /home/dolphin/software/kafka_2.12-1.1.0/config/server.properties
+\end{lstlisting}
 
+查看主题信息：
+
+\begin{lstlisting}[language=Bash]
 bin/kafka-topics.sh --zookeeper localhost:2181 --list
 
 # 查看当前Broker中的所有组
@@ -2945,9 +2969,19 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 
 CFB模式(密文反馈:Cipher feedback)，CFB能够将块密文（Block Cipher）转换为流密文（Stream Cipher）。ShadowSocks现在主流的加密方式有两种：aes-256-cfb 和 rc4-md5 前者加密强度高（指的并不是安全性高而是更难被 GFW 检测出来）
 但系统开销会更大一点，它是很多一键包默认的加密方式，
-后者加密解密速度比前者快得多，但安全性不够。如果是用在路由器上，因为很多路由器 CPU 速度都在 500MHz 以下，性能并不强，
-使用 aes-256-cfb 多出来的那点性能开销在路由器上可能会构成一个影响性能的大问题，
+后者加密解密速度比前者快得多，但安全性不够。如果是用在路由器上，因为很多路由器CPU速度都在500MHz以下，性能并不强，
+使用aes-256-cfb多出来的那点性能开销在路由器上可能会构成一个影响性能的大问题，
 所以，之前使用在路由器上的加密方式一般都选 rc4-md5。
+
+\subsubsection{代理失效}
+
+有时无法连接上Shadowsocks服务器，在本地无法扫描到Shadowsocks服务器的1080端口。可以尝试在其他主机扫描Shadowsocks服务器，如果其他主机能够扫描到，有可能是到Shadowsocks的1080端口从国内阻断。扫描端口Linux、Mac使用命令扫描：
+
+\begin{lstlisting}[language=Bash]
+nmap -A4 {IP}
+\end{lstlisting}
+
+Windows可以使用Zenmap或者MobaXterm。放弃使用1080默认端口，换一个端口即可解决此问题。
 
 
 \subsection{Scoop}
@@ -3002,6 +3036,21 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 
 输出PING6(56=40+8+8 bytes) local ip --> 2400:da00:2::29。local ip是本机的IPv6地址。
 
+\subsection{Git}
+
+\subsubsection{提交规范}
+
+
+\begin{itemize}
+	\item{feat :新功能}
+	\item{fix :修复bug}
+	\item{doc : 文档改变}
+	\item{style : 代码格式改变}
+	\item{refactor :某个已有功能重构}
+	\item{perf :性能优化}
+	\item{test :增加测试}
+	\item{revert: 撤销上一次的 commit}
+\end{itemize}
 
 \subsection{ssh}
 
@@ -3028,6 +3077,17 @@ PasswordAuthentication yes
 PermitRootLogin yes
 \end{lstlisting}
 
+在Windows Powershell下设置免密登录远程主机：
+
+\begin{lstlisting}[language=Bash]
+# 在Windows Powershell下设置免密登录
+# 注意在Powershell下保留符号<前加上转义符
+ssh -p 22 root@bookdb 'mkdir -p .ssh && cat >> ~/.ssh/authorized_keys' \< ~/.ssh/id_rsa.pub
+\end{lstlisting}
+
+
+
+
 \subsubsection{ssh重启失败}
 
 使用命令查看状态时一直停留在activating状态，是由于selinux导致，临时关闭selinux即可。
@@ -3044,6 +3104,10 @@ setenforce 0
 \begin{lstlisting}[language=Bash]
 gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin-xiaoqiang"  --ssh-flag="-p 1234"
 \end{lstlisting}
+
+\subsubsection{ssh安全}
+
+一旦测试并且验证了你的公钥可以登录，就可以取消密码登录，这样你的远程服务器就不会被暴力密码攻击。
 
 \subsubsection{Google Cloud SSH重启失败}
 
