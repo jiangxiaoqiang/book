@@ -2066,8 +2066,7 @@ psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据
 \copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
 # 备份数据库
-pg_dump -h bookdb -U postgres dolphin > ./dolphin-201902100030.bak
-http http://localhost:8000/spider/api/v1/consumer?is_generate_url=1
+pg_dump -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
 \end{lstlisting}
 
 再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
@@ -3052,7 +3051,7 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 	\item{revert: 撤销上一次的 commit}
 \end{itemize}
 
-\subsection{ssh}
+\subsection{ssh(Secure Shell)}
 
 使用如下命令动态代理：
 
@@ -3085,9 +3084,6 @@ PermitRootLogin yes
 ssh -p 22 root@bookdb 'mkdir -p .ssh && cat >> ~/.ssh/authorized_keys' \< ~/.ssh/id_rsa.pub
 \end{lstlisting}
 
-
-
-
 \subsubsection{ssh重启失败}
 
 使用命令查看状态时一直停留在activating状态，是由于selinux导致，临时关闭selinux即可。
@@ -3105,9 +3101,15 @@ setenforce 0
 gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin-xiaoqiang"  --ssh-flag="-p 1234"
 \end{lstlisting}
 
-\subsubsection{ssh安全}
+\subsubsection{ssh安全(Secure Shell Security)}
 
-一旦测试并且验证了你的公钥可以登录，就可以取消密码登录，这样你的远程服务器就不会被暴力密码攻击。
+一旦测试并且验证了你的公钥可以登录，就可以取消密码登录，这样你的远程服务器就不会被暴力密码攻击。可以修改ssh的默认22端口为其他端口，这样可以避免一些网络上自动的扫描和枚举尝试，但是还是可以轻易的通过nmap等工具扫描出真实的ssh端口，修改了默认端口后，其他所有连接都需要调整端口，便捷性会受到影响。允许指定的用户从指定的IP登录，可以在ssh配置文件(/etc/ssh/sshd\_config)中新增如下配置：
+
+\begin{lstlisting}[language=Bash]
+allowusers root@192.168.1.102 root@192.168.2.0/24
+\end{lstlisting}
+
+以上脚本允许IP为192.168.1.102的机器和IP段为192.168.2.0-192.168.2.255的机器以root用户登录，这样可以避免除开允许的IP或IP段外，其他IP通过自动扫描脚本和词典来枚举登录密码。如果字典足够先进、加上社工分析，如果密码设置不够复杂，枚举出登录密码的概率会大大提高。
 
 \subsubsection{Google Cloud SSH重启失败}
 
