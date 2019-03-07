@@ -1780,6 +1780,13 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
 \end{lstlisting}
 
+\subsection{java.lang.NoClassDefFoundError: org/springframework/web/servlet/HandlerMapping}
+
+Spring Boot和Swagger集成时，出现此问题，更新springfox可以解决：
+
+\begin{lstlisting}[language=XML]
+compile "io.springfox:springfox-swagger2:2.9.2"
+\end{lstlisting}
 
 
 
