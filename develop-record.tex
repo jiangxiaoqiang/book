@@ -1663,6 +1663,53 @@ UML部署图描述了一个运行时的硬件结点，以及在这些结点上�
 
 由于目前线上的测试版本未经过严格测试，此时又需要更新一个微小特性。采用直接编辑jar包的方式来更新。直接用7zip工具打开jar文件，将编译好的新class替换掉7zip打开的jar包中的class即可。
 
+\subsection{常见操作}
+
+生成树形数据结构：
+
+\begin{lstlisting}[language=Bash]
+public<T> List<T> findFullOrgTree(List<T> rootOrgs) {
+    List<T> menuList = new ArrayList<>();
+    for (int i = 0; i < rootOrgs.size(); i++) {
+        Integer parentId = (Integer)BeanUtil.getFieldValueByName("parentId",rootOrgs.get(i));        
+        if (parentId == 0) {
+            menuList.add(rootOrgs.get(i));
+        }
+    }
+    for (T menu : menuList) {
+        Integer id = (Integer)BeanUtil.getFieldValueByName("id",menu);
+        List<T> child = getChild(id,rootOrgs);
+        BeanUtil.setFieldValueByName("children",menu,child);
+    }
+    return menuList;
+}
+\end{lstlisting}
+
+递归生成子结构：
+
+\begin{lstlisting}[language=Bash]
+private <T> List<T> getChild(Integer id, List<T> rootMenu) {
+    List<T> childList = new ArrayList<>();
+    for (T menu : rootMenu) {
+        Integer parentId = (Integer)BeanUtil.getFieldValueByName("parentId",menu);
+        if (parentId != null) {
+            if (parentId.equals(id)) {
+                childList.add(menu);
+            }
+        }
+    }
+    for (T menu : childList) {
+        Integer childId = (Integer)BeanUtil.getFieldValueByName("id",menu);
+        List<T> child = getChild(childId, rootMenu);
+        BeanUtil.setFieldValueByName("children",menu,child);
+    }
+    if (childList.size() == 0) {
+        return null;
+    }
+    return childList;
+}
+\end{lstlisting}
+
 \section{编辑中}
 
 
@@ -1780,6 +1827,13 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
 \end{lstlisting}
 
+\subsection{java.lang.NoClassDefFoundError: org/springframework/web/servlet/HandlerMapping}
+
+Spring Boot和Swagger集成时，出现此问题，更新springfox可以解决：
+
+\begin{lstlisting}[language=XML]
+compile "io.springfox:springfox-swagger2:2.9.2"
+\end{lstlisting}
 
 
 
@@ -2966,6 +3020,19 @@ CFB模式(密文反馈:Cipher feedback)，CFB能够将块密文（Block Cipher�
 后者加密解密速度比前者快得多，但安全性不够。如果是用在路由器上，因为很多路由器CPU速度都在500MHz以下，性能并不强，
 使用aes-256-cfb多出来的那点性能开销在路由器上可能会构成一个影响性能的大问题，
 所以，之前使用在路由器上的加密方式一般都选 rc4-md5。
+
+\subsubsection{访问分流}
+
+当开启了代理后，虽然可以顺畅科学上网，但是内网的应用比如持续集成和Jenkins无法访问。此时可开启分流特性，让科学上网的流量走科学上网渠道，内网的流量走内网渠道。在SwitchOmega中新建交换文件dolphin-custom，新增流量规则如下图所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.45]{switchomegarules.png}
+	\caption{Switch Omega规则实例}
+	\label{fig:switchomegarules}
+\end{figure}
+
+以上的规则为，内网的地址直接访问，其他URL全部走代理，如果手工配置规则，那将是无穷无尽的配置，可以配合GFWList项目\footnote{\url{https://github.com/gfwlist/gfwlist}}来更新规则，这样维护一套规则，可以所用用户都受益。如何配置参考Github教程\footnote{\url{https://github.com/FelisCatus/SwitchyOmega/wiki/GFWList}},目前需要从Github\footnote{\url{https://raw.githubusercontent.com/wiki/FelisCatus/SwitchyOmega/GFWList.bak}}中获取备份文件。
 
 \subsubsection{代理失效}
 
