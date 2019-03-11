@@ -1655,6 +1655,16 @@ proxy = "127.0.0.1:1080"
 
 \section{Java}
 
+Java环境变量配置：
+
+\begin{lstlisting}[language=Bash]
+export JAVA_HOME=/home/dolphin/app/third-party/java/jdk1.8.0_121
+export PATH=$PATH:$JAVA_HOME/bin
+export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
+\end{lstlisting}
+
+
+
 \subsection{UML图}
 
 UML部署图描述了一个运行时的硬件结点，以及在这些结点上运行的软件组件的静态视图。 部署图显示了系统的硬件，安装在硬件上的软件，以及用于连接异构的机器之间的中间件。构件图描述系统的模块结构，抽象层次较高。组件图(Component Diagram)又称为构件图，他描述的是在软件系统中遵从并实现一组接口的物理的、可替换的软件模块。
@@ -3326,6 +3336,15 @@ mysql -h127.0.0.1 -uroot -p123456
 
 \subsection{Docker安装}
 
+在CentOS上，输入如下命令安装Docker：
+
+\begin{lstlisting}[language=Bash]
+yum install docker -y
+# 启动Docker守护进程
+systemctl start docker
+\end{lstlisting}
+
+
 \subsection{安装数据层}
 
 查看MariaDB:
@@ -3361,8 +3380,9 @@ docker run --name MariaDB \
 # 运行Jenkins
 docker run -p 8080:8080 \ 
 	-p 50000:50000 \ 
-	-v /usr/local/work/jenkins:/var/jenkins_home \ 
+	-v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home \ 
 	--name j01 -idt jenkins
+docker run -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
 \end{lstlisting}
 
 p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
