@@ -1655,6 +1655,16 @@ proxy = "127.0.0.1:1080"
 
 \section{Java}
 
+Java环境变量配置：
+
+\begin{lstlisting}[language=Bash]
+export JAVA_HOME=/home/dolphin/app/third-party/java/jdk1.8.0_121
+export PATH=$PATH:$JAVA_HOME/bin
+export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
+\end{lstlisting}
+
+
+
 \subsection{UML图}
 
 UML部署图描述了一个运行时的硬件结点，以及在这些结点上运行的软件组件的静态视图。 部署图显示了系统的硬件，安装在硬件上的软件，以及用于连接异构的机器之间的中间件。构件图描述系统的模块结构，抽象层次较高。组件图(Component Diagram)又称为构件图，他描述的是在软件系统中遵从并实现一组接口的物理的、可替换的软件模块。
@@ -1662,6 +1672,53 @@ UML部署图描述了一个运行时的硬件结点，以及在这些结点上�
 \subsection{编辑Jar包}
 
 由于目前线上的测试版本未经过严格测试，此时又需要更新一个微小特性。采用直接编辑jar包的方式来更新。直接用7zip工具打开jar文件，将编译好的新class替换掉7zip打开的jar包中的class即可。
+
+\subsection{常见操作}
+
+生成树形数据结构：
+
+\begin{lstlisting}[language=Bash]
+public<T> List<T> findFullOrgTree(List<T> rootOrgs) {
+    List<T> menuList = new ArrayList<>();
+    for (int i = 0; i < rootOrgs.size(); i++) {
+        Integer parentId = (Integer)BeanUtil.getFieldValueByName("parentId",rootOrgs.get(i));        
+        if (parentId == 0) {
+            menuList.add(rootOrgs.get(i));
+        }
+    }
+    for (T menu : menuList) {
+        Integer id = (Integer)BeanUtil.getFieldValueByName("id",menu);
+        List<T> child = getChild(id,rootOrgs);
+        BeanUtil.setFieldValueByName("children",menu,child);
+    }
+    return menuList;
+}
+\end{lstlisting}
+
+递归生成子结构：
+
+\begin{lstlisting}[language=Bash]
+private <T> List<T> getChild(Integer id, List<T> rootMenu) {
+    List<T> childList = new ArrayList<>();
+    for (T menu : rootMenu) {
+        Integer parentId = (Integer)BeanUtil.getFieldValueByName("parentId",menu);
+        if (parentId != null) {
+            if (parentId.equals(id)) {
+                childList.add(menu);
+            }
+        }
+    }
+    for (T menu : childList) {
+        Integer childId = (Integer)BeanUtil.getFieldValueByName("id",menu);
+        List<T> child = getChild(childId, rootMenu);
+        BeanUtil.setFieldValueByName("children",menu,child);
+    }
+    if (childList.size() == 0) {
+        return null;
+    }
+    return childList;
+}
+\end{lstlisting}
 
 \section{编辑中}
 
@@ -1780,6 +1837,13 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 <include resource="org/springframework/boot/logging/logback/base.xml"/>
 \end{lstlisting}
 
+\subsection{java.lang.NoClassDefFoundError: org/springframework/web/servlet/HandlerMapping}
+
+Spring Boot和Swagger集成时，出现此问题，更新springfox可以解决：
+
+\begin{lstlisting}[language=XML]
+compile "io.springfox:springfox-swagger2:2.9.2"
+\end{lstlisting}
 
 
 
@@ -2967,6 +3031,19 @@ CFB模式(密文反馈:Cipher feedback)，CFB能够将块密文（Block Cipher�
 使用aes-256-cfb多出来的那点性能开销在路由器上可能会构成一个影响性能的大问题，
 所以，之前使用在路由器上的加密方式一般都选 rc4-md5。
 
+\subsubsection{访问分流}
+
+当开启了代理后，虽然可以顺畅科学上网，但是内网的应用比如持续集成和Jenkins无法访问。此时可开启分流特性，让科学上网的流量走科学上网渠道，内网的流量走内网渠道。在SwitchOmega中新建交换文件dolphin-custom，新增流量规则如下图所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.45]{switchomegarules.png}
+	\caption{Switch Omega规则实例}
+	\label{fig:switchomegarules}
+\end{figure}
+
+以上的规则为，内网的地址直接访问，其他URL全部走代理，如果手工配置规则，那将是无穷无尽的配置，可以配合GFWList项目\footnote{\url{https://github.com/gfwlist/gfwlist}}来更新规则，这样维护一套规则，可以所用用户都受益。如何配置参考Github教程\footnote{\url{https://github.com/FelisCatus/SwitchyOmega/wiki/GFWList}},目前需要从Github\footnote{\url{https://raw.githubusercontent.com/wiki/FelisCatus/SwitchyOmega/GFWList.bak}}中获取备份文件。
+
 \subsubsection{代理失效}
 
 有时无法连接上Shadowsocks服务器，在本地无法扫描到Shadowsocks服务器的1080端口。可以尝试在其他主机扫描Shadowsocks服务器，如果其他主机能够扫描到，有可能是到Shadowsocks的1080端口从国内阻断。扫描端口Linux、Mac使用命令扫描：
@@ -3326,6 +3403,15 @@ mysql -h127.0.0.1 -uroot -p123456
 
 \subsection{Docker安装}
 
+在CentOS上，输入如下命令安装Docker：
+
+\begin{lstlisting}[language=Bash]
+yum install docker -y
+# 启动Docker守护进程
+systemctl start docker
+\end{lstlisting}
+
+
 \subsection{安装数据层}
 
 查看MariaDB:
@@ -3361,8 +3447,9 @@ docker run --name MariaDB \
 # 运行Jenkins
 docker run -p 8080:8080 \ 
 	-p 50000:50000 \ 
-	-v /usr/local/work/jenkins:/var/jenkins_home \ 
+	-v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home \ 
 	--name j01 -idt jenkins
+docker run --name="jenkins" -d -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
 \end{lstlisting}
 
 p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
