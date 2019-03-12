@@ -1635,7 +1635,7 @@ CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是
 
 \subsection{Git clone慢}
 
-Git克隆GitHub仓库时特别慢，如果开启了代理，配置Git也同时使用代理编辑home目录下的.gitconfig文件：
+Git克隆GitHub仓库时特别慢，如果开启了代理，配置Git也同时使用代理。编辑home目录下的.gitconfig文件添加代理：
 
 \begin{lstlisting}[language=Bash]
 [http]
@@ -3045,6 +3045,11 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 	\item{test :增加测试}
 	\item{revert: 撤销上一次的 commit}
 \end{itemize}
+
+\subsection{Gradle}
+
+Gradle 4.0开始，废弃了compile关键字，需要将compile关键字调整为implement关键字，否则编译失败，提示找不到ProjectDependency.getProjectConfiguration()方法，在Lorg/gradle/api/artifacts/Configuration中。
+
 
 \subsection{ssh(Secure Shell)}
 
