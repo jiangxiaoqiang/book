@@ -3009,22 +3009,6 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 
 \section{Little Tool}
 
-\subsection{Ansible}
-
-ansible是新出现的自动化运维工具，基于Python开发，集合了众多运维工具（puppet、cfengine、chef、func、fabric）的优点，实现了批量系统配置、批量程序部署、批量运行命令等功能。
-
-\begin{lstlisting}
-[spider-client]
-	google-cloud-ce-us-east ansible_ssh_port=22 ansible_ssh_user=root
-	google-cloud-ce-ansia-east ansible_ssh_port=22 ansible_ssh_user=root
-	google-cloud-ds ansible_ssh_port=22 ansible_ssh_user=root
-	# 加拿大搬瓦工主机
-	banwagong-canada ansible_ssh_port=22 ansible_ssh_user=root
-\end{lstlisting}
-
-方括号中表示节点所属的组，spider client表示爬虫客户端组，由于目前有许多爬虫客户端，将所有爬虫客户端编排为一个组。组下面表示主机，google-cloud-ce-useast表示Google云节点的计算引擎(Compute Engine)主机，在美国东部，google-cloud-ds表示数据存储(Data Storage)主机。google-cloud-ce-ansia-east表示亚洲东部的云主机。
-
-
 \subsection{Shadowsocks}
 
 当前Shadowsocks有多个实现支持，以自由软件形式发布的主要有原始Shadowsocks（以Python语言编写）、Shadowsocks-libev（分支项目openwrt-Shadowsocks）、Shadowsocks-rust、Shadowsocks-go/go-Shadowsocks2、libQtShadowsocks、Shadowsocks-qt5（仅作为客户端）、Shadowsocks-android（仅作为客户端）、Shadowsocks-windows（仅作为客户端）、ShadowsocksX-NG（仅作为客户端）、Outline、V2Ray、Brook等等，还有为数甚多的免费软件及专有软件（多数是iOS上运行的，如shadowrocket、Surge等），如下是服务端的配置示例。
@@ -3412,19 +3396,26 @@ ssh root@10.142.0.2
 docker ps
 # 登陆Docker容器
 docker exec -it f5605d02f9f5 bash
-<<<<<<< HEAD
 # 列出所有容器
 docker ps -a
 # 停止容器
 docker stop f5605d02f9f5
 # 删除容器
 docker rm -v 57b35bfcbc71
-=======
->>>>>>> fdc59db72b764ee24bf41f7bf72031cef9079482
 # 登陆Docker后，登陆MariaDB
 mysql -h127.0.0.1 -uroot -p123456
 \end{lstlisting}
 
+在删除容器时，添加-v参数可自动删除容器的卷(Volume)。如下命令所示：
+
+\begin{lstlisting}[language=Bash]
+# 删除容器
+# 同时删除Volume
+docker rm -v 57b35bfcbc71
+# 有时删除容器时未删除Volume
+# 删除孤单的Volume
+docker volume rm $(docker volume ls -qf dangling=true)
+\end{lstlisting}
 
 \subsection{Docker安装}
 

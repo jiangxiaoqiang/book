@@ -1635,7 +1635,7 @@ CGLib的底层基于ASM实现，是一个高效高性能的生成库；而ASM是
 
 \subsection{Git clone慢}
 
-Git克隆GitHub仓库时特别慢，如果开启了代理，配置Git也同时使用代理。编辑home目录下的.gitconfig文件添加代理：
+Git克隆GitHub仓库时特别慢，如果开启了代理，配置Git也同时使用代理编辑home目录下的.gitconfig文件：
 
 \begin{lstlisting}[language=Bash]
 [http]
@@ -3139,11 +3139,6 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 	\item{revert: 撤销上一次的 commit}
 \end{itemize}
 
-\subsection{Gradle}
-
-Gradle 4.0开始，废弃了compile关键字，需要将compile关键字调整为implement关键字，否则编译失败，提示找不到ProjectDependency.getProjectConfiguration()方法，在Lorg/gradle/api/artifacts/Configuration中。
-
-
 \subsection{ssh(Secure Shell)}
 
 使用如下命令动态代理：
@@ -3412,15 +3407,6 @@ ssh root@10.142.0.2
 docker ps
 # 登陆Docker容器
 docker exec -it f5605d02f9f5 bash
-<<<<<<< HEAD
-# 列出所有容器
-docker ps -a
-# 停止容器
-docker stop f5605d02f9f5
-# 删除容器
-docker rm -v 57b35bfcbc71
-=======
->>>>>>> fdc59db72b764ee24bf41f7bf72031cef9079482
 # 登陆Docker后，登陆MariaDB
 mysql -h127.0.0.1 -uroot -p123456
 \end{lstlisting}
@@ -3474,7 +3460,7 @@ docker run -p 8080:8080 \
 	-p 50000:50000 \ 
 	-v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home \ 
 	--name j01 -idt jenkins
-docker run --name="jenkins" -d -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
+docker run -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
 \end{lstlisting}
 
 p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
