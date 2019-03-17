@@ -2615,15 +2615,13 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 
 根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
 
-
-
-
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[scale=0.05]{elk-log-architecture.jpg}
 	\caption{ELK流程}
 	\label{fig:elklogarchitecture}
 \end{figure}
+
 logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
 
 \begin{lstlisting}[language=Bash]
@@ -2655,6 +2653,10 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 	"detail": "any things you want here"
 }
 \end{lstlisting}
+
+
+可以将 syslog-ng 当作 rsyslog 的替代品（尽管历史上它们是两种不同的方式）。它也是一个模块化的 syslog 守护进程，但是它可以做的事情要比 syslog 多。它可以接收磁盘缓冲并将 Elasticsearch HTTP 作为输出。它使用 PatternDB 作为语法解析的基础，作为 Elasticsearch 的传输工具，它是一个不错的选择。
+
 
 \section{配置管理中心(Configuration Management Center)}
 
@@ -2987,6 +2989,30 @@ for messages in msg_pack.items():
 
 \chapter{OS}
 
+\section{MacOS}
+
+\subsection{ssh主机tab提示}
+
+在Mac的~/.ssh/config中配置了SSH主机后，默认tab按键没有效果，可以通过安装bash-complete来实现：
+
+\begin{lstlisting}[language=Bash]
+# 由于国内网络原因
+# 使用brew命令之前最好替换源
+# 或设置代理
+# 否则会失败或者非常慢
+brew install bash-completion
+\end{lstlisting}
+
+再在~/.bash\_profile添加如下配置即可：
+
+\begin{lstlisting}[language=Bash]
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+	. $(brew --prefix)/etc/bash_completion
+fi
+\end{lstlisting}
+
+以上脚本是在启动终端的时候导入bash complete配置。
+
 \section{Linux}
 
 \subsection{环境变量(Environment Variable)}
@@ -2998,7 +3024,7 @@ for messages in msg_pack.items():
 查找大文件：
 
 \begin{lstlisting}[language=Bash]
-find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
+sudo find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 \end{lstlisting}
 
 查找操作系统中大于800MB的文件。让find在打印出一个文件名之后接着输出一个NULL字符 ('\textbackslash 0') 而不是换行符, 然后再告诉xargs也用NULL字符来作为记录的分隔符。
@@ -3202,7 +3228,14 @@ gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin
 allowusers root@192.168.1.102 root@192.168.2.0/24
 \end{lstlisting}
 
-以上脚本允许IP为192.168.1.102的机器和IP段为192.168.2.0-192.168.2.255的机器以root用户登录，这样可以避免除开允许的IP或IP段外，其他IP通过自动扫描脚本和词典来枚举登录密码。如果字典足够先进、加上社工分析，如果密码设置不够复杂，枚举出登录密码的概率会大大提高。
+以上脚本允许IP为192.168.1.102的机器和IP段为192.168.2.0-192.168.2.255的机器以root用户登录，这样可以避免除开允许的IP或IP段外，其他IP通过自动扫描脚本和词典来枚举登录密码。如果字典足够先进、加上社工分析，如果密码设置不够复杂，枚举出登录密码的概率会大大提高。设置免密登陆：
+
+\begin{lstlisting}[language=Bash]
+ssh -p 22 pi@prod-book-db 'mkdir -p .ssh && cat >> ~/.ssh/authorized_keys' < ~/.ssh/id_rsa.pub
+\end{lstlisting}
+
+
+
 
 \subsubsection{Google Cloud SSH重启失败}
 
@@ -3408,22 +3441,27 @@ ssh root@10.142.0.2
 好不容易配置部署了redmine，结果后面换了一台机器，又重新部署一遍？其实绝大部都是配置的工作，繁琐又重复，其实我们没有办法也没有必要记住每一步操作步骤，先安装什么，安装好了再修改哪个文件的配置，重复的劳动没有任何意义。开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？以上这些问题，就是Docker要解决的问题，可大量减少花费在维护、配置不同系统的时间。常用命令:
 
 \begin{lstlisting}[language=Bash]
+# 安装指定版本的app
+# jenkins低版本的app许多插件不支持
+# 使用命令docker pull jenkins/jenkins:latest并不会安装最新版本
+docker pull jenkins/jenkins:2.164.1
 # 查看当前运行的容器
 docker ps
 # 登陆Docker容器
-docker exec -it f5605d02f9f5 bash
-<<<<<<< HEAD
+docker exec -it 4ed55631985b bash
+# 以root用户登陆容器
+docker exec -it --user root 4ed55631985b bash
 # 列出所有容器
 docker ps -a
 # 停止容器
 docker stop f5605d02f9f5
 # 删除容器
 docker rm -v 57b35bfcbc71
-=======
->>>>>>> fdc59db72b764ee24bf41f7bf72031cef9079482
 # 登陆Docker后，登陆MariaDB
 mysql -h127.0.0.1 -uroot -p123456
 \end{lstlisting}
+
+查看Jenkins的最新构建情况\footnote{\url{https://hub.docker.com/r/jenkins/jenkins/tags}}。
 
 
 \subsection{Docker安装}
@@ -3475,6 +3513,10 @@ docker run -p 8080:8080 \
 	-v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home \ 
 	--name j01 -idt jenkins
 docker run --name="jenkins" -d -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
+# 启动Jenkins（初次）
+# 指定特定的容器jenkins/jenkins:2.164.1
+# 注意容器包含特定的版本号
+docker run --name="jenkins" -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins/jenkins:2.164.1
 \end{lstlisting}
 
 p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
