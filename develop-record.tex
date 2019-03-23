@@ -2125,7 +2125,7 @@ psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据
 \copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
 # 备份数据库
-pg_dump -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
+pg_dump -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903231013.bak
 \end{lstlisting}
 
 再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
@@ -2613,7 +2613,7 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 
 \section{日志中心(Logging Center)}
 
-根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
+在云主机中记录日志时，日志大小是需要考量的因素，一般云主机的磁盘空间是非常局促的，基础配置在10GB至40GB之间，记录日志时，可以考虑记录少量时间段的日志，再统一收集到统一的日志处理中心。一般情况下采用Rotate的方式，记录限定大小和限定数量的日志，比如限制每个日志文件的大小是100MB，最多保留5份日志。在写爬虫的过程中，由于部署了多台机器，没有考虑到日志限制造成了许多麻烦的后续处理(虽然可以使用Ansible来批量部署，但是也比较麻烦)。根据Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
 
 \begin{figure}[htbp]
 	\centering
@@ -2946,8 +2946,6 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 \end{lstlisting}
 
 
-
-
 \subsection{配置}
 
 \paragraph{max.poll.interval.ms}
@@ -3148,6 +3146,28 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 \end{lstlisting}
 
 输出PING6(56=40+8+8 bytes) local ip --> 2400:da00:2::29。local ip是本机的IPv6地址。
+
+\subsection{Nginx}
+
+Nginx提供静态文件服务配置：
+
+\begin{lstlisting}[language=Bash]
+server {
+    listen       80;
+    server_name  _;
+    root         /usr/share/nginx/html;
+
+    location /package {
+        alias /home/dolphin/share/;
+        sendfile on;
+        autoindex on;
+        autoindex_exact_size off;
+        autoindex_localtime on;
+    }
+}
+\end{lstlisting}
+
+
 
 \subsection{Git}
 
@@ -3461,7 +3481,7 @@ docker rm -v 57b35bfcbc71
 mysql -h127.0.0.1 -uroot -p123456
 \end{lstlisting}
 
-查看Jenkins的最新构建情况\footnote{\url{https://hub.docker.com/r/jenkins/jenkins/tags}}。
+查看Jenkins的最新构建情况\footnote{\url{https://hub.docker.com/r/jenkins/jenkins/tags}}。 
 
 
 \subsection{Docker安装}
