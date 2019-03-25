@@ -2125,7 +2125,7 @@ psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据
 \copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
 # 备份数据库
-pg_dump -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903231013.bak
+pg_dump -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
 \end{lstlisting}
 
 再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
@@ -2613,7 +2613,10 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 
 \section{日志中心(Logging Center)}
 
-在云主机中记录日志时，日志大小是需要考量的因素，一般云主机的磁盘空间是非常局促的，基础配置在10GB至40GB之间，记录日志时，可以考虑记录少量时间段的日志，再统一收集到统一的日志处理中心。一般情况下采用Rotate的方式，记录限定大小和限定数量的日志，比如限制每个日志文件的大小是100MB，最多保留5份日志。在写爬虫的过程中，由于部署了多台机器，没有考虑到日志限制造成了许多麻烦的后续处理(虽然可以使用Ansible来批量部署，但是也比较麻烦)。根据Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
+根据 Google Trend 的信息显示，ELK Stack已经成为目前最流行的集中式日志解决方案。ELK的整体流程如图\ref{fig:elklogarchitecture}所示。
+
+
+
 
 \begin{figure}[htbp]
 	\centering
@@ -2621,7 +2624,6 @@ yum install -y openssl openssl-devel libevent-devel python-docutils libtool auto
 	\caption{ELK流程}
 	\label{fig:elklogarchitecture}
 \end{figure}
-
 logstash数据收集引擎。它支持动态的从各种数据源搜集数据，并对数据进行过滤、分析、丰富、统一格式等操作，然后存储到用户指定的位置。Logstash 项目诞生于 2009 年 8 月 2 日。其作者是世界著名的运维工程师乔丹西塞(JordanSissel)，乔丹西塞当时是著名虚拟主机托管商 DreamHost 的员工，还发布过非常棒的软件打包工具 fpm，并主办着一年一度的 sysadmin advent calendar(advent calendar 文化源自基督教氛围浓厚的 Perl 社区，在每年圣诞来临的 12 月举办，从 12 月 1 日起至 12 月 24 日止，每天发布一篇小短文介绍主题相关技术)。logstash是jvm跑的，资源消耗比较大，启动一个logstash就需要消耗500M左右的内存，而filebeat只需要10来M内存资源。Filebeat轻量型日志采集器。当您要面对成百上千、甚至成千上万的服务器、虚拟机和容器生成的日志时，Filebeat 将为您提供一种轻量型方法，用于转发和汇总日志与文件，让简单的事情不再繁杂。查看Elastic配置：
 
 \begin{lstlisting}[language=Bash]
@@ -2653,10 +2655,6 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 	"detail": "any things you want here"
 }
 \end{lstlisting}
-
-
-可以将 syslog-ng 当作 rsyslog 的替代品（尽管历史上它们是两种不同的方式）。它也是一个模块化的 syslog 守护进程，但是它可以做的事情要比 syslog 多。它可以接收磁盘缓冲并将 Elasticsearch HTTP 作为输出。它使用 PatternDB 作为语法解析的基础，作为 Elasticsearch 的传输工具，它是一个不错的选择。
-
 
 \section{配置管理中心(Configuration Management Center)}
 
@@ -2946,6 +2944,8 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 \end{lstlisting}
 
 
+
+
 \subsection{配置}
 
 \paragraph{max.poll.interval.ms}
@@ -2987,30 +2987,6 @@ for messages in msg_pack.items():
 
 \chapter{OS}
 
-\section{MacOS}
-
-\subsection{ssh主机tab提示}
-
-在Mac的~/.ssh/config中配置了SSH主机后，默认tab按键没有效果，可以通过安装bash-complete来实现：
-
-\begin{lstlisting}[language=Bash]
-# 由于国内网络原因
-# 使用brew命令之前最好替换源
-# 或设置代理
-# 否则会失败或者非常慢
-brew install bash-completion
-\end{lstlisting}
-
-再在~/.bash\_profile添加如下配置即可：
-
-\begin{lstlisting}[language=Bash]
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-	. $(brew --prefix)/etc/bash_completion
-fi
-\end{lstlisting}
-
-以上脚本是在启动终端的时候导入bash complete配置。
-
 \section{Linux}
 
 \subsection{环境变量(Environment Variable)}
@@ -3022,7 +2998,7 @@ fi
 查找大文件：
 
 \begin{lstlisting}[language=Bash]
-sudo find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
+find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 \end{lstlisting}
 
 查找操作系统中大于800MB的文件。让find在打印出一个文件名之后接着输出一个NULL字符 ('\textbackslash 0') 而不是换行符, 然后再告诉xargs也用NULL字符来作为记录的分隔符。
@@ -3047,16 +3023,6 @@ ansible是新出现的自动化运维工具，基于Python开发，集合了众�
 \end{lstlisting}
 
 方括号中表示节点所属的组，spider client表示爬虫客户端组，由于目前有许多爬虫客户端，将所有爬虫客户端编排为一个组。组下面表示主机，google-cloud-ce-useast表示Google云节点的计算引擎(Compute Engine)主机，在美国东部，google-cloud-ds表示数据存储(Data Storage)主机。google-cloud-ce-ansia-east表示亚洲东部的云主机。
-
-\subsection{Gradle}
-
-在使用Gradle 4.x进行编译时，模块的编译路径build中未生成相应的libs目录和jar包\footnote{\url{https://stackoverflow.com/questions/55331907/gradlew-complie-has-no-lib-jar/55335054\#55335054}}。build任务实际上生成了jar包，本地任务稍后执行时将jar包移除了。解决此问题移除本地的任务即可，采用如下命令编译：
-
-\begin{lstlisting}[language=Bash]
-# 注意此处Gradle版本是4.7
-./gradlew -p web -x test -x jar build
-\end{lstlisting}
-
 
 
 \subsection{Shadowsocks}
@@ -3157,28 +3123,6 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 
 输出PING6(56=40+8+8 bytes) local ip --> 2400:da00:2::29。local ip是本机的IPv6地址。
 
-\subsection{Nginx}
-
-Nginx提供静态文件服务配置：
-
-\begin{lstlisting}[language=Bash]
-server {
-    listen       80;
-    server_name  _;
-    root         /usr/share/nginx/html;
-
-    location /package {
-        alias /home/dolphin/share/;
-        sendfile on;
-        autoindex on;
-        autoindex_exact_size off;
-        autoindex_localtime on;
-    }
-}
-\end{lstlisting}
-
-
-
 \subsection{Git}
 
 \subsubsection{提交规范}
@@ -3258,14 +3202,7 @@ gcloud compute --project "turing-poet-231815" ssh --zone "asia-east1-b" "dolphin
 allowusers root@192.168.1.102 root@192.168.2.0/24
 \end{lstlisting}
 
-以上脚本允许IP为192.168.1.102的机器和IP段为192.168.2.0-192.168.2.255的机器以root用户登录，这样可以避免除开允许的IP或IP段外，其他IP通过自动扫描脚本和词典来枚举登录密码。如果字典足够先进、加上社工分析，如果密码设置不够复杂，枚举出登录密码的概率会大大提高。设置免密登陆：
-
-\begin{lstlisting}[language=Bash]
-ssh -p 22 pi@prod-book-db 'mkdir -p .ssh && cat >> ~/.ssh/authorized_keys' < ~/.ssh/id_rsa.pub
-\end{lstlisting}
-
-
-
+以上脚本允许IP为192.168.1.102的机器和IP段为192.168.2.0-192.168.2.255的机器以root用户登录，这样可以避免除开允许的IP或IP段外，其他IP通过自动扫描脚本和词典来枚举登录密码。如果字典足够先进、加上社工分析，如果密码设置不够复杂，枚举出登录密码的概率会大大提高。
 
 \subsubsection{Google Cloud SSH重启失败}
 
@@ -3471,27 +3408,22 @@ ssh root@10.142.0.2
 好不容易配置部署了redmine，结果后面换了一台机器，又重新部署一遍？其实绝大部都是配置的工作，繁琐又重复，其实我们没有办法也没有必要记住每一步操作步骤，先安装什么，安装好了再修改哪个文件的配置，重复的劳动没有任何意义。开发过程中会发现，许多工作都可以总结出来套路的，做过一遍之后，以后的内容都是高度重复。比如安装个软件，部署个应用，特别时多机部署，要保证一致性非常麻烦。还有经常会有的问题：在我的电脑上好好的呀？以上这些问题，就是Docker要解决的问题，可大量减少花费在维护、配置不同系统的时间。常用命令:
 
 \begin{lstlisting}[language=Bash]
-# 安装指定版本的app
-# jenkins低版本的app许多插件不支持
-# 使用命令docker pull jenkins/jenkins:latest并不会安装最新版本
-docker pull jenkins/jenkins:2.164.1
 # 查看当前运行的容器
 docker ps
 # 登陆Docker容器
-docker exec -it 4ed55631985b bash
-# 以root用户登陆容器
-docker exec -it --user root 4ed55631985b bash
+docker exec -it f5605d02f9f5 bash
+<<<<<<< HEAD
 # 列出所有容器
 docker ps -a
 # 停止容器
 docker stop f5605d02f9f5
 # 删除容器
 docker rm -v 57b35bfcbc71
+=======
+>>>>>>> fdc59db72b764ee24bf41f7bf72031cef9079482
 # 登陆Docker后，登陆MariaDB
 mysql -h127.0.0.1 -uroot -p123456
 \end{lstlisting}
-
-查看Jenkins的最新构建情况\footnote{\url{https://hub.docker.com/r/jenkins/jenkins/tags}}。 
 
 
 \subsection{Docker安装}
@@ -3543,10 +3475,6 @@ docker run -p 8080:8080 \
 	-v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home \ 
 	--name j01 -idt jenkins
 docker run --name="jenkins" -d -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
-# 启动Jenkins（初次）
-# 指定特定的容器jenkins/jenkins:2.164.1
-# 注意容器包含特定的版本号
-docker run --name="jenkins" -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins/jenkins:2.164.1
 \end{lstlisting}
 
 p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
