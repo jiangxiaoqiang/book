@@ -3024,6 +3024,16 @@ ansible是新出现的自动化运维工具，基于Python开发，集合了众�
 
 方括号中表示节点所属的组，spider client表示爬虫客户端组，由于目前有许多爬虫客户端，将所有爬虫客户端编排为一个组。组下面表示主机，google-cloud-ce-useast表示Google云节点的计算引擎(Compute Engine)主机，在美国东部，google-cloud-ds表示数据存储(Data Storage)主机。google-cloud-ce-ansia-east表示亚洲东部的云主机。
 
+\subsection{Gradle}
+
+在使用Gradle 4.x进行编译时，模块的编译路径build中未生成相应的libs目录和jar包\footnote{\url{https://stackoverflow.com/questions/55331907/gradlew-complie-has-no-lib-jar/55335054\#55335054}}。build任务实际上生成了jar包，本地任务稍后执行时将jar包移除了。解决此问题移除本地的任务即可，采用如下命令编译：
+
+\begin{lstlisting}[language=Bash]
+# 注意此处Gradle版本是4.7
+./gradlew -p web -x test -x jar build
+\end{lstlisting}
+
+
 
 \subsection{Shadowsocks}
 
