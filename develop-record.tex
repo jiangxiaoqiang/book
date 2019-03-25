@@ -3202,7 +3202,22 @@ server {
 
 \subsection{Gradle}
 
-Gradle 4.0开始，废弃了compile关键字，需要将compile关键字调整为implement关键字，否则编译失败，提示找不到ProjectDependency.getProjectConfiguration()方法，在Lorg/gradle/api/artifacts/Configuration中。
+Gradle 4.0开始，废弃了compile关键字，需要将compile关键字调整为implement关键字，否则编译失败，提示找不到ProjectDependency.getProjectConfiguration()方法，在Lorg/gradle/api/artifacts/Configuration中。在使用Gradle 4.x进行编译时，模块的编译路径build中未生成相应的libs目录和jar包\footnote{\url{https://stackoverflow.com/questions/55331907/gradlew-complie-has-no-lib-jar/55335054\#55335054}}。build任务实际上生成了jar包，本地任务稍后执行时将jar包移除了。解决此问题移除本地的任务即可，采用如下命令编译：
+
+\begin{lstlisting}[language=Bash]
+# 注意此处Gradle版本是4.7
+./gradlew -p web -x test -x jar build
+\end{lstlisting}
+
+在使用Gradle编译时，提示有使用即将过期的特性(Deprecated Gradle features were used in this build, making it incompatible with Gradle 5.0)，但是又没有说明哪些特性即将过期，可以使用如下命令查看：
+
+\begin{lstlisting}[language=Bash]
+# 添加warning-mode模式
+./gradlew -p web -x test --warning-mode=all build
+\end{lstlisting}
+
+添加warning-mode参数后，在控制台会输出详细的需要调整的地方。此处提示从Gradle 5.0开始，lombok注解的解析方式会有变化，需要调整引用模式。
+
 
 
 \subsection{ssh(Secure Shell)}
