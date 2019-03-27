@@ -1722,8 +1722,9 @@ private <T> List<T> getChild(Integer id, List<T> rootMenu) {
 
 \section{编辑中}
 
+如果用非基本类型对象作为HashMap的key时不重写的话，会无法正常获取到对应的值，无法正确的按照预期写入对象和获取对象\footnote{参考:\url{https://www.journaldev.com/21095/java-equals-hashcode}}。
 
-
+\paragraph{ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？}
 
 \subsection{缓存雪崩(Cache stampede)}
 
