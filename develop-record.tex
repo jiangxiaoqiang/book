@@ -1663,7 +1663,22 @@ export PATH=$PATH:$JAVA_HOME/bin
 export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
 \end{lstlisting}
 
+\subsection{字符串比较}
 
+String s1 = "Hello World"; String s2 = "Hello World"; a==b的结果是什么？ 这包含了内存，String存储方式等诸多知识点。
+
+\begin{lstlisting}[language=Java]
+String s1 = "hello,world!";
+String s2 = "hello,world!";
+System.out.println(s1 == s2); // True
+\end{lstlisting}
+
+== 操作符比较的是两个对象的引用是否指向同一内存地址，如果内存地址相同，则返回 true；equals() 比较的只是两个字符串对象的引用指向的内存地址所存储的字面值，而忽略内存地址是否相同。
+
+
+\paragraph{HashMap里的hashcode方法和equal方法什么时候需要重写？如果不重写会有什么后果？}
+
+当在HashMap里以非基本类型作为key时，或者是比较非基本类型时。
 
 \subsection{UML图}
 
@@ -1677,7 +1692,7 @@ UML部署图描述了一个运行时的硬件结点，以及在这些结点上�
 
 生成树形数据结构：
 
-\begin{lstlisting}[language=Bash]
+\begin{lstlisting}[language=Java]
 public<T> List<T> findFullOrgTree(List<T> rootOrgs) {
     List<T> menuList = new ArrayList<>();
     for (int i = 0; i < rootOrgs.size(); i++) {
