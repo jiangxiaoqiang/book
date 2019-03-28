@@ -1678,7 +1678,23 @@ System.out.println(s1 == s2); // True
 
 \paragraph{HashMap里的hashcode方法和equal方法什么时候需要重写？如果不重写会有什么后果？}
 
-当在HashMap里以非基本类型作为key时，或者是比较非基本类型时。
+当在HashMap里以非基本类型作为key时，或者是比较非基本类型时。如果用非基本类型对象作为HashMap的key时不重写的话，会无法正常获取到对应的值，无法正确的按照预期写入对象和获取对象\footnote{参考:\url{https://www.journaldev.com/21095/java-equals-hashcode}}。
+
+\paragraph{ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？}
+
+
+\paragraph{Java中==和equals有什么区别}
+
+原始数据类型(byte,short,char,int,long,float,double,boolean)，他们之间的比较使用（==），比较的是他们的值。引用数据类型用（==）进行比较，比较的是他们在内存中的存放地址。equals如果没有自己的实现，原始类型默认比较其值，引用类型默认比较内存地址。
+
+\paragraph{Java的静态代理和动态代理有什么差别？}
+
+静态代理在存在较多相似逻辑时，会出现重复编码的情况，实现类总是需要实现一堆接口(冗余)。当接口变化时，相应的所有的实现类需要改变(不易维护)。动态代理在程序运行时运用反射机制动态创建而成。相对来说，动态代理增加了程序的灵活性。CGLib(Code Generation Library)采用了非常底层的字节码技术，其原理是通过字节码技术为一个类创建子类，并在子类中采用方法拦截的技术拦截所有父类方法的调用，顺势织入横切逻辑。JDK动态代理与CGLib动态代理均是实现Spring AOP的基础。
+
+\paragraph{volatile关键字有什么作用？}
+
+
+\paragraph{CompletableFuture，这个是JDK1.8里的新特性，通过它怎么实现多线程并发控制？}
 
 \subsection{UML图}
 
@@ -1737,9 +1753,7 @@ private <T> List<T> getChild(Integer id, List<T> rootMenu) {
 
 \section{编辑中}
 
-如果用非基本类型对象作为HashMap的key时不重写的话，会无法正常获取到对应的值，无法正确的按照预期写入对象和获取对象\footnote{参考:\url{https://www.journaldev.com/21095/java-equals-hashcode}}。
 
-\paragraph{ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？}
 
 \subsection{缓存雪崩(Cache stampede)}
 
