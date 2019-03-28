@@ -1737,8 +1737,9 @@ private <T> List<T> getChild(Integer id, List<T> rootMenu) {
 
 \section{编辑中}
 
+如果用非基本类型对象作为HashMap的key时不重写的话，会无法正常获取到对应的值，无法正确的按照预期写入对象和获取对象\footnote{参考:\url{https://www.journaldev.com/21095/java-equals-hashcode}}。
 
-
+\paragraph{ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？}
 
 \subsection{缓存雪崩(Cache stampede)}
 
@@ -3024,6 +3025,12 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 \chapter{Widgets}
 
 \section{Little Tool}
+
+\subsection{百度药丸}
+
+
+百度的广告较多，为了不受首页广告的干扰，以前还专门找了旧版的百度搜索入口。但是终究是不方便，一不小心又到了新版的网页，各种乱标题党的新闻和广告。偶尔偶然在Chrome的应用商店遇到一个可以屏蔽百度广告的Chrome插件“百度药丸”，安装之后，首页和搜索页立即变清爽了。此插件可以进行首页美化，在首页添加美观的css样式，可以屏蔽搜索结果页面侧边栏的广告，可以屏蔽搜索结果的推广广告，阻止百度跟踪(通过阻止用户登陆实现，需要登陆的时候将此功能关闭即可)用户。
+
 
 \subsection{Ansible}
 
