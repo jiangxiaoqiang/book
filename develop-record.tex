@@ -1663,6 +1663,46 @@ export PATH=$PATH:$JAVA_HOME/bin
 export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
 \end{lstlisting}
 
+\subsection{泛型(Generic)-参数化类型}
+
+Java语言引入泛型的好处是安全简单，可以在在编译的时候检查类型安全，避免由于类型转换失败程序在运行时抛出异常。同时，泛型还可以消除代码中许多的强制类型转换(强制类型转换很消耗性能)，带来了性能上的收益，并且所有的强制转换都是自动和隐式的，泛型也提高代码的重用率。
+
+\paragraph{类型擦除(ype Erasure)}
+
+泛型的实现思路有两种\footnote{\url{https://www.cnblogs.com/fsjohnhuang/p/4288614.html}}：
+
+\begin{itemize}
+\item {Code Specialization}在实例化一个泛型类或泛型方法时将产生一份新的目标代码（字节码或二进制码）。如针对一个泛型List，当程序中出现List<String>和List<Integer>时，则会生成List<String>,List<Integer>等的Class实例。
+\item{Code Sharing}对每个泛型只生成唯一一份目标代码，该泛型类的所有实例的数据类型均映射到这份目标代码中，在需要的时候执行类型检查和类型转换。如针对List<String>和List<Integer>只生成一个List<Object>的Class实例。
+\end{itemize}
+
+C++的模板和C\# 就是典型的Code Specialization。由于在程序中出现N种L泛型List则会生成N个Class实例，因此会造成代码膨胀（Code Bloat）。而Java则采用Code Sharing的思路，并通过类型擦除（Type Erasure）来实现。类型擦除的过程大致分为两步：
+
+\begin{itemize}
+\item {使用泛型参数extends的边界类型来代替泛型参数（<T> 默认为<T extends Object>，<?>默认为<? extends Object>）。}
+\item{在需要的位置插入类型检查和类型转换的语句。}
+\end{itemize}
+
+用如下代码片段来观察类型擦除，在没有类型搽除前：
+
+\begin{lstlisting}[language=Java]
+Map<String, String> map = new HashMap<String, String>();
+map.put("hello", "你好");
+\end{lstlisting}
+
+采用javac编译后，查看泛型擦除后的代码为：
+
+\begin{lstlisting}[language=Java]
+HashMap var1 = new HashMap();
+var1.put("hello", "你好");
+\end{lstlisting}
+
+擦除法所谓的擦除，仅仅是对方法的 Code 属性中的字节码进行擦除，实际上元数据中还是保留了泛型信息，这也是我们能通过反射手段取得参数化类型的根本依据。
+
+\paragraph{获取实际类型}
+
+既然泛型擦除了类型，那么怎么获取到实际到类型呢\footnote{\url{https://blog.csdn.net/hj7jay/article/details/54889717}}？
+
 \subsection{字符串比较}
 
 String s1 = "Hello World"; String s2 = "Hello World"; a==b的结果是什么？ 这包含了内存，String存储方式等诸多知识点。
@@ -1674,6 +1714,53 @@ System.out.println(s1 == s2); // True
 \end{lstlisting}
 
 == 操作符比较的是两个对象的引用是否指向同一内存地址，如果内存地址相同，则返回 true；equals() 比较的只是两个字符串对象的引用指向的内存地址所存储的字面值，而忽略内存地址是否相同。
+
+\paragraph{List、Map、Set的区别与联系}
+
+List和Set都实现了collection接口\footnote{https://www.jianshu.com/p/46a6b4c6693f}。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.4]{collection.png}
+	\caption{List和Set}
+	\label{fig:collection}
+\end{figure}
+
+\paragraph{什么时候使用LinkedHashMap、ConcurrentHashMap、WeakHashMap}
+
+
+\paragraph{哪些集合类是线程安全的}
+
+Vector/HashTable/ConcurrentHashMap/Stack.
+
+
+\paragraph{为什么Set、List、map不实现Cloneable和Serializable接口}
+
+Collection接口指定一组称为元素的对象。元素如何被组织取决于具体实现。例如，一些LIST实现允许重复的元素，而SET不允许。Collection是一种抽象表示，而克隆和序列化重在执行，应该是在Collection具体实现子类中根据具体元素组织情况来实现。因此，强制在所有实现都要有克隆和序列化是不够灵活的，具有限制性。
+
+
+\paragraph{HashMap 、HashTable、TreeMap、LinkedHashMap、ConcurrentHashMap 、WeakHashMap}
+
+LinkedHashMap是HashMap的一個子類，如果需要輸出的順序和輸入相同，那麼用LinkedHashMap可以實現、它還可以按讀取順序來排列。WeakHashMap中key採用的是“弱引用”的方式，只要WeakHashMap中的key不再被外部引用，它就可以被垃圾回收器回收。而HashMap中key採用的是“強引用的方式”，當HashMap中的key沒有被外部引用時，只有在這個key從HashMap中刪除後，才可以被垃圾回收器回收。在JDK1.8中有了一些变化，当链表的存储的数据个数大于等于8的时候，不再采用链表存储，而采用了红黑树存储结构。两个线程同时操作时同时遇到HashMap需要扩容，且映射到相同的地址（key计算得到的HashCode相同），此时在扩容时可能发生一种情况， 两个线程同时对HashMap进行扩容，扩容时做第一次循环时一个线程阻塞，另一个完成扩容，前一个继续，那么就可能发生链表数据的相互指向问题， 造成get数据时遍历的死循环.JDK1.8 中通过测试发现依然存在JDK1.7中的数据丢失情况\footnote{\url{http://linfenliang.com/hashmap/2017/08/04/HashMapInJDK-6-7-8-Differ/}}.
+
+\begin{table}[htbp]
+	\caption{Map时间复杂度}
+	\label{table:mapo}
+	\begin{center}
+		\begin{tabular}{|c|c|p{5cm}|}
+			\hline
+			\multirow{1}{*}{Type}
+			& \multicolumn{1}{c|}{获取} 
+			& \multicolumn{1}{c|}{查找}\\			
+			\cline{1-3}
+			ArrayList &  O(1)  &  O(1) \\
+			\hline
+			HashMap &  O(N/BucketSize)  & O(N/BucketSize)  \\
+			\hline							
+		\end{tabular}	
+	\end{center}
+\end{table}
+
 
 
 \paragraph{HashMap里的hashcode方法和equal方法什么时候需要重写？如果不重写会有什么后果？}
@@ -1861,6 +1948,15 @@ redis为了避免客户端连接数过多，有一个timeout配置，意思是�
 Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对方主动连接目标时才会，抓到包，比较被动，不确定性很大，但是没有攻击性。第二种是常用的方式，使用Aircrack—ng强制解除认证，迫使目标进行重新连接。第三种类似第二种方式。
 
 \chapter{前端}
+
+\section{Flex}
+
+布局的传统解决方案，基于盒状模型，依赖 display属性 + position属性 + float属性。它对于那些特殊布局非常不方便，比如，垂直居中就不容易实现。2009年，W3C提出了一种新的方案—-Flex布局，可以简便、完整、响应式地实现各种页面布局。目前，它已经得到了所有浏览器的支持，这意味着，现在就能很安全地使用这项功能。Flex是Flexible Box的缩写，意为”弹性布局”，用来为盒状模型提供最大的灵活性。
+
+\subsection{小程序}
+
+在小程序中，设有 display: flex 或者 display: block 的元素就是一个 flex container（伸缩容器），里面的子元素称为 flex item（伸缩项目）。在 flex container 中，子元素都可以使用 Flex 进行布局。
+
 
 \section{React}
 
@@ -2186,7 +2282,10 @@ psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据
 \copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
 # 备份数据库
-pg_dump -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
+# v参数表示verbose，输出备份过程中的详细信息
+# 虽然无法看到备份的整体进度
+# 但是可以通过verbose参数看到备份的大致进展情况
+pg_dump -v -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
 /usr/pgsql-9.6/bin/pg_dump -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903261013.bak
 \end{lstlisting}
 
