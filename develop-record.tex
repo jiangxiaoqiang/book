@@ -1715,6 +1715,18 @@ System.out.println(s1 == s2); // True
 
 == 操作符比较的是两个对象的引用是否指向同一内存地址，如果内存地址相同，则返回 true；equals() 比较的只是两个字符串对象的引用指向的内存地址所存储的字面值，而忽略内存地址是否相同。
 
+\paragraph{Arrays.sort的实现}
+
+在JDK7以前的版本中sort()的实现原理是：基本类型使用优化后的快速排序，其他类型使用优化后的归并排序，jdk7以后修改了排序策略：如果JVM启动参数配置了-Djava.util.Arrays.useLegacyMergeSort=true那么就会执行上面所说的排序策略(优化的归并排序)，否则将会执行TimSort排序\footnote{\url{https://www.jianshu.com/p/d7ba7d919b80}}(此处存疑)。
+
+
+\subsection{什么时候使用CopyOnArrayList}
+
+CopyOnWriteArrayList这是一个ArrayList的线程安全的变体，其原理大概可以通俗的理解为:初始化的时候只有一个容器，很常一段时间，这个容器数据、数量等没有发生变化的时候，大家(多个线程)，都是读取(假设这段时间里只发生读取的操作)同一个容器中的数据，所以这样大家读到的数据都是唯一、一致、安全的，但是后来有人往里面增加了一个数据，这个时候CopyOnWriteArrayList 底层实现添加的原理是先copy出一个容器(可以简称副本)，再往新的容器里添加这个新的数据，最后把新的容器的引用地址赋值给了之前那个旧的的容器地址，但是在添加这个数据的期间，其他线程如果要去读取数据，仍然是读取到旧的容器里的数据。
+
+
+\paragraph{Redis和memcached：什么时候选择redis，什么时候选择memcached，内存模型和存储策略是什么样的}
+
 \paragraph{List、Map、Set的区别与联系}
 
 List和Set都实现了collection接口\footnote{https://www.jianshu.com/p/46a6b4c6693f}。
@@ -2016,6 +2028,20 @@ Spring通过属性注入配置ConfigurationProperties无法读取到配置文件
 
 Redis不是为消息队列而设计的，其实不是做消息队列的理想选择，不过Redis简单，能够满足目前的需求，姑且用之。Redis的PUB/SUB机制，即发布-订阅模式。利用的Redis的列表(lists)数据结构。比较好的使用模式是，生产者lpush消息，消费者brpop消息，并设定超时时间，可以减少redis的压力。只有在Redis宕机且数据没有持久化的情况下丢失数据，可以根据业务通过AOF和缩短持久化间隔来保证很高的可靠性，而且也可以通过多个client来提高消费速度。但相对于专业的消息队列来说，该方案消息的状态过于简单(没有状态)，且没有ack机制，消息取出后消费失败依赖于client记录日志或者重新push到队列里面。RocketMQ没有成熟稳定的Python客户端，有一个小众客户端但是不支持Python3，RabbitMQ貌似主要由商业公司主导，虽然成熟稳定，但是使用貌似不够广泛，Kafka虽然主要的使用场景是大规模流式数据处理，但是考虑到使用的广泛性，和成熟的周边，还是选择Kafka，以后的日志处理估计也会用到它。
 
+\subsection{常用命令}
+
+在Redis中常用命令如下：
+
+\begin{lstlisting}[language=Bash]
+# 登录Redis
+redis-cli -h 192.168.251.96 -p 6379
+# 查看Redis数据库数量
+CONFIG GET databases
+# 查看每个数据库的key信息
+INFO keyspace
+\end{lstlisting}
+
+
 \section{SSDB}
 
 Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。经过试用，发现文档太过于简洁，缺乏配套的工具，比如客户端就只有PHP SSDB Admin，客户端部署困难。
@@ -2185,7 +2211,7 @@ ctid：表示数据记录的物理行当信息，指的是 一条记录位于哪
 
 \subsection{常用SQL}
 
-查看单个表大小：
+查看PostgreSQL单个表大小：
 
 \begin{lstlisting}[language=SQL]
 -- 数据库中单个表的大小（不包含索引）
@@ -2226,7 +2252,8 @@ alter table public.spider_urls_pool alter column id set default nextval('public.
 
 \begin{lstlisting}[language=SQL]
 -- 爬取URL新增唯一约束
-alter table spider_urls_pool add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
+alter table spider_urls_pool 
+add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
 \end{lstlisting}
 
 \paragraph{去重(Remove Duplicate Rows)}
@@ -2252,7 +2279,19 @@ WHERE   T1.ctid < T2.ctid  -- delete the older versions
     AND T1.key  = T2.key;  -- add more columns if needed
 \end{lstlisting}
 
-PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USING子句里声明其它表。
+PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USING子句里声明其它表。如下语句移除book表中重复的元素，未移除重复数据时表数据量在600W左右，占用磁盘空间3333MB：
+
+\begin{lstlisting}[language=SQL]
+DELETE FROM book T1
+    USING   book T2
+WHERE   T1.ctid < T2.ctid  -- delete the older versions
+    AND T1.name  = T2.name
+	AND T1.isbn = T2.isbn
+	AND T1.isbn10 = T2.isbn10;  -- add more columns if needed
+\end{lstlisting}
+
+定义如果书籍的名字、ISBN、ISBN10都重复，则认为是同一本书籍，予以删除。
+
 
 \paragraph{导入导出(Import\&Export)}
 
