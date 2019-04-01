@@ -2268,7 +2268,7 @@ PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USIN
 # 登录PostgreSQL数据库
 psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据到/home/dolphin/share目录
-\copy (select * from public.book) to '/home/dolphin/share/dolphin-book-binary-bak-201902062112' with Binary;
+\copy (select * from public.book-legacy) to '/home/dolphin/share/dolphin-book-binary-bak-201904012112' with Binary
 # 导出book数据
 \copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
 # 备份数据库
@@ -2276,7 +2276,7 @@ psql -h bookdb -p 5432 dolphin postgres
 # 虽然无法看到备份的整体进度
 # 但是可以通过verbose参数看到备份的大致进展情况
 pg_dump -v -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
-/usr/pgsql-9.6/bin/pg_dump -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903261013.bak
+/usr/pgsql-9.6/bin/pg_dump -v -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903261013.bak
 \end{lstlisting}
 
 再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
@@ -3791,7 +3791,7 @@ request.meta["proxy"]="https://" + proxy_address
 
 \subsection{CIDR(Classless Inter-Domain Routing)}
 
-CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
+CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法）(slash notation)，即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
 
 
 \begin{table}[htbp]
@@ -3806,6 +3806,8 @@ CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}
 			& \multicolumn{1}{c|}{主机数}\\			
 			\cline{1-4}
 			a.b.c.0/24 & +0.0.0.255 &  255.255.255.0  & 256 \\
+			\hline
+			113.248.0.0/16 & +0.0.255.255 &  255.255.0.0  & 65536 \\
 			\hline							
 		\end{tabular}	
 	\end{center}
