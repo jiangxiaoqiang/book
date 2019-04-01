@@ -2023,6 +2023,10 @@ Redis不是为消息队列而设计的，其实不是做消息队列的理想选
 \begin{lstlisting}[language=Bash]
 # 登录Redis
 redis-cli -h 192.168.251.96 -p 6379
+# 查看Redis数据库数量
+CONFIG GET databases
+# 查看每个数据库的key信息
+INFO keyspace
 \end{lstlisting}
 
 
