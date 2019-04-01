@@ -1699,7 +1699,8 @@ System.out.println(s1 == s2); // True
 
 \paragraph{JDK、JRE和JVM三者之间关系}
 
-JDK（Java Development Kit）是针对Java开发员的产品，是整个Java的核心，包括了Java运行环境JRE、Java工具和Java基础类库。Java Runtime Environment（JRE）是运行JAVA程序所必须的环境的集合，包含JVM标准实现及Java核心类库。JVM是Java Virtual Machine（Java虚拟机）的缩写，是整个java实现跨平台的最核心的部分，能够运行以Java语言写作的软件程序。JDK是java开发工具包，在其安装目录下面有六个文件夹、一些描述文件、一个src压缩文件。bin、include、lib、 jre这四个文件夹起作用，demo、sample是一些例子。可以看出来JDK包含JRE，而JRE包含JVM。
+JDK（Java Development Kit）是针对Java开发员的产品，是整个Java的核心，包括了Java运行环境JRE、Java工具和Java基础类库。Java Runtime Environment（JRE）是运行JAVA程序所必须的环境的集合，包含JVM标准实现及Java核心类库。JVM是Java Virtual Machine（Java虚拟机）的缩写，是整个java实现跨平台的最核心的部分，能够运行以Java语言写作的软件程序。
+JDK是java开发工具包，在其安装目录下面有六个文件夹、一些描述文件、一个src压缩文件。bin、include、lib、 jre这四个文件夹起作用，demo、sample是一些例子。可以看出来JDK包含JRE，而JRE包含JVM。
 
 \begin{itemize}
 	\item{bin:最主要的是编译器(javac.exe)}
@@ -1712,7 +1713,8 @@ JDK（Java Development Kit）是针对Java开发员的产品，是整个Java的�
 
 \paragraph{HashMap}
 
-HashMap是由数组+链表组成；寻址容易，插入和删除容易。（存储单元数组Entry[]，数组里面包含链表）HashMap其实也是由一个线性的数组实现的。所以可以理解为其存储数据的容器就是一个线性容器；HashMap里面有一个内部静态类Entry，其重要的属性有key，value，next，从属性key，value 就可以很明显的看出来 Entry就是HashMap键值对实现的一个基础bean；也就是说HashMap的基础就是一个线性数组，这个数组就是Entry[]，Map里面的内容都保存在Entry[]中；
+HashMap是由数组+链表组成；寻址容易，插入和删除容易。（存储单元数组Entry[]，数组里面包含链表）HashMap其实也是由一个线性的数组实现的。所以可以理解为其存储数据的容器就是一个线性容器；HashMap里面有一个内部静态类Entry，其重要的属性有key，value，next，从属性key，value 就可以很明显的看出来 Entry就是HashMap键值对实现的一个基础bean；也就是说HashMap的基础就是一个线性数组，这个数组就是Entry[]，Map里面的内容都保存在Entry[]中；
+
 
 
 \subsection{UML图}
@@ -1917,6 +1919,16 @@ Spring通过属性注入配置ConfigurationProperties无法读取到配置文件
 \subsection{Redis消息队列}
 
 Redis不是为消息队列而设计的，其实不是做消息队列的理想选择，不过Redis简单，能够满足目前的需求，姑且用之。Redis的PUB/SUB机制，即发布-订阅模式。利用的Redis的列表(lists)数据结构。比较好的使用模式是，生产者lpush消息，消费者brpop消息，并设定超时时间，可以减少redis的压力。只有在Redis宕机且数据没有持久化的情况下丢失数据，可以根据业务通过AOF和缩短持久化间隔来保证很高的可靠性，而且也可以通过多个client来提高消费速度。但相对于专业的消息队列来说，该方案消息的状态过于简单(没有状态)，且没有ack机制，消息取出后消费失败依赖于client记录日志或者重新push到队列里面。RocketMQ没有成熟稳定的Python客户端，有一个小众客户端但是不支持Python3，RabbitMQ貌似主要由商业公司主导，虽然成熟稳定，但是使用貌似不够广泛，Kafka虽然主要的使用场景是大规模流式数据处理，但是考虑到使用的广泛性，和成熟的周边，还是选择Kafka，以后的日志处理估计也会用到它。
+
+\subsection{常用命令}
+
+在Redis中常用命令如下：
+
+\begin{lstlisting}[language=Bash]
+# 登录Redis
+redis-cli -h 192.168.251.96 -p 6379
+\end{lstlisting}
+
 
 \section{SSDB}
 
