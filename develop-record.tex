@@ -2041,6 +2041,13 @@ CONFIG GET databases
 INFO keyspace
 \end{lstlisting}
 
+有时在获取值时，需要预先查看key所包含的类型：
+
+\begin{lstlisting}[language=Bash]
+# 查看被ban的ｉp列表key的类型
+type statistic_ban_ip:04/02/19
+\end{lstlisting}
+
 
 \section{SSDB}
 
@@ -3277,6 +3284,15 @@ ansible是新出现的自动化运维工具，基于Python开发，集合了众�
 
 在Gradle 5.3版本中，此命令不会生成jar包。
 
+\subsection{vim}
+
+删除空行：
+
+\begin{lstlisting}[language=Bash]
+:g/^$/d
+\end{lstlisting}
+
+:g will execute a command on lines which match a regex. The regex is 'blank line' and the command is :d (delete).正则表达式\verb|^$|表示匹配空行，\verb|^|表示一行的开始，\verb|$|表示一行的结束，中间没有任何内容在vim中表示空行。
 
 \subsection{Shadowsocks}
 
@@ -3375,6 +3391,31 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 \end{lstlisting}
 
 输出PING6(56=40+8+8 bytes) local ip --> 2400:da00:2::29。local ip是本机的IPv6地址。
+
+\subsection{Openresty}
+
+openresty服务器管理命令:
+
+\begin{lstlisting}[language=Bash]
+service openresty start //启动openresty
+service openresty stop //停止openresty
+# 重启openresty
+service openresty restart
+\end{lstlisting}
+
+编译Openresty:
+
+\begin{lstlisting}[language=Bash]
+./configure --with-pcre=/usr/local/pcre-8.43 --with-openssl=/usr/local/openssl-1.0.2r --with-zlib=/usr/local/zlib-1.2.8
+\end{lstlisting}
+
+注意路径/usr/local/zlib-1.2.8是zlib的源码目录，安装：
+
+\begin{lstlisting}[language=Bash]
+gmake
+gmake install
+\end{lstlisting}
+
 
 \subsection{Nginx}
 
