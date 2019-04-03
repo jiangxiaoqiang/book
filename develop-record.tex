@@ -2135,6 +2135,14 @@ ALTER TABLE book
 ADD UNIQUE (name,isbn,isbn10)
 \end{lstlisting}
 
+添加复合主键：
+
+\begin{lstlisting}[language=SQL]
+ALTER TABLE book_intial ADD PRIMARY KEY(name,isbn,isbn10);
+\end{lstlisting}
+
+
+
 \subsection{pgAgent}
 
 PostgreSQL定时任务真是麻烦，要编译pgAgent，安装pgAgent之前要安装cmake、wxWidgets。首先采用如下命令安装cmake：
@@ -3369,6 +3377,15 @@ ipv6 and ipv6.addr==2404:6800:4005:80b::200a
 输出PING6(56=40+8+8 bytes) local ip --> 2400:da00:2::29。local ip是本机的IPv6地址。
 
 \subsection{Nginx}
+
+\subsubsection{Nginx匹配优先级}
+
+Nginx location匹配的优先级如下：
+
+\begin{lstlisting}
+(location =) > (location 完整路径) > (location ^~ 路径) > (location ~,~* 正则顺序) > (location 部分起始路径) > (/)
+\end{lstlisting}
+
 
 \subsubsection{Nginx超时转发}
 
