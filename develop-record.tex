@@ -1715,6 +1715,18 @@ System.out.println(s1 == s2); // True
 
 == 操作符比较的是两个对象的引用是否指向同一内存地址，如果内存地址相同，则返回 true；equals() 比较的只是两个字符串对象的引用指向的内存地址所存储的字面值，而忽略内存地址是否相同。
 
+\paragraph{Arrays.sort的实现}
+
+在JDK7以前的版本中sort()的实现原理是：基本类型使用优化后的快速排序，其他类型使用优化后的归并排序，jdk7以后修改了排序策略：如果JVM启动参数配置了-Djava.util.Arrays.useLegacyMergeSort=true那么就会执行上面所说的排序策略(优化的归并排序)，否则将会执行TimSort排序\footnote{\url{https://www.jianshu.com/p/d7ba7d919b80}}(此处存疑)。
+
+
+\subsection{什么时候使用CopyOnArrayList}
+
+CopyOnWriteArrayList这是一个ArrayList的线程安全的变体，其原理大概可以通俗的理解为:初始化的时候只有一个容器，很常一段时间，这个容器数据、数量等没有发生变化的时候，大家(多个线程)，都是读取(假设这段时间里只发生读取的操作)同一个容器中的数据，所以这样大家读到的数据都是唯一、一致、安全的，但是后来有人往里面增加了一个数据，这个时候CopyOnWriteArrayList 底层实现添加的原理是先copy出一个容器(可以简称副本)，再往新的容器里添加这个新的数据，最后把新的容器的引用地址赋值给了之前那个旧的的容器地址，但是在添加这个数据的期间，其他线程如果要去读取数据，仍然是读取到旧的容器里的数据。
+
+
+\paragraph{Redis和memcached：什么时候选择redis，什么时候选择memcached，内存模型和存储策略是什么样的}
+
 \paragraph{List、Map、Set的区别与联系}
 
 List和Set都实现了collection接口\footnote{https://www.jianshu.com/p/46a6b4c6693f}。
@@ -2206,7 +2218,7 @@ ctid：表示数据记录的物理行当信息，指的是 一条记录位于哪
 
 \subsection{常用SQL}
 
-查看单个表大小：
+查看PostgreSQL单个表大小：
 
 \begin{lstlisting}[language=SQL]
 -- 数据库中单个表的大小（不包含索引）
@@ -2247,7 +2259,8 @@ alter table public.spider_urls_pool alter column id set default nextval('public.
 
 \begin{lstlisting}[language=SQL]
 -- 爬取URL新增唯一约束
-alter table spider_urls_pool add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
+alter table spider_urls_pool 
+add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
 \end{lstlisting}
 
 \paragraph{去重(Remove Duplicate Rows)}
@@ -2273,7 +2286,19 @@ WHERE   T1.ctid < T2.ctid  -- delete the older versions
     AND T1.key  = T2.key;  -- add more columns if needed
 \end{lstlisting}
 
-PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USING子句里声明其它表。
+PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USING子句里声明其它表。如下语句移除book表中重复的元素，未移除重复数据时表数据量在600W左右，占用磁盘空间3333MB：
+
+\begin{lstlisting}[language=SQL]
+DELETE FROM book T1
+    USING   book T2
+WHERE   T1.ctid < T2.ctid  -- delete the older versions
+    AND T1.name  = T2.name
+	AND T1.isbn = T2.isbn
+	AND T1.isbn10 = T2.isbn10;  -- add more columns if needed
+\end{lstlisting}
+
+定义如果书籍的名字、ISBN、ISBN10都重复，则认为是同一本书籍，予以删除。
+
 
 \paragraph{导入导出(Import\&Export)}
 
@@ -2289,7 +2314,7 @@ PostgreSQL允许你在WHERE条件里引用其它表的字段， 方法是在USIN
 # 登录PostgreSQL数据库
 psql -h bookdb -p 5432 dolphin postgres
 # 导出book数据到/home/dolphin/share目录
-\copy (select * from public.book) to '/home/dolphin/share/dolphin-book-binary-bak-201902062112' with Binary;
+\copy (select * from public.book-legacy) to '/home/dolphin/share/dolphin-book-binary-bak-201904012112' with Binary
 # 导出book数据
 \copy (select * from public.book) to '/volume1/document/dolphin-proj/dolphin-book-text-bak-201902091012'
 # 备份数据库
@@ -2297,7 +2322,7 @@ psql -h bookdb -p 5432 dolphin postgres
 # 虽然无法看到备份的整体进度
 # 但是可以通过verbose参数看到备份的大致进展情况
 pg_dump -v -h bookdb -U postgres dolphin > ./dolphin-fulldb-backup-201902100030.bak
-/usr/pgsql-9.6/bin/pg_dump -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903261013.bak
+/usr/pgsql-9.6/bin/pg_dump -v -h prod-book-db -U postgres dolphin > ./dolphin-fulldb-backup-201903261013.bak
 \end{lstlisting}
 
 再将导出的数据通过HTTP下载工具下载到本地，尽量避免在公网导出数据，由于网速的缘故，上GB的数据导出无法预估需要时间，导出时无法看到进度，一般会失去耐心。
@@ -3846,7 +3871,7 @@ request.meta["proxy"]="https://" + proxy_address
 
 \subsection{CIDR(Classless Inter-Domain Routing)}
 
-CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法），即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
+CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}}(Classless Inter-Domain Routing)采用各种长度的"网络前缀"来代替分类地址中的网络号和子网号，其格式为：IP地址 = \{<网络前缀>,<主机号>\}。为了区分网络前缀，通常采用"斜线记法"（CIDR记法）(slash notation)，即IP地址/网络前缀所占比特数。例如：192.168.24.0/22表示32位的地址中，前22位为网络前缀，后10(32-22=10)位代表主机号。在换算中，192.168.24.0/22 对应的二进制为：1100 0000(192)，1010 1000(168)，0001 10\textcolor{red}{00}(24)，\textcolor{red}{0000 0000}(0)其中红色为主机号，总共有10位。当这10位全为0时，取最小地址192.168.24.0，当这10位全为1时，取最大地址192.168.27.255。本例中将第三段地址数据中最小是00011000（24），最大是00011011（27），第四段地址数据中最小为0000 0001（1），最大为1111 1110（254），以上括号中数据为十进制，其前面为二进制。所以本例中192.168.24.0/22 对应地址段为192.168.24.1-192.168.27.254，共4个网段。
 
 
 \begin{table}[htbp]
@@ -3861,6 +3886,8 @@ CIDR\footnote{\url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing}
 			& \multicolumn{1}{c|}{主机数}\\			
 			\cline{1-4}
 			a.b.c.0/24 & +0.0.0.255 &  255.255.255.0  & 256 \\
+			\hline
+			113.248.0.0/16 & +0.0.255.255 &  255.255.0.0  & 65536 \\
 			\hline							
 		\end{tabular}	
 	\end{center}
