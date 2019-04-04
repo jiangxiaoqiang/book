@@ -1722,10 +1722,28 @@ System.out.println(s1 == s2); // True
 
 \subsection{什么时候使用CopyOnArrayList}
 
-CopyOnWriteArrayList这是一个ArrayList的线程安全的变体，其原理大概可以通俗的理解为:初始化的时候只有一个容器，很常一段时间，这个容器数据、数量等没有发生变化的时候，大家(多个线程)，都是读取(假设这段时间里只发生读取的操作)同一个容器中的数据，所以这样大家读到的数据都是唯一、一致、安全的，但是后来有人往里面增加了一个数据，这个时候CopyOnWriteArrayList 底层实现添加的原理是先copy出一个容器(可以简称副本)，再往新的容器里添加这个新的数据，最后把新的容器的引用地址赋值给了之前那个旧的的容器地址，但是在添加这个数据的期间，其他线程如果要去读取数据，仍然是读取到旧的容器里的数据。
+CopyOnWriteArrayList这是一个ArrayList的线程安全的变体，其原理大概可以通俗的理解为:初始化的时候只有一个容器，很常一段时间，这个容器数据、数量等没有发生变化的时候，大家(多个线程)，都是读取(假设这段时间里只发生读取的操作)同一个容器中的数据，所以这样大家读到的数据都是唯一、一致、安全的，但是后来有人往里面增加了一个数据，这个时候CopyOnWriteArrayList 底层实现添加的原理是先copy出一个容器(可以简称副本)，再往新的容器里添加这个新的数据，最后把新的容器的引用地址赋值给了之前那个旧的的容器地址，但是在添加这个数据的期间，其他线程如果要去读取数据，仍然是读取到旧的容器里的数据。
 
 
-\paragraph{Redis和memcached：什么时候选择redis，什么时候选择memcached，内存模型和存储策略是什么样的}
+
+\paragraph{Redis和memcached：什么时候选择Redis，什么时候选择Memcached，内存模型和存储策略是什么样的}
+
+选择Redis\footnote{\url{http://redisdoc.com/topic/index.html}}还是Memcached，需要根据具体的应用场景和他们之间的区别：
+
+\begin{itemize}
+\item {\textbf{数据类型支持不同}}与Memcached仅支持简单的key-value结构的数据记录不同，Redis支持的数据类型要丰富得多。最为常用的数据类型主要由五种：String、Hash、List、Set和Sorted Set。Redis内部使用一个redisObject对象来表示所有的key和value。
+\item {\textbf{数据持久化支持}}Redis虽然是基于内存的存储系统，但是它本身是支持内存数据的持久化的，而且提供两种主要的持久化策略：RDB快照和AOF日志。而memcached是不支持数据持久化操作的。
+\item {\textbf{集群管理不同}}Memcached本身并不支持分布式，因此只能在客户端通过像一致性哈希这样的分布式算法来实现Memcached的分布式存储。
+\end{itemize}
+
+\paragraph{常见序列化协议及其优缺点}
+
+常见序列化协议有COM、CORBA、XML、JSON、Protobuf、Thrift和Avro.
+
+\paragraph{http请求报文结构和内容}
+
+HTTP报文结构分为起始行，请求头，请求体。起始行由方法、、URL、HTTP版本组成，以空格分开。请求头和请求体以空行分开。
+
 
 \paragraph{List、Map、Set的区别与联系}
 
