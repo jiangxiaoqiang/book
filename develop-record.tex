@@ -2055,6 +2055,18 @@ type statistic_ban_ip:04/02/19
 Postgresql持久化时速度跟不上抓取的速度，需要一个消息队列，第一是写入队列中数据能够落地不能丢，第二是在写入性能不高的情况下，可以缓冲足够庞大的数据，毕竟无法时刻监控持久化到数据库的任务。而SSDB恰好可以满足需求，redis讲数据全部存储在了内存中，而云服务器内存不够大，在队列数据较多时无法有良好的表现，而SSDB\footnote{\url{http://ssdb.io/zh_cn/}}绝对优势是将数据写入了硬盘，同时也支持配置部分内存用于缓存热数据。经过试用，发现文档太过于简洁，缺乏配套的工具，比如客户端就只有PHP SSDB Admin，客户端部署困难。
 
 
+\section{MySQL}
+
+\subsection{自动启动}
+
+禁止MySQL自动启动，注意不是开机启动：
+
+\begin{lstlisting}[language=Bash]
+systemctl list-unit-files|grep mysqld
+systemctl disable mysqld
+\end{lstlisting}
+
+
 \section{Postgres}
 
 查看Postgrsql日志：
@@ -2113,7 +2125,8 @@ options (schema_name 'public',table_name 'fund_words_lib');
 
 \subsection{count慢}
 
-count(*)慢这个不是pg的问题，任何MVCC(Multi-Version Concurrency Control,多版本并发控制)的数据库在count(*)时都是扫全表的。 MySQL之所以快是因为MyISAM引擎相当不严谨（ACID方面，不支持事务），它对表row总行数有个计数器。而MySQL支持（准确说是部分支持）事务的innodb引擎做count(*)就是扫全表照样慢。如果有人从数据库中读数据的同时，有另外的人写入数据，有可能读数据的人会看到『半写』或者不一致的数据。有很多种方法来解决这个问题，叫做并发控制方法。最简单的方法，通过加锁，让所有的读者等待写者工作完成，但是这样效率会很差。MVCC 使用了一种不同的手段，每个连接到数据库的读者，在某个瞬间看到的是数据库的一个快照，写者写操作造成的变化在写操作完成之前（或者数据库事务提交之前）对于其他的读者来说是不可见的。当一个 MVCC 数据库需要更一个一条数据记录的时候，它不会直接用新数据覆盖旧数据，而是将旧数据标记为过时（obsolete）并在别处增加新版本的数据。这样就会有存储多个版本的数据，但是只有一个是最新的。这种方式允许读者读取在他读之前已经存在的数据，即使这些在读的过程中半路被别人修改、删除了，也对先前正在读的用户没有影响。这种多版本的方式避免了填充删除操作在内存和磁盘存储结构造成的空洞的开销，但是需要系统周期性整理（sweep through）以真实删除老的、过时的数据\footnote{资料来源：\url{https://en.wikipedia.org/wiki/Multiversion_concurrency_control}}。针对count需要全表扫描的问题，可以直接从pg\_class统计表中查看表的行数，缺点是统计表中的数据不是实时的。从pg\_class查看数据如下代码片段所示：
+count(*)慢这个不是pg的问题，任何MVCC(Multi-Version Concurrency Control,多版本并发控制)的数据库在count(*)时都是扫全表的。 MySQL之所以快是因为MyISAM引擎相当不严谨（ACID方面，不支持事务），它对表row总行数有个计数器。而MySQL支持（准确说是部分支持）事务的innodb引擎做count(*)就是扫全表照样慢。如果有人从数据库中读数据的同时，有另外的人写入数据，有可能读数据的人会看到『半写』或者不一致的数据。有很多种方法来解决这个问题，叫做并发控制方法。最简单的方法，通过加锁，让所有的读者等待写者工作完成，但是这样效率会很差。MVCC 使用了一种不同的手段，每个连接到数据库的读者，在某个瞬间看到的是数据库的一个快照，写者写操作造成的变化在写操作完成之前（或者数据库事务提交之前）对于其他的读者来说是不可见的。当一个 MVCC 数据库需要更一个一条数据记录的时候，它不会直接用新数据覆盖旧数据，而是将旧数据标记为过时（obsolete）并在别处增加新版本的数据。这样就会有存储多个版本的数据，但是只有一个是最新的。这种方式允许读者读取在他读之前已经存在的数据，即使这些在读的过程中半路被别人修改、删除了，也对先前正在读的用户没有影响。这种多版本的方式避免了填充删除操作在内存和磁盘存储结构造成的空洞的开销，但是需要系统周期性整理（sweep through）以真实删除老的、过时的数据\footnote{资料来源：\url{https://en.wikipedia.org/wiki/Multiversion_concurrency_control}}。针对count需要全表扫描的问题，可以直接从pg\_class统计表中查看表的行数，缺点是统计表中的数据不是实时的。这个数值每次vacuum\footnote{Postgres垃圾回收动作：\url{https://www.postgresql.org/docs/9.6/sql-vacuum.html}}之后
+变化。统计的行数的误差在vacuum之间删除或者插入的行数。从pg\_class查看数据如下代码片段所示：
 
 \begin{lstlisting}[language=SQL]
 -- 查看book表的行数
@@ -2283,6 +2296,26 @@ alter table spider_urls_pool
 add constraint uk_spider_urls_pool_unique_scrapy_url unique (scrapy_url);
 \end{lstlisting}
 
+\paragraph{表合并}
+
+
+合并表如下语句所示：
+
+\begin{lstlisting}[language=SQL]
+insert into public.book
+select *
+from public.book_backup20190405 legacy
+where not exists 
+(
+    select *
+    from public.book
+    where name = legacy."name"
+    and isbn = legacy.isbn
+    and isbn10 = legacy.isbn10
+)
+\end{lstlisting}
+
+
 \paragraph{去重(Remove Duplicate Rows)}
 
 去除fund\_words\_lib表的重复数据\footnote{\url{https://stackoverflow.com/questions/6583916/delete-duplicate-records-in-postgresql}}：
@@ -2317,12 +2350,19 @@ WHERE   T1.ctid < T2.ctid  -- delete the older versions
 	AND T1.isbn10 = T2.isbn10;  -- add more columns if needed
 \end{lstlisting}
 
-定义如果书籍的名字、ISBN、ISBN10都重复，则认为是同一本书籍，予以删除。
+定义如果书籍的名字、ISBN、ISBN10都重复，则认为是同一本书籍，予以删除。去除重复的另一种方式：
+
+\begin{lstlisting}[language=SQL]
+insert into book_nodulp (id, name, isbn, author, publisher, price, translator, subtitle, publish_year, add_date, binding, douban_id, content_intro, original_name, author_intro, content, update_date, score, issuer, pages, isbn10, source, summary, creator, industry_identifiers, language, description, categories)  
+select id, name, isbn, author, publisher, price, translator, subtitle, publish_year, add_date, binding, douban_id, content_intro, original_name, author_intro, content, update_date, score, issuer, pages, isbn10, source, summary, creator, industry_identifiers, language, description, categories from   
+(select row_number() over(partition by name,isbn,isbn10 order by add_date desc ) as rn, * from book_backup_500w) t  
+where t.rn=1;
+\end{lstlisting}
 
 
 \paragraph{导入导出(Import\&Export)}
 
-需要导入大表(4500W)到远程的Google Cloud，表的大小在5GB左右。直接试用pgAdmin的导入功能，由于服务器在国外，受限于网速，运行了2天没有导入完毕。先将导出的binary文件拷贝到Google Cloud主机上。再登录PostgreSQL客户端执行导入语句：
+需要导入基础词库表(4500W)到远程的Google Cloud数据库主机，表的大小在5GB左右。直接试用pgAdmin的导入功能，由于服务器在国外，受限于网速，运行了2天没有导入完毕。尝试先将导出的binary文件远程拷贝到Google Cloud数据库主机上。再远程服务器上登录PostgreSQL客户端执行导入语句：
 
 \begin{lstlisting}[language=Bash]
 \copy public.fund_words_lib(word,remark,id,state) from '/home/dolphin/dolphin-words' encoding 'utf8';
@@ -3132,7 +3172,7 @@ bin/kafka-topics.sh --zookeeper localhost:2181 --list
 bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --list
 
 # 查看主题dolphin-spider-google-book-bookinfo信息
-bin/kafka-topics.sh --zookeeper localhost:2181 --describe --topic dolphin-spider-google-book-bookinfo
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-topics.sh --zookeeper localhost:2181 --describe --topic dolphin-spider-google-book-bookinfo
 
 # 查看消费组google-book情况
 bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group google-book
@@ -3141,6 +3181,8 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 查看消费堆积情况语句如下：
 
 \begin{lstlisting}[language=Bash]
+/home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh  --list --bootstrap-server mq-server:9092
+
 # 查看Kafka消息堆积情况
 /home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --describe
 \end{lstlisting}
@@ -3238,11 +3280,28 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 
 查找操作系统中大于800MB的文件。让find在打印出一个文件名之后接着输出一个NULL字符 ('\textbackslash 0') 而不是换行符, 然后再告诉xargs也用NULL字符来作为记录的分隔符。
 
+\subsection{Linux环境选择}
+
+
+
+
 \part{Tool}
 
 \chapter{Widgets}
 
 \section{Little Tool}
+
+\subsection{YouTube视频下载}
+
+YouTube视频下载需要youtube-dl工具：
+
+\begin{lstlisting}[language=Bash]
+# 查看所有可用格式
+youtube-dl -F https://www.youtube.com/watch?v=8IRX1C6vC_I
+youtube-dl -f 18 https://www.youtube.com/watch?v=8IRX1C6vC_I
+\end{lstlisting}
+
+
 
 \subsection{百度药丸}
 
@@ -3496,7 +3555,7 @@ ssh -Nf -D 127.0.0.1:2000 google-cloud
 ssh -g -fN -L 8100:192.168.0.14:8100 192.168.1.11
 \end{lstlisting}
 
-服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。访问腾讯视频时，提示所在地区无法访问，可能是国外相应的服务封锁了部分地区的IP。
+f选项请求ssh作为后台服务。服务端有大量拒绝连接输出，且部分网站无法正常访问，不知原因在何处。。
 
 
 \subsubsection{ssh登录Google Cloud}
@@ -3796,11 +3855,6 @@ docker pull mariadb
 运行容器：
 
 \begin{lstlisting}[language=Bash]
-docker run --name MariaDB \
-	-p 3306:3306 \
-	-v /data/db/mariadb:/var/lib/mysql \
-	-e MYSQL_ROOT_PASSWORD=123456 \
-	-d mariadb
 # 运行Jenkins
 docker run -p 8080:8080 \ 
 	-p 50000:50000 \ 
@@ -3809,12 +3863,9 @@ docker run -p 8080:8080 \
 docker run -p 8080:8080 -p 50000:50000 -v /home/dolphin/app/third-party/jenkins:/home/dolphin/app/third-party/jenkins/jenkins_home jenkins
 \end{lstlisting}
 
-p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。启动MariaDB镜像：
+p表示要自定义映射的端口(port)，可以用-p hostPort:containerPort。为了方便迁移数据库中的数据，可以通过挂载数据卷(volum	e)来实现。这样，数据库中的数据将保存在我们挂载的本地文件/data/db/mariadb的上。我们可以迁移或者备份这个文件夹，来实现数据库迁移。一般一个自动生成的空数据库文件，大概有100多兆 ，而且这个文件夹中包含很多子文件，因此如果通过SSH或者FTP传输都需要比较长的时间，可以通过压缩打包来减少文件夹的容量。
 
 \begin{lstlisting}[language=Bash]
-# 启动MariaDB
-docker run --name mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb
-
 # 启动Jenkins
 docker run -p 8080:8080 -v /usr/local/work/jenkins:/var/jenkins_home -t jenkins
 \end{lstlisting}
