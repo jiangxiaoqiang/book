@@ -1724,6 +1724,11 @@ System.out.println(s1 == s2); // True
 
 CopyOnWriteArrayList这是一个ArrayList的线程安全的变体，其原理大概可以通俗的理解为:初始化的时候只有一个容器，很常一段时间，这个容器数据、数量等没有发生变化的时候，大家(多个线程)，都是读取(假设这段时间里只发生读取的操作)同一个容器中的数据，所以这样大家读到的数据都是唯一、一致、安全的，但是后来有人往里面增加了一个数据，这个时候CopyOnWriteArrayList 底层实现添加的原理是先copy出一个容器(可以简称副本)，再往新的容器里添加这个新的数据，最后把新的容器的引用地址赋值给了之前那个旧的的容器地址，但是在添加这个数据的期间，其他线程如果要去读取数据，仍然是读取到旧的容器里的数据。
 
+\paragraph{Java CAS原理}
+
+CAS（比较与交换，Compare and swap） 是一种有名的无锁算法。无锁编程，即不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步，所以也叫非阻塞同步（Non-blocking Synchronization）。实现非阻塞同步的方案称为“无锁编程算法”（ Non-blocking algorithm）\footnote{\url{https://www.cnblogs.com/zhuawang/p/4196904.html}}。
+
+
 \paragraph{Redis和memcached：什么时候选择Redis，什么时候选择Memcached，内存模型和存储策略是什么样的}
 
 选择Redis\footnote{\url{http://redisdoc.com/topic/index.html}}还是Memcached，需要根据具体的应用场景和他们之间的区别：
@@ -2411,6 +2416,25 @@ select *
 from fund_words_lib 
 where word ~ '^[0-9\.]+$' 
 limit 2;
+\end{lstlisting}
+
+
+\subsection{死锁处理}
+
+发现数据库一张表任何操作都没有响应，查看状态信息：
+
+\begin{lstlisting}[language=SQL]
+select * 
+from pg_stat_activity 
+where state = 'active'
+and wait_event_type = 'Lock'
+limit 50;
+\end{lstlisting}
+
+结束死锁进程：
+
+\begin{lstlisting}[language=SQL]
+SELECT pg_cancel_backend('1185');
 \end{lstlisting}
 
 
