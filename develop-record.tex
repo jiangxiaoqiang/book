@@ -7,6 +7,7 @@
 \usepackage{longtable}
 \usepackage{fontspec}
 \usepackage{ctex}
+\usepackage{svg}
 \usepackage[top=3cm,bottom=3cm,left=3cm,right=3cm, headsep=8pt]{geometry} % Page margins
 \geometry{papersize={19cm,24cm}}
 \usepackage{graphicx} % Required for including pictures
@@ -2000,7 +2001,11 @@ Handshake Snooper进行抓包嗅探。Monitor哦被动监听模式，只有对�
 \end{itemize}
 
 
+\subsection{数据可视化}
 
+\paragraph{D3.js}
+
+使用HTML、SVG和CSS，可以让使用者以数据驱动的方式去操作DOM，能够满足现在浏览器的兼容性并且不受专用框架的限制。
 
 \chapter{Spring}
 
@@ -3329,6 +3334,19 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 \chapter{Widgets}
 
 \section{Little Tool}
+
+\subsection{Graphviz}
+
+Graphviz具有开源、简洁、跨平台的优点。使用Graphviz绘图时，每次编译图片执行dot命令不够方便，可以利用Visual Studio Code插件在编辑dot源码是实时预览目标图片,而且可以生成SVG(Scalable Vector Graphics)格式的文件，在放大的同时也不会失真。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=1]{piplinelogic.pdf}
+	\caption{消费者持久化处理逻辑}
+	\label{fig:piplinelogic}
+\end{figure}
+
+编辑完毕后，如果需要在LaTex文档中引用图片，可以先用Inkscape\footnote{\url{https://inkscape.org/}}工具将之转换成PDF格式的文件，再引入。
 
 \subsection{YouTube视频下载}
 
