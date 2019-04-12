@@ -1725,6 +1725,19 @@ System.out.println(s1 == s2); // True
 
 CopyOnWriteArrayList这是一个ArrayList的线程安全的变体，其原理大概可以通俗的理解为:初始化的时候只有一个容器，很常一段时间，这个容器数据、数量等没有发生变化的时候，大家(多个线程)，都是读取(假设这段时间里只发生读取的操作)同一个容器中的数据，所以这样大家读到的数据都是唯一、一致、安全的，但是后来有人往里面增加了一个数据，这个时候CopyOnWriteArrayList 底层实现添加的原理是先copy出一个容器(可以简称副本)，再往新的容器里添加这个新的数据，最后把新的容器的引用地址赋值给了之前那个旧的的容器地址，但是在添加这个数据的期间，其他线程如果要去读取数据，仍然是读取到旧的容器里的数据。
 
+\paragraph{ReentrantLock以及AQS实现原理}
+
+ReentrantLock是可重入锁，什么是可重入锁呢？可重入锁就是当前持有该锁的线程能够多次获取该锁，无需等待。可重入锁是如何实现的呢？这要从ReentrantLock的一个内部类Sync的父类说起，Sync的父类是AbstractQueuedSynchronizer（后面简称AQS）。
+
+AQS(Abstract Queued Synchronizer)是JDK1.5提供的一个基于FIFO等待队列实现的一个用于实现同步器的基础框架，这个基础框架的重要性可以这么说，JCU(Java Conccurrent Utils)包里面几乎所有的有关锁、多线程并发以及线程同步器等重要组件的实现都是基于AQS这个框架。AQS的核心思想是基于volatile int state这样的一个属性同时配合Unsafe工具对其原子性的操作来实现对当前锁的状态进行修改。当state的值为0的时候，标识改Lock不被任何线程所占有。AQS(AbstractQueuedSynchronizer)是java.util.concurrent的基础。也是Doug Lea大神为广大java开发作出的卓越贡献。J.U.C中的工具类如Semaphore、CountDownLatch、ReentrantLock、ReentrantReadWriteLock等都极大程度依赖了AQS.ReentrantLock是AQS的独占锁，Semaphore是AQS共享锁。
+
+作者：徐士林
+链接：https://www.jianshu.com/p/6afaef97264a
+来源：简书
+简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
+
+当有多个线程去竞争同一个锁的时候，假设锁被某个线程占用，那么如果有成千上万个线程在等待锁，有一种做法是同时唤醒这成千上万个线程去去竞争锁，这个时候就发生了羊群效应，海量的竞争必然造成资源的剧增和浪费，因此终究只能有一个线程竞争成功，其他线程还是要老老实实的回去等待。AQS的FIFO的等待队列给解决在锁竞争方面的羊群效应问题提供了一个思路：保持一个FIFO队列，队列每个节点只关心其前一个节点的状态，线程唤醒也只唤醒队头等待线程。
+
 \paragraph{Java CAS原理}
 
 CAS（比较与交换，Compare and swap） 是一种有名的无锁算法。无锁编程，即不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步，所以也叫非阻塞同步（Non-blocking Synchronization）。实现非阻塞同步的方案称为“无锁编程算法”（ Non-blocking algorithm）\footnote{\url{https://www.cnblogs.com/zhuawang/p/4196904.html}}。
@@ -3337,7 +3350,7 @@ find / -type f -size +800M -print0 | xargs -0 du -h | sort -nr
 
 \subsection{Graphviz}
 
-Graphviz具有开源、简洁、跨平台的优点。使用Graphviz绘图时，每次编译图片执行dot命令不够方便，可以利用Visual Studio Code插件在编辑dot源码是实时预览目标图片,而且可以生成SVG(Scalable Vector Graphics)格式的文件，在放大的同时也不会失真。
+Graphviz具有开源、简洁、跨平台的优点。使用Graphviz绘图时，每次编译图片执行dot命令不够方便，可以利用Visual Studio Code插件Graphviz Preview在编辑dot源码是实时预览目标图片,而且可以生成SVG(Scalable Vector Graphics)格式的文件，在放大的同时也不会失真。
 
 \begin{figure}[htbp]
 	\centering
