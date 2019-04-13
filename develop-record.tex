@@ -3228,6 +3228,7 @@ bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --grou
 /home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh  --list --bootstrap-server mq-server:9092
 
 # 查看Kafka消息堆积情况
+# 当前的offset、消费者信息等
 /home/dolphin/software/kafka_2.12-1.1.0/bin/kafka-consumer-groups.sh --bootstrap-server mq-server:9092 --group google-book --describe
 \end{lstlisting}
 
@@ -3265,6 +3266,22 @@ earliest：当各分区下有已提交的offset时，从提交的offset开始消
 对于传统的message queue而言，一般会删除已经被消费的消息，而Kafka集群会保留所有的消息，无论其被消费与否。当然，因为磁盘限制，不可能永久保留所有数据（实际上也没必要），因此Kafka提供两种策略去删除旧数据。一是基于时间，二是基于partition文件大小。例如可以通过配置\$KAFKA\_HOME/config/server.properties，让Kafka删除一周前的数据，也可通过配置让Kafka在partition文件超过1GB时删除旧数据。
 
 \subsection{常见问题}
+
+\subsubsection{Found a corrupted index file corresponding to log file}
+
+启动Kafka时提示：
+
+\begin{lstlisting}
+[2019-04-12 06:40:58,318] WARN [Log partition=dolphin-spider-google-book-bookinfo-0, dir=/tmp/kafka-logs] Found a corrupted index file corresponding to log file /tmp/kafka-logs/dolphin-spider-google-book-bookinfo-0/00000000000000154133.log due to Corrupt index found, index file (/tmp/kafka-logs/dolphin-spider-google-book-bookinfo-0/00000000000000154133.index) has non-zero size but the last offset is 154133 which is no greater than the base offset 154133.}, recovering segment and rebuilding index files... (kafka.log.Log)
+\end{lstlisting}
+
+删除掉索引文件问题修复。
+
+\begin{lstlisting}[language=Bash]
+cd /tmp/kafka-logs/dolphin-spider-google-book-bookinfo-0
+# 删除当前目录下的索引文件
+rm -rf *
+\end{lstlisting}
 
 \subsubsection{Commit cannot be completed since the group has already rebalanced}
 
