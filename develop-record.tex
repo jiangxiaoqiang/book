@@ -1704,7 +1704,7 @@ var1.put("hello", "你好");
 
 既然泛型擦除了类型，那么怎么获取到实际到类型呢\footnote{\url{https://blog.csdn.net/hj7jay/article/details/54889717}}？
 
-\subsection{字符串比较}
+\paragraph{字符串比较}
 
 String s1 = "Hello World"; String s2 = "Hello World"; a==b的结果是什么？ 这包含了内存，String存储方式等诸多知识点。
 
@@ -1715,6 +1715,40 @@ System.out.println(s1 == s2); // True
 \end{lstlisting}
 
 == 操作符比较的是两个对象的引用是否指向同一内存地址，如果内存地址相同，则返回 true；equals() 比较的只是两个字符串对象的引用指向的内存地址所存储的字面值，而忽略内存地址是否相同。
+
+\paragraph{B树和B+树是解决什么样的问题的，怎样演化过来，之间区别}
+
+二叉树(Binary Search Tree)说起,一棵高度为h的树上各操作的时间复杂度为O(h)，而树的高度与树的平衡性有关，最好情况下对于一颗含n个节点的完全二叉树，操作的复杂度为O(lgn)，但是在最坏情况下二叉树退化成线性链，操作复杂度为O(n)。由此可知，在实际使用时应尽量保证数据的随机性，以使树的高度不至于过大，否则会产生退化现象，为了避免此问题，提出了平衡二叉树，AVL树是最早被发明的自平衡二叉查找树，AVL树得名于它的发明者G. M. Adelson-Velsky和Evgenii Landis，他们在1962年的论文《An algorithm for the organization of information》中公开了这一数据结构。。再提出怎样让每一层放的节点多一些来减少遍历高度，引申出m叉树，m叉搜索树同样会有退化现象，引出m叉平衡树，也就是B树，这时候每个节点既放了key也放了value，怎样使每个节点放尽可能多的key值，以减少遍历高度呢（访问磁盘次数），可以将每个节点只放key值，将value值放在叶子结点，在叶子结点的value值增加指向相邻节点指针，这就是优化后的B+树。
+
+\paragraph{Java类初始化顺序}
+
+ "基类静态代码块" -> "基类静态成员字段" -> "派生类静态代码块"
+    -> "派生类静态成员字段" -> "基类普通代码块" -> "基类普通成员字段"
+    -> "基类构造函数" -> "派生类普通代码块"
+    -> "派生类普通成员字段" -> "派生类构造函数";
+
+\paragraph{dispatchServlet怎样分发任务的}
+
+1）. 用户发请求-->DispatcherServlet，前端控制器收到请求后自己不进行处理，而是委托给其他的解析器进行处理，作为统一访问点，进行全局的流程控制。
+
+2）.DispatcherServlet-->HandlerMapping，HandlerMapping将会把请求映射为HandlerExecutionChain对象（包含一个Handler处理器,多个HandlerInterceptor拦截器)。
+
+3）.DispatcherServlet-->HandlerAdapter,HandlerAdapter将会把处理器包装为适配器，从而支持多种类型的处理器。
+
+4）.HandlerAdapter-->处理器功能处理方法的调用，HandlerAdapter将会根据适配的结果调用真正的处理器的功能处理方法，完成功能处理，并返回一个ModelAndView对象(包含模型数据，逻辑视图名)
+
+5）.ModelAndView的逻辑视图名-->ViewResolver，ViewResoler将把逻辑视图名解析为具体的View。
+
+6）.View-->渲染，View会根据传进来的Model模型数据进行渲染，此处的Model实际是一个Map数据结构
+
+7）.返回控制权给DispatcherServlet，由DispatcherServlet返回响应给用户。
+
+
+
+\paragraph{private修饰的方法可以通过反射访问，那么private的意义是什么}
+
+private是声明方法的允许访问范围，偏向于OOP的设计原则,并不是为了绝对安全而设计。只提供内部类调用的方法有private修饰后，外部类调用时可以更清晰简洁(不会出现许多根本用不到或者完全没必要暴露给外部类的方法)。反射偏重逆向操作，舍弃了部分性能和安全，获取了部分的便捷性和灵活性，需要掌控好平衡。可以理解为private定义了一个规则，但是某些情况下，可以特事特办。可以不遵守规则，但是需要承担一些风险\footnote{\url{https://stackoverflow.com/questions/1239581/why-is-it-allowed-to-access-java-private-fields-via-reflection/1239690\#1239690}}。
+
 
 \paragraph{Arrays.sort的实现}
 
