@@ -1720,6 +1720,23 @@ System.out.println(s1 == s2); // True
 
 二叉树(Binary Search Tree)说起,一棵高度为h的树上各操作的时间复杂度为O(h)，而树的高度与树的平衡性有关，最好情况下对于一颗含n个节点的完全二叉树，操作的复杂度为O(lgn)，但是在最坏情况下二叉树退化成线性链，操作复杂度为O(n)。由此可知，在实际使用时应尽量保证数据的随机性，以使树的高度不至于过大，否则会产生退化现象，为了避免此问题，提出了平衡二叉树，AVL树是最早被发明的自平衡二叉查找树，AVL树得名于它的发明者G. M. Adelson-Velsky和Evgenii Landis，他们在1962年的论文《An algorithm for the organization of information》中公开了这一数据结构。。再提出怎样让每一层放的节点多一些来减少遍历高度，引申出m叉树，m叉搜索树同样会有退化现象，引出m叉平衡树，也就是B树，这时候每个节点既放了key也放了value，怎样使每个节点放尽可能多的key值，以减少遍历高度呢（访问磁盘次数），可以将每个节点只放key值，将value值放在叶子结点，在叶子结点的value值增加指向相邻节点指针，这就是优化后的B+树。
 
+\paragraph{红黑树}
+
+它在1972年由鲁道夫·贝尔发明，被称为"对称二叉B树"，它现代的名字源于Leo J. Guibas和Robert Sedgewick于1978年写的一篇论文\footnote{\url{https://zh.wikipedia.org/wiki/红黑树}}。红黑树是每个节点都带有颜色属性的二叉查找树，颜色为红色或黑色。在二叉查找树强制一般要求以外，对于任何有效的红黑树增加了如下的额外要求：
+
+\begin{enumerate}
+\item {节点是红色或黑色。}
+\item{根是黑色。}
+\item{所有叶子都是黑色（叶子是NIL节点）--"nil叶子"或"空（null）叶子。}
+\item{每个红色节点必须有两个黑色的子节点。（从每个叶子到根的所有路径上不能有两个连续的红色节点。）}
+\item{从任一节点到其每个叶子的所有简单路径都包含相同数目的黑色节点。}
+\end{enumerate}
+
+
+
+
+
+
 \paragraph{Java类初始化顺序}
 
  "基类静态代码块" -> "基类静态成员字段" -> "派生类静态代码块"
@@ -1728,6 +1745,14 @@ System.out.println(s1 == s2); // True
     -> "派生类普通成员字段" -> "派生类构造函数";
 
 \paragraph{dispatchServlet怎样分发任务的}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.5]{dispatch-workflow}
+	\caption{Dispatch流程}
+	\label{fig:dispatchworkflow}
+\end{figure}
+
 
 1）. 用户发请求-->DispatcherServlet，前端控制器收到请求后自己不进行处理，而是委托给其他的解析器进行处理，作为统一访问点，进行全局的流程控制。
 
@@ -1855,6 +1880,11 @@ LinkedHashMap是HashMap的一個子類，如果需要輸出的順序和輸入相
 \paragraph{HashMap里的hashcode方法和equal方法什么时候需要重写？如果不重写会有什么后果？}
 
 当在HashMap里以非基本类型作为key时，或者是比较非基本类型时。如果用非基本类型对象作为HashMap的key时不重写的话，会无法正常获取到对应的值，无法正确的按照预期写入对象和获取对象\footnote{参考:\url{https://www.journaldev.com/21095/java-equals-hashcode}}。
+
+\paragraph{HashMap put()元素产生冲突，为什么用LinkedList（拉链法）而不用ArrayList解决，产生冲突时key值不等，新元素怎样加入链表，为什么这么设计}
+
+
+
 
 \paragraph{ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？}
 
