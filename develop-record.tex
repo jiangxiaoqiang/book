@@ -1718,7 +1718,7 @@ System.out.println(s1 == s2); // True
 
 \paragraph{B树和B+树是解决什么样的问题的，怎样演化过来，之间区别}
 
-二叉树(Binary Search Tree)说起,一棵高度为h的树上各操作的时间复杂度为O(h)，而树的高度与树的平衡性有关，最好情况下对于一颗含n个节点的完全二叉树，操作的复杂度为O(lgn)，但是在最坏情况下二叉树退化成线性链，操作复杂度为O(n)。由此可知，在实际使用时应尽量保证数据的随机性，以使树的高度不至于过大，否则会产生退化现象，为了避免此问题，提出了平衡二叉树，AVL树是最早被发明的自平衡二叉查找树，AVL树得名于它的发明者G. M. Adelson-Velsky和Evgenii Landis，他们在1962年的论文《An algorithm for the organization of information》中公开了这一数据结构。。再提出怎样让每一层放的节点多一些来减少遍历高度，引申出m叉树，m叉搜索树同样会有退化现象，引出m叉平衡树，也就是B树，这时候每个节点既放了key也放了value，怎样使每个节点放尽可能多的key值，以减少遍历高度呢（访问磁盘次数），可以将每个节点只放key值，将value值放在叶子结点，在叶子结点的value值增加指向相邻节点指针，这就是优化后的B+树。
+二叉树(Binary Search Tree)说起,一棵高度为h的树上各操作的时间复杂度为O(h)，而树的高度与树的平衡性有关，最好情况下对于一颗含n个节点的完全二叉树，操作的复杂度为O(lgn)，但是在最坏情况下二叉树退化成线性链，操作复杂度为O(n)。由此可知，在实际使用时应尽量保证数据的随机性，以使树的高度不至于过大，否则会产生退化现象，为了避免此问题，提出了平衡二叉树，AVL树是最早被发明的自平衡二叉查找树，AVL树得名于它的发明者G. M. Adelson-Velsky和Evgenii Landis，他们在1962年的论文《An algorithm for the organization of information》中公开了这一数据结构。。再提出怎样让每一层放的节点多一些来减少遍历高度，引申出m叉树，m叉搜索树同样会有退化现象，引出m叉平衡树，也就是B树，这时候每个节点既放了key也放了value，怎样使每个节点放尽可能多的key值，以减少遍历高度呢（访问磁盘次数），可以将每个节点只放key值，将value值放在叶子结点，在叶子结点的value值增加指向相邻节点指针，这就是优化后的B+树。B+树是B树的一个升级版，相对于B树来说B+树更充分的利用了节点的空间，让查询速度更加稳定，其速度完全接近于二分法查找。
 
 \paragraph{Java类初始化顺序}
 
@@ -3442,29 +3442,38 @@ for messages in msg_pack.items():
 
 \subsection{快捷键}
 
-control + command + F：窗口最大化或者还原
+control + command + F：窗口最大化或者还原.
+
+默认情况下，ssh连接到服务器后，如果长时间没有操作，服务器会自动断开这个连接。现象就是mac终端上的操作不再有相应。
+可以通过修改mac上的ssh配置解决此问题:
+
+\begin{lstlisting}[language=Bash]
+vi ~/.ssh/config
+// 加入这句：
+ServerAliveInterval 30
+\end{lstlisting}
 
 \section{Linux}
 
 \subsection{后台执行}
 
-Linux使用nohup时，无法进行交互操作，比如在dump数据时输入密码。可以在运行程序的时候Ctrl + A，Z，将程序调整为后台执行。将程序调整为后台执行：
+Linux使用nohup时，无法进行交互操作，比如在使用Postgres的dump命令导出数据的过程中输入密码，是因为nohup关闭了标准输入，导致该进程不再能够接收任何输入\footnote{\url{http://www.ruanyifeng.com/blog/2016/02/linux-daemon.html}}。可以在运行程序的时候Ctrl + A，Z，将程序调整为后台执行。将程序调整为后台执行：
 
 \begin{lstlisting}[language=Bash]
 # 查看后台任务
 jobs
-# disown -ah使所有的作业都忽略HUP信号
-# disown -rh使正在运行的作业忽略HUP信号
-# 使作业1忽略HUP信号
-disown %1
 # 将一个在后台暂停的命令，变成继续执行
 # 如果后台有多个命令，可以用bg \%jobnumber将选中的命令调出
 # \%jobnumber是通过jobs命令查到的后台正在执行的命令的序号
 # 注意不是pid
-bg
+bg %1
+# disown -ah使所有的作业都忽略HUP信号
+# disown -rh使正在运行的作业忽略HUP信号
+# 使作业1忽略HUP信号
+disown %1
 \end{lstlisting}
 
-当使用过 disown 之后，会将把目标作业从作业列表中移除，我们将不能再使用jobs来查看它，但是依然能够用ps -ef查找到它。
+当使用过disown之后，会将把目标作业从作业列表中移除，我们将不能再使用jobs来查看它，但是依然能够用ps -ef查找到它。注意在执行disown命令之前，一定要先执行bg(background)命令让作业在后台继续运行，否则作业会一直暂停。the disown builtin command is used to remove jobs from the job table, or to mark jobs so that a SIGHUP signal is not sent to them if the parent shell receives it (e.g. if the user logs out)\footnote{\url{https://en.wikipedia.org/wiki/Disown_(Unix)}}.
 
 
 
