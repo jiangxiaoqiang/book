@@ -682,7 +682,6 @@ export PYTHONPATH=/usr/lib64/python3.6/site-packages/
 \end{lstlisting}
 
 
-
 \subsection{Linux版本查看}
 
 Linux版本可分为内核版本(Kernel Version)和系统版本(System Version)，内核由内核小组维护，内核外集成不同的软件形成不同发行版本。
@@ -1820,9 +1819,36 @@ CAS（比较与交换，Compare and swap） 是一种有名的无锁算法。无
 \item {\textbf{集群管理不同}}Memcached本身并不支持分布式，因此只能在客户端通过像一致性哈希这样的分布式算法来实现Memcached的分布式存储。
 \end{itemize}                                  
 
+内存模型参考\footnote{\url{http://www.dongcoder.com/detail-1031666.html}},如图\ref{fig:redismemorymodel}所示。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.6]{memory-model.pdf}
+	\caption{Redis内存模型}
+	\label{fig:redismemorymodel}
+\end{figure}
+
+字符串是 Redis最基本的数据类型，Redis 中字符串对象的编码可以是 int，raw 或者 embstr 中的某一种.
+
+
 \paragraph{常见序列化协议及其优缺点}
 
-常见序列化协议有COM、CORBA、XML、JSON、Protobuf、Thrift和Avro
+常见序列化协议有COM、CORBA、XML、JSON、Protobuf、Thrift和Avro\footnote{\url{http://www.dongcoder.com/detail-1031666.html}}。
+
+\paragraph{Protobuf}protobuf(Google Protocol Buffers)
+Google提供一个具有高效的协议数据交换格式工具库(类似Json)。
+但相比于Json，Protobuf有更高的转化效率，时间效率和空间效率都是JSON的3-5倍。优点是性能好效率高、有代码生成机制、支持向前和向后兼容、支持多种变成语言。缺点是可读性较差、缺少自描述、通用型较差，多平台项目中，可能会涉及到改造和适配工作。JSON使用广泛，开发效率高，性能相对较低，维护成本较高。
+
+\paragraph{Thrift}
+
+\begin{enumerate}
+\item {序列化和RPC支持一站式解决，比pb更方便}
+\item{跨语言，IDL接口定义语言，自动生成多语言文件}
+\item{省流量，体积较小}
+\item{包含完整的客户端/服务端堆栈，可快速实现RPC}
+\item{为服务端提供了多种工作模式，如线程池模型、非阻塞模型}
+\end{enumerate}
+
 
 \paragraph{http请求报文结构和内容}
 
@@ -1883,7 +1909,11 @@ LinkedHashMap是HashMap的一個子類，如果需要輸出的順序和輸入相
 
 \paragraph{HashMap put()元素产生冲突，为什么用LinkedList（拉链法）而不用ArrayList解决，产生冲突时key值不等，新元素怎样加入链表，为什么这么设计}
 
+HashMap key冲突属于特殊情况，不是常规情况，ArrayList的初始长度是10，如果使用ArrayList，绝大多数情况下ArrayList只有一个元素，会造成资源的浪费。从ArrayList中删除最后一个元素代价很小，但是删除第一个元素时，需要移动之后的所有元素，代价很大。LinkedList插入和删除复杂度都是O(1)\footnote{\url{https://stackoverflow.com/questions/30414427/why-linkedlist-in-hashmapwhy-not-other-implementation-of-list}}。
 
+\paragraph{Iterator和Enumeration区别}
+
+Enumeration只有2个函数接口。通过Enumeration，我们只能读取集合的数据，而不能对数据进行修改.Iteration只有3个函数的接口。Iteration除了能读取集合的数据之外，也能对数据进行删除.Iterator支持Fail-Fast机制，当一个线程在遍历时，不允许另外一个线程对数据进行修改（除非调用实现了Iterator的Remove方法）。因此Iterator被认为是安全可靠的遍历方式\footnote{\url{https://www.cnblogs.com/yixianyixian/p/7687492.html}}.
 
 
 \paragraph{ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？}
@@ -1920,6 +1950,23 @@ JDK是java开发工具包，在其安装目录下面有六个文件夹、一些�
 \paragraph{HashMap}
 
 HashMap是由数组+链表组成；寻址容易，插入和删除容易。（存储单元数组Entry[]，数组里面包含链表）HashMap其实也是由一个线性的数组实现的。所以可以理解为其存储数据的容器就是一个线性容器；HashMap里面有一个内部静态类Entry，其重要的属性有key，value，next，从属性key，value 就可以很明显的看出来 Entry就是HashMap键值对实现的一个基础bean；也就是说HashMap的基础就是一个线性数组，这个数组就是Entry[]，Map里面的内容都保存在Entry[]中；
+
+\paragraph{Lucene全文搜索的原理}
+
+Lucene全文搜索基于倒排索引(Reverted Index)，主要分为2方面，建立索引和检索。建立索引的流程如下：
+
+
+检索的流程如下：
+
+\paragraph{如何设计存储海量数据的存储系统}
+
+\paragraph{为什么PostgreSQL最大的单表只能是32TB}
+
+在PostgreSQL中，一张表对应多个数据文件。
+数据文件中存储的是page，每一个page都有一个单独的编号，因为pg寻址空间采用的是32位，也就是$2^{32}=4294967296$，也就是一组数据文件中最多存放这些page。
+按照默认的block\_size设置为8K，可以计算出来一组数据文件最大的大小是32TB。
+
+$2^{32} \times 8 \div 1024 \div 1024 \div 1024 = 32TB$
 
 \subsection{Java类文件结构}
 
@@ -2516,6 +2563,27 @@ insert into book_nodulp (id, name, isbn, author, publisher, price, translator, s
 select id, name, isbn, author, publisher, price, translator, subtitle, publish_year, add_date, binding, douban_id, content_intro, original_name, author_intro, content, update_date, score, issuer, pages, isbn10, source, summary, creator, industry_identifiers, language, description, categories from   
 (select row_number() over(partition by name,isbn,isbn10 order by add_date desc ) as rn, * from book_backup_500w) t  
 where t.rn=1;
+\end{lstlisting}
+
+通过中间表：
+
+\begin{lstlisting}[language=SQL]
+select min(id) as mid into tmp 
+from fund_words_lib 
+group by word  
+\end{lstlisting}
+
+建立新表：
+
+\begin{lstlisting}[language=SQL]
+insert into fund_words_lib_nodulp 
+select * 
+from fund_words_lib 
+where id in 
+(
+	select mid 
+	from tmp
+)   
 \end{lstlisting}
 
 
@@ -3469,6 +3537,16 @@ for messages in msg_pack.items():
 \chapter{OS}
 
 \section{Mac}
+
+\subsection{软件}
+
+\paragraph{Mounty}
+
+Mac OS X下读写NTFS分区，安装Mounty：
+
+\begin{lstlisting}[language=Bash]
+brew cask install mounty
+\end{lstlisting}
 
 \subsection{快捷键}
 
