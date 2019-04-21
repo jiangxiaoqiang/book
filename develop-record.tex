@@ -1663,7 +1663,9 @@ export PATH=$PATH:$JAVA_HOME/bin
 export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
 \end{lstlisting}
 
-\subsection{泛型(Generic)-参数化类型}
+\subsection{Java问题}
+
+\paragraph{泛型(Generic)-参数化类型}
 
 Java语言引入泛型的好处是安全简单，可以在在编译的时候检查类型安全，避免由于类型转换失败程序在运行时抛出异常。同时，泛型还可以消除代码中许多的强制类型转换(强制类型转换很消耗性能)，带来了性能上的收益，并且所有的强制转换都是自动和隐式的，泛型也提高代码的重用率。
 
@@ -1929,6 +1931,8 @@ Enumeration只有2个函数接口。通过Enumeration，我们只能读取集合
 
 \paragraph{volatile关键字有什么作用？}
 
+Java 语言中的 volatile 变量可以被看作是一种 “程度较轻的 synchronized”；与 synchronized 块相比，volatile 变量所需的编码较少，并且运行时开销也较少，但是它所能实现的功能也仅是 synchronized 的一部分。Volatile 变量具有 synchronized 的可见性特性，但是不具备原子特性。这就是说线程能够自动发现 volatile 变量的最新值。Volatile 变量可用于提供线程安全，但是只能应用于非常有限的一组用例：多个变量之间或者某个变量的当前值与修改后值之间没有约束。
+
 
 \paragraph{CompletableFuture，这个是JDK1.8里的新特性，通过它怎么实现多线程并发控制？}
 
@@ -1964,7 +1968,8 @@ Lucene全文搜索基于倒排索引(Reverted Index)，主要分为2方面，建
 
 在PostgreSQL中，一张表对应多个数据文件。
 数据文件中存储的是page，每一个page都有一个单独的编号，因为pg寻址空间采用的是32位，也就是$2^{32}=4294967296$，也就是一组数据文件中最多存放这些page。
-按照默认的block\_size设置为8K，可以计算出来一组数据文件最大的大小是32TB。
+按照默认的block\_size设置为8K，可以计算出来一组数据文件最大的大小是32TB。
+
 
 $2^{32} \times 8 \div 1024 \div 1024 \div 1024 = 32TB$
 
